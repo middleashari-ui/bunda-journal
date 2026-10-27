@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bunda Journal - Print Template B5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --b5-width: 176mm;
+            --b5-height: 250mm;
+            --sage: #556B2F;
+            --terracotta: #C87A64;
+            --cream: #FAF9F7;
+        }
+
+        body {
+            background-color: #e5e5e5;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .font-serif { font-family: 'Playfair Display', serif; }
+
+        .page {
+            width: var(--b5-width);
+            height: var(--b5-height);
+            background-color: var(--cream);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+            padding: 15mm; 
+        }
+
+        /* Lined Paper Effect untuk area menulis */
+        .lined-paper {
+            background-image: repeating-linear-gradient(transparent, transparent 7.5mm, #d1d5db 7.6mm);
+            line-height: 7.6mm;
+            width: 100%;
+        }
+
+        /* Washi Tape Effect */
+        .washi-tape {
+            position: absolute;
+            width: 30mm;
+            height: 8mm;
+            background-color: rgba(200, 122, 100, 0.3); /* Terracotta transparent */
+            transform: rotate(-3deg);
+            top: -4mm;
+            left: 50%;
+            margin-left: -15mm;
+            z-index: 10;
+        }
+
+        .print-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--sage);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 99px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(85, 107, 47, 0.4);
+            border: none;
+            z-index: 100;
+        }
+
+        @page {
+            size: B5;
+            margin: 0;
+        }
+
+        @media print {
+            body { background-color: white; padding: 0; display: block; }
+            .page { box-shadow: none; margin: 0; page-break-after: always; }
+            .print-btn { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="print-btn" onclick="window.print()">🖨️ Simpan ke PDF (B5)</button>
+
+    <!-- HALAMAN KIRI (Tracker & Jurnal) -->
+    <div class="page">
+        <!-- Header -->
+        <div class="flex justify-between items-end border-b-2 border-stone-800 pb-2 mb-4">
+            <h1 class="font-serif text-5xl font-normal text-stone-900">Week 12</h1>
+            <div class="border border-stone-300 bg-white px-2 py-1 text-[10px] flex items-center min-w-[100px]">
+                <span class="text-stone-400 mr-2">Date:</span>
+            </div>
+        </div>
+
+        <!-- Cerita Harian (Senin - Minggu) -->
+        <div class="mb-4">
+            <div class="bg-[#F5EEEE] border border-stone-300 py-1 text-center text-[10px] font-semibold text-stone-700 uppercase tracking-widest mb-2">
+                Cerita & Perasaan Harian
+            </div>
+            <div class="space-y-1">
+                <div class="flex items-start">
+                    <span class="w-[12mm] text-[9px] font-bold text-stone-600 uppercase mt-1">Sen</span>
+                    <div class="flex-1 h-[15.2mm] lined-paper"></div>
+                </div>
+                <div class="flex items-start">
+                    <span class="w-[12mm] text-[9px] font-bold text-stone-600 uppercase mt-1">Sel</span>
+                    <div class="flex-1 h-[15.2mm] lined-paper"></div>
+                </div>
+                <div class="flex items-start">
+                    <span class="w-[12mm] text-[9px] font-bold text-stone-600 uppercase mt-1">Rab</span>
+                    <div class="flex-1 h-[15.2mm] lined-paper"></div>
+                </div>
+                <div class="flex items-start">
+                    <span class="w-[12mm] text-[9px] font-bold text-stone-600 uppercase mt-1">Kam</span>
+                    <div class="flex-1 h-[15.2mm] lined-paper"></div>
+                </div>
+                <div class="flex items-start">
+                    <span class="w-[12mm] text-[9px] font-bold text-stone-600 uppercase mt-1">Jum</span>
+                    <div class="flex-1 h-[15.2mm] lined-paper"></div>
+                </div>
+                <div class="flex items-start">
+                    <span class="w-[12mm] text-[9px] font-bold text-stone-600 uppercase mt-1">Sab</span>
+                    <div class="flex-1 h-[15.2mm] lined-paper"></div>
+                </div>
+                <div class="flex items-start">
+                    <span class="w-[12mm] text-[9px] font-bold text-[#C87A64] uppercase mt-1">Min</span>
+                    <div class="flex-1 h-[15.2mm] lined-paper"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tracker Kombinasi (Sleep Graph & Checklist) -->
+        <div class="flex gap-3 mb-2">
+            
+            <!-- Sleep Graph -->
+            <div class="w-1/2 flex flex-col">
+                <div class="bg-[#F5EEEE] border border-stone-300 py-1 text-center text-[9px] font-semibold text-stone-700 uppercase tracking-widest mb-1">
+                    Grafik Tidur (Jam)
+                </div>
+                <div class="flex-1 border border-stone-300 bg-white p-1 flex">
+                    <!-- Sumbu Y (Jam) -->
+                    <div class="flex flex-col justify-between text-[8px] font-medium text-stone-500 pr-1 border-r border-stone-200">
+                        <span>9+</span>
+                        <span>7-8</span>
+                        <span>5-6</span>
+                        <span>&lt;5</span>
+                    </div>
+                    <!-- Sumbu X (Hari) & Grid Area -->
+                    <div class="flex-1 flex flex-col relative">
+                        <!-- Garis horizontal tipis (Background) -->
+                        <div class="absolute inset-0 flex flex-col justify-between">
+                            <div class="border-b border-dashed border-stone-200 h-0 mt-[6px]"></div>
+                            <div class="border-b border-dashed border-stone-200 h-0"></div>
+                            <div class="border-b border-dashed border-stone-200 h-0"></div>
+                            <div class="border-b border-dashed border-stone-200 h-0 mb-[6px]"></div>
+                        </div>
+                        <!-- Kolom Hari -->
+                        <div class="flex-1 flex text-center text-[7px] text-stone-500 font-bold z-10 items-end pb-0.5">
+                            <div class="flex-1 border-r border-stone-100 last:border-r-0">S</div>
+                            <div class="flex-1 border-r border-stone-100 last:border-r-0">S</div>
+                            <div class="flex-1 border-r border-stone-100 last:border-r-0">R</div>
+                            <div class="flex-1 border-r border-stone-100 last:border-r-0">K</div>
+                            <div class="flex-1 border-r border-stone-100 last:border-r-0">J</div>
+                            <div class="flex-1 border-r border-stone-100 last:border-r-0">S</div>
+                            <div class="flex-1 text-[#C87A64]">M</div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-[6px] text-stone-400 text-center mt-0.5 italic">*Tarik garis grafik tidurmu</p>
+            </div>
+
+            <!-- Ceklis Rutinitas -->
+            <div class="w-1/2 flex flex-col">
+                <div class="bg-[#F5EEEE] border border-stone-300 py-1 text-center text-[9px] font-semibold text-stone-700 uppercase tracking-widest mb-1">
+                    Ceklis Kesehatan
+                </div>
+                <div class="flex-1 border border-stone-300 bg-white">
+                    <table class="w-full text-center table-fixed border-collapse">
+                        <thead>
+                            <tr class="bg-stone-50 border-b border-stone-300 text-[8px]">
+                                <th class="w-[30%] border-r border-stone-300 py-0.5"></th>
+                                <th class="font-normal py-0.5">S</th>
+                                <th class="font-normal py-0.5">S</th>
+                                <th class="font-normal py-0.5">R</th>
+                                <th class="font-normal py-0.5">K</th>
+                                <th class="font-normal py-0.5">J</th>
+                                <th class="font-normal py-0.5">S</th>
+                                <th class="font-normal py-0.5 text-[#C87A64]">M</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-[10px]">
+                            <!-- Vitamin -->
+                            <tr class="border-b border-stone-300">
+                                <td class="border-r border-stone-300 text-[8px] font-medium py-1 text-left px-1">💊 Vitamin</td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                            </tr>
+                            <!-- Air -->
+                            <tr class="border-b border-stone-300">
+                                <td class="border-r border-stone-300 text-[8px] font-medium py-1 text-left px-1">💧 Air 2L</td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                            </tr>
+                            <!-- Olahraga -->
+                            <tr>
+                                <td class="border-r border-stone-300 text-[8px] font-medium py-1 text-left px-1">🚶‍♀️ Gerak</td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                                <td><div class="w-2.5 h-2.5 rounded-full border border-stone-300 mx-auto"></div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mood Graph (Full Width di bagian bawah) -->
+        <div class="w-full flex flex-col mt-2">
+            <div class="bg-[#F5EEEE] border border-stone-300 py-1 text-center text-[9px] font-semibold text-stone-700 uppercase tracking-widest mb-1">
+                Grafik Mood Harian
+            </div>
+            <div class="h-[25mm] border border-stone-300 bg-white p-1 flex">
+                <!-- Sumbu Y (Emoji) -->
+                <div class="flex flex-col justify-between text-[11px] pr-2 border-r border-stone-200">
+                    <span>🥰</span>
+                    <span>😊</span>
+                    <span>🥺</span>
+                    <span>😫</span>
+                </div>
+                <!-- Sumbu X (Hari) & Grid Area -->
+                <div class="flex-1 flex flex-col relative">
+                    <!-- Garis horizontal tipis (Background) -->
+                    <div class="absolute inset-0 flex flex-col justify-between">
+                        <div class="border-b border-dashed border-stone-200 h-0 mt-[6px]"></div>
+                        <div class="border-b border-dashed border-stone-200 h-0"></div>
+                        <div class="border-b border-dashed border-stone-200 h-0"></div>
+                        <div class="border-b border-dashed border-stone-200 h-0 mb-[6px]"></div>
+                    </div>
+                    <!-- Kolom Hari -->
+                    <div class="flex-1 flex text-center text-[8px] text-stone-500 font-bold z-10 items-end pb-0.5">
+                        <div class="flex-1 border-r border-stone-100 last:border-r-0">Senin</div>
+                        <div class="flex-1 border-r border-stone-100 last:border-r-0">Selasa</div>
+                        <div class="flex-1 border-r border-stone-100 last:border-r-0">Rabu</div>
+                        <div class="flex-1 border-r border-stone-100 last:border-r-0">Kamis</div>
+                        <div class="flex-1 border-r border-stone-100 last:border-r-0">Jumat</div>
+                        <div class="flex-1 border-r border-stone-100 last:border-r-0">Sabtu</div>
+                        <div class="flex-1 text-[#C87A64]">Minggu</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- HALAMAN KANAN (Galeri & Milestone) -->
+    <div class="page">
+        <!-- Weekly Fact -->
+        <div class="bg-[#556B2F]/10 border border-[#556B2F]/20 p-2 rounded-sm mb-5 text-center">
+            <p class="text-[9px] text-[#556B2F] font-bold uppercase tracking-wider mb-0.5">✨ Milestone Minggu Ini</p>
+            <p class="text-[10px] text-stone-700 font-serif italic">Si kecil seukuran buah lemon! Organ vitalnya sudah terbentuk sempurna dan mulai berfungsi.</p>
+        </div>
+
+        <!-- Photo Placeholder (Polaroid Style) -->
+        <div class="relative w-[110mm] mx-auto bg-white p-3 shadow-md border border-stone-200 mb-6 group">
+            <div class="washi-tape"></div>
+            <div class="w-full h-[95mm] bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center justify-center">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a8a29e" stroke-width="1.5" class="mb-2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span class="text-[10px] font-medium text-stone-400 uppercase tracking-widest text-center px-4">Tempel Foto USG /<br/>Baby Bump</span>
+            </div>
+            <div class="mt-2 text-center border-b border-stone-300 mx-4 h-[5mm]"></div>
+        </div>
+
+        <!-- Baby & Mom Stats -->
+        <div class="flex gap-3 mb-6">
+            <div class="flex-1">
+                <div class="bg-[#F5EEEE] border border-stone-300 py-1 text-center text-[9px] font-semibold text-stone-700 uppercase tracking-widest">Berat Bunda</div>
+                <div class="bg-white border-b border-l border-r border-stone-300 h-6 relative">
+                    <span class="absolute right-2 top-1 text-[10px] text-stone-400">kg</span>
+                </div>
+            </div>
+            <div class="flex-1">
+                <div class="bg-[#F5EEEE] border border-stone-300 py-1 text-center text-[9px] font-semibold text-stone-700 uppercase tracking-widest">Lingkar Perut</div>
+                <div class="bg-white border-b border-l border-r border-stone-300 h-6 relative">
+                    <span class="absolute right-2 top-1 text-[10px] text-stone-400">cm</span>
+                </div>
+            </div>
+            <div class="flex-1">
+                <div class="bg-[#F5EEEE] border border-stone-300 py-1 text-center text-[9px] font-semibold text-stone-700 uppercase tracking-widest">Tekanan Darah</div>
+                <div class="bg-white border-b border-l border-r border-stone-300 h-6 relative">
+                    <span class="absolute right-2 top-1 text-[8px] text-stone-400">mmHg</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Catatan Medis / Dokter -->
+        <div>
+            <div class="bg-[#F5EEEE] border border-stone-300 py-1 text-center text-[10px] font-semibold text-stone-700 uppercase tracking-widest mb-1">
+                Catatan Dokter / Pertanyaan untuk Konsul
+            </div>
+            <div class="h-[30.4mm] lined-paper text-transparent">.</div>
+        </div>
+    </div>
+
+</body>
+</html>

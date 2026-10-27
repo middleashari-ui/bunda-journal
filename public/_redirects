@@ -1,0 +1,6 @@
+/*
+  Cloudflare Pages redirects:
+  Redirect root domain bundajournal.my.id to www.bundajournal.my.id
+*/
+https://bundajournal.my.id/* https://www.bundajournal.my.id/:splat 301
+http://bundajournal.my.id/* https://www.bundajournal.my.id/:splat 301

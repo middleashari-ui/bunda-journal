@@ -1,0 +1,542 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap');
+
+/* Local font embedding for PDF export reliability */
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/lora/v35/0QI6MX1D_JOuGQbT0gvTJPa787weuxJBkq0.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2') format('woff2');
+}
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Lora", Georgia, serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  --color-oatmeal: #F9F8F6;
+  --color-appBg: #F5F2EB;
+  --color-sage: #556B2F;
+  --color-sageLight: #708846;
+  --color-sageHover: #465926;
+  --color-terracotta: #C87A64;
+  --color-terracottaSoft: #F4ECE8;
+  --color-terracottaHover: #B56B56;
+  --color-stoneDark: #292524;
+  --color-stoneMuted: #78716C;
+}
+
+@layer base {
+  :root {
+    --primary-color: #556B2F;
+    --primary-hover: #465926;
+    --primary-light: #708846;
+    --bg-color: #F5F2EB;
+    --color-sage: #556B2F;
+    --color-sageLight: #708846;
+    --color-sageHover: #465926;
+    --color-appBg: #F5F2EB;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  }
+
+  body {
+    background-color: var(--bg-color, #ECE8E1);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    color: #292524;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Custom Scrollbar Utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Single-Page Display Control across Desktop, Laptop, Tablet, and Mobile */
+/* Completely hide right page when Kiri is active */
+.show-left-only .b5-page-right,
+.show-left-only .b5-page:nth-of-type(2),
+.show-left-only .b5-page:last-of-type {
+  display: none !important;
+}
+
+/* Completely hide left page when Kanan is active */
+.show-right-only .b5-page-left,
+.show-right-only .b5-page:nth-of-type(1),
+.show-right-only .b5-page:first-of-type {
+  display: none !important;
+}
+
+/* Mode Spread: Container berlatar gelap menampung 2 halaman berjajar berdampingan rata tengah */
+.studio-spread-viewport {
+  width: 100% !important;
+  min-height: 100% !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.studio-spread-canvas {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 24px !important;
+  flex-shrink: 0 !important;
+}
+
+.studio-spread-canvas > div {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 24px !important;
+  width: auto !important;
+}
+
+.studio-spread-canvas .b5-page {
+  display: flex !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+}
+
+/* 1 Muka Penuh: Setiap spread berukuran tepat 176mm (lebar 1 halaman B5) */
+.studio-vertical-spread {
+  width: 176mm !important;
+  max-width: 176mm !important;
+  min-width: 176mm !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}
+
+.studio-vertical-spread > div,
+.studio-vertical-spread .flex.flex-row {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 176mm !important;
+  max-width: 176mm !important;
+  min-width: 176mm !important;
+  box-sizing: border-box !important;
+  gap: 0 !important;
+}
+
+.studio-vertical-spread .b5-page {
+  display: flex !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-shadow: 0 6px 24px -4px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 4px !important;
+}
+
+.studio-vertical-spread .b5-page-left {
+  margin-bottom: var(--page-gap-unscaled, 44px) !important;
+}
+
+.studio-vertical-spread .b5-page-right {
+  margin-bottom: 0 !important;
+}
+
+/* Watermark Penanda Halaman: Kotak kecil semi-transparan rapi di pojok atas */
+.studio-vertical-spread .b5-page-left::before,
+.b5-page-left::before {
+  content: 'Halaman Kiri';
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 40;
+  padding: 3px 8px;
+  background: rgba(28, 25, 23, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #FAF8F5;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+  user-select: none;
+}
+
+.studio-vertical-spread .b5-page-right::before,
+.b5-page-right::before {
+  content: 'Halaman Kanan';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 40;
+  padding: 3px 8px;
+  background: rgba(28, 25, 23, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #FAF8F5;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Sembunyikan watermark saat mengekspor PDF atau saat mencetak */
+.exporting-pdf .b5-page-left::before,
+.exporting-pdf .b5-page-right::before,
+.pdf-export-container .b5-page-left::before,
+.pdf-export-container .b5-page-right::before,
+.pdf-export-container .b5-page::before,
+.pdf-export-container .b5-page::after,
+.pdf-export-container .page-badge-watermark,
+.pdf-export-container .badge-penanda {
+  display: none !important;
+  content: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+@media print {
+  .studio-vertical-spread .b5-page-left::before,
+  .studio-vertical-spread .b5-page-right::before,
+  .b5-page-left::before,
+  .b5-page-right::before {
+    display: none !important;
+  }
+}
+
+/* ============================================================== */
+/* OFF-SCREEN CONTAINER EXPORT PDF (html-to-image B5 Murni)       */
+/* ============================================================== */
+.pdf-export-container {
+  width: 176mm !important;
+  max-width: 176mm !important;
+  min-width: 176mm !important;
+  box-sizing: border-box !important;
+  background-color: #ffffff !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.pdf-export-container .b5-page {
+  transform: none !important;
+  -webkit-transform: none !important;
+  width: 176mm !important;
+  max-width: 176mm !important;
+  min-width: 176mm !important;
+  height: 250mm !important;
+  max-height: 250mm !important;
+  min-height: 250mm !important;
+  margin: 0 auto !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.pdf-export-container .studio-vertical-spread {
+  transform: none !important;
+  -webkit-transform: none !important;
+  width: 176mm !important;
+  max-width: 176mm !important;
+  min-width: 176mm !important;
+  margin: 0 !important;
+}
+
+.pdf-export-container .studio-vertical-spread > div,
+.pdf-export-container .studio-vertical-spread .flex.flex-row,
+.pdf-export-container .flex.flex-row {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 176mm !important;
+  max-width: 176mm !important;
+  min-width: 176mm !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+.pdf-export-container .studio-vertical-spread .b5-page-left {
+  margin-bottom: 0 !important;
+}
+
+/* Strict B5 Page Dimensions (176mm x 250mm) across desktop and scaled mobile */
+.b5-page {
+  width: 176mm !important;
+  max-width: 176mm !important;
+  min-width: 176mm !important;
+  height: 250mm !important;
+  max-height: 250mm !important;
+  min-height: 250mm !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+  position: relative;
+}
+
+/* Margin Jilidan Cetak Hardcover:
+   Dibuat simetris 20mm (2cm) di seluruh sisi atas, bawah, kanan, kiri
+   sebagai batas pemisah aman jilidan cetak hardcover */
+.b5-page-left,
+.b5-page-right,
+.b5-page {
+  padding: 20mm !important;
+  box-sizing: border-box !important;
+}
+
+/* Touch Action Utility for Smooth Mobile Pinch-to-Zoom */
+.pinch-zoom-viewport {
+  touch-action: pan-x pan-y pinch-zoom !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Document Lock Mode (Read-Only / Disabled) */
+.document-locked input,
+.document-locked textarea,
+.document-locked select {
+  pointer-events: none !important;
+  user-select: text !important;
+  cursor: default !important;
+}
+
+.document-locked label:has(input[type="file"]),
+.document-locked input[type="file"] + label,
+.document-locked .b5-page button[type="button"]:not(.allow-when-locked) {
+  pointer-events: none !important;
+  cursor: default !important;
+  opacity: 0.95 !important;
+}
+
+/* B5 Print Media Engine: 17,6 cm x 25 cm */
+/* 1. Kunci instruksi kertas dan matikan margin browser */
+@page {
+  size: A4 portrait;
+  margin: 0 !important;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0 !important;
+  }
+
+  /* 2. Paksa warna latar tercetak & kunci skala font HP */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+  }
+
+  /* 3. Kunci kanvas per halaman agar tidak pernah bocor/bergeser */
+  .halaman-jurnal,
+  .b5-page,
+  .preview-pdf-page {
+    position: relative !important;
+    width: 176mm !important;
+    max-width: 176mm !important;
+    min-width: 176mm !important;
+    height: 250mm !important;
+    max-height: 250mm !important;
+    min-height: 250mm !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important; /* Mencegah munculnya halaman kosong tambahan */
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* 4. Kunci bingkai foto USG agar tidak gepeng */
+  .bingkai-usg img,
+  .aspect-\[4\/3\] img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important; /* Foto otomatis terpotong rapi mengikuti bingkai */
+    display: block !important;
+  }
+
+  /* Reset layout viewport scaling saat print */
+  .studio-vertical-spread {
+    transform: none !important;
+    width: 210mm !important;
+  }
+
+  .print-modal-container main > div > div {
+    height: auto !important;
+    width: 210mm !important;
+  }
+
+  .print-modal-container main > div > div > div {
+    height: auto !important;
+    width: 210mm !important;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    background-color: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 176mm !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Sembunyikan elemen latar dan navigasi saat print */
+  #root > div > *:not(.print-modal-container):not(.book-preview-container) {
+    display: none !important;
+  }
+
+  .book-preview-container {
+    position: static !important;
+    display: block !important;
+    width: 176mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+  }
+
+  .book-preview-container > header {
+    display: none !important;
+  }
+
+  .book-preview-container > div {
+    position: static !important;
+    display: block !important;
+    width: 176mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+  }
+
+  .print-modal-container {
+    position: static !important;
+    display: block !important;
+    width: 176mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+  }
+
+  .print-modal-container > header,
+  .print-modal-container > footer {
+    display: none !important;
+  }
+
+  .print-modal-container > main {
+    position: static !important;
+    display: block !important;
+    width: 176mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+  }
+
+  .print-all-container {
+    display: block !important;
+    width: 176mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-spread {
+    display: block !important;
+    width: 176mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .show-left-only > div > .b5-page,
+  .show-right-only > div > .b5-page {
+    display: flex !important;
+  }
+
+  /* Container Utama B5 Page & Preview Page saat Cetak */
+  .b5-page,
+  .preview-pdf-page {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    min-width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    min-height: 297mm !important;
+    padding: 20mm !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* PDF Export: Force absolute sizing for consistent rendering */
+.pdf-export-container .b5-page,
+.pdf-export-container .preview-pdf-page {
+  width: 176mm !important;
+  height: 250mm !important;
+  font-size: 10pt !important;
+  line-height: 1.4 !important;
+  overflow: hidden !important;
+}
+
+.pdf-export-container h1 { font-size: 18pt !important; }
+.pdf-export-container h2 { font-size: 14pt !important; }
+.pdf-export-container h3 { font-size: 12pt !important; }
+.pdf-export-container p,
+.pdf-export-container span,
+.pdf-export-container label { font-size: 9pt !important; }
+.pdf-export-container .text-xs { font-size: 8pt !important; }
+.pdf-export-container .text-sm { font-size: 9pt !important; }
+.pdf-export-container .text-base { font-size: 10pt !important; }
+.pdf-export-container .text-lg { font-size: 12pt !important; }
+.pdf-export-container .text-xl { font-size: 14pt !important; }
+.pdf-export-container .text-2xl { font-size: 16pt !important; }
+.pdf-export-container .text-3xl { font-size: 18pt !important; }
