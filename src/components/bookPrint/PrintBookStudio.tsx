@@ -78,6 +78,33 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   const [isDocumentLocked, setIsDocumentLocked] = useState<boolean>(() => {
     return localStorage.getItem('bunda_book_locked') === 'true';
   });
+  const [lockToast, setLockToast] = useState<{ message: string; isLocked: boolean } | null>(null);
+  const lockToastTimeoutRef = useRef<number | null>(null);
+
+  const toggleDocumentLock = () => {
+    setIsDocumentLocked(prev => {
+      const next = !prev;
+      if (lockToastTimeoutRef.current) {
+        window.clearTimeout(lockToastTimeoutRef.current);
+      }
+      setLockToast({
+        message: next ? 'Dokumen Terkunci (Mode Baca)' : 'Mode Edit Aktif (Bisa Mengetik)',
+        isLocked: next
+      });
+      lockToastTimeoutRef.current = window.setTimeout(() => {
+        setLockToast(null);
+      }, 3000);
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (lockToastTimeoutRef.current) {
+        window.clearTimeout(lockToastTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('bunda_book_locked', String(isDocumentLocked));
@@ -699,39 +726,30 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
           )}
         </div>
 
-        {/* Right: Tombol Edit, Download PDF, dan Menu Drawer */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Tombol Edit / Kunci Dokumen */}
+        {/* Right: Tombol Edit (Icon Only & Konsisten), Download PDF (Icon Only), dan Menu Drawer */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Tombol Edit / Kunci Dokumen (Icon Only, Warna Konsisten, Pesan di Tengah 3 Detik) */}
           <button
-            onClick={() => setIsDocumentLocked(l => !l)}
-            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer ${
-              isDocumentLocked 
-                ? 'bg-amber-950/70 border-amber-700/70 text-amber-300 hover:bg-amber-900/70' 
-                : 'bg-emerald-950/70 border-emerald-700/70 text-emerald-300 hover:bg-emerald-900/70'
-            }`}
+            onClick={toggleDocumentLock}
+            className="w-8 h-8 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-stone-700 active:scale-95"
             title={isDocumentLocked ? 'Mode Terkunci (Read-Only) - Klik untuk Edit' : 'Mode Edit - Klik untuk Kunci Dokumen'}
+            aria-label={isDocumentLocked ? 'Buka Kunci untuk Mode Edit' : 'Kunci Dokumen'}
           >
             {isDocumentLocked ? (
-              <>
-                <Lock className="w-3.5 h-3.5 text-amber-400" />
-                <span>Terkunci</span>
-              </>
+              <Lock className="w-4 h-4 text-stone-300" />
             ) : (
-              <>
-                <Unlock className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Mode Edit</span>
-              </>
+              <Unlock className="w-4 h-4 text-stone-300" />
             )}
           </button>
 
-          {/* Tombol Simpan PDF (Opsi C: Jendela Cetak Bersih Anti-Geser B5) */}
+          {/* Tombol Simpan PDF (Icon Only) */}
           <button
             onClick={handleOpenPrintWindow}
-            className="px-3 py-1.5 bg-[#556B2F] hover:bg-[#465926] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
-            title="Download PDF B5 (100 Halaman Anti-Geser)"
+            className="w-8 h-8 rounded-lg bg-[#556B2F] hover:bg-[#465926] text-white flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95 border border-[#465926]"
+            title="Download PDF (100 Halaman)"
+            aria-label="Download PDF"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>Download PDF (100 Hal)</span>
+            <Download className="w-4 h-4" />
           </button>
 
           {/* Menu Drawer Button (Pilihan Tema, Scan Halaman, & Daftar Bab) */}
@@ -863,6 +881,35 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
       </footer>
 
       {/* ============================================================== */}
+      {/* 3.5 CENTER TOAST NOTIFICATION: STATUS KUNCI / MODE EDIT (3 DETIK) */}
+      {/* ============================================================== */}
+      {lockToast && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4">
+          <div className="bg-stone-900/95 border border-stone-700 text-white px-5 py-3.5 rounded-2xl shadow-2xl backdrop-blur-md flex items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+              lockToast.isLocked ? 'bg-amber-950/80 border border-amber-600/50 text-amber-400' : 'bg-[#556B2F]/30 border border-[#556B2F]/50 text-[#8FA36C]'
+            }`}>
+              {lockToast.isLocked ? (
+                <Lock className="w-5 h-5 text-amber-400" />
+              ) : (
+                <Unlock className="w-5 h-5 text-emerald-400" />
+              )}
+            </div>
+            <div className="flex flex-col pr-1">
+              <span className="text-sm font-semibold tracking-tight text-stone-100">
+                {lockToast.message}
+              </span>
+              <span className="text-[11px] text-stone-400 font-sans">
+                {lockToast.isLocked 
+                  ? 'Input dan catatan terkunci dari ketikan tidak sengaja.' 
+                  : 'Ketuk pada teks atau catatan mana saja untuk mengubah isi.'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
       {/* 4. HAMBURGER SLIDE-OVER DRAWER (Menu, Tema, Scan, Kunci Mode)  */}
       {/* ============================================================== */}
       {isMenuOpen && (
@@ -932,7 +979,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
             {/* Kunci Mode Jurnal (Document Lock Switch) */}
             <div className="mb-3.5">
               <button
-                onClick={() => setIsDocumentLocked(l => !l)}
+                onClick={toggleDocumentLock}
                 className={`w-full p-2.5 rounded-xl border text-left text-xs transition-all cursor-pointer flex items-center justify-between shadow-xs ${
                   isDocumentLocked 
                     ? 'bg-amber-950/40 border-amber-600/60 text-amber-100' 
