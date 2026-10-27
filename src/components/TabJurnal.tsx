@@ -633,7 +633,15 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                         week,
                         isCustom: true
                       };
-                      setPhotos(p => [newPhoto, ...p]);
+                      setPhotos(p => [newPhoto, ...p.filter(x => x.week !== week)]);
+                      try {
+                        const savedPhotosStr = localStorage.getItem('bunda_photos');
+                        let currentList: PhotoMemory[] = savedPhotosStr ? JSON.parse(savedPhotosStr) : [];
+                        currentList = currentList.filter(p => p.week !== week);
+                        currentList.push(newPhoto);
+                        localStorage.setItem('bunda_photos', JSON.stringify(currentList));
+                        window.dispatchEvent(new Event('bunda_journal_updated'));
+                      } catch {}
                     });
                   }}
                 />
@@ -653,7 +661,18 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                     <div className="p-1.5 text-[9.5px] flex items-center justify-between">
                       <span className="truncate text-stone-700 font-medium">{item.caption}</span>
                       <button 
-                        onClick={() => setPhotos(p => p.filter(x => x.id !== item.id))}
+                        onClick={() => {
+                          setPhotos(p => p.filter(x => x.id !== item.id));
+                          try {
+                            const savedPhotosStr = localStorage.getItem('bunda_photos');
+                            if (savedPhotosStr) {
+                              let currentList: PhotoMemory[] = JSON.parse(savedPhotosStr);
+                              currentList = currentList.filter(x => x.id !== item.id);
+                              localStorage.setItem('bunda_photos', JSON.stringify(currentList));
+                              window.dispatchEvent(new Event('bunda_journal_updated'));
+                            }
+                          } catch {}
+                        }}
                         className="text-stone-400 hover:text-rose-500 p-0.5 cursor-pointer"
                       >
                         <Trash2 className="w-3 h-3" />

@@ -572,6 +572,12 @@ export default function App() {
             photos={photos}
             pastEntries={pastEntries}
             currentWeek={week}
+            onUpdatePhoto={(w, newPhoto) => {
+              setPhotos(prev => {
+                const filtered = prev.filter(p => p.week !== w);
+                return [...filtered, newPhoto];
+              });
+            }}
             onClose={() => setIsBookPreviewOpen(false)}
           />
         )}

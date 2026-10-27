@@ -127,16 +127,19 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
           if (typeof parsed.sleepHourIndex === 'number') {
             const idx = parsed.sleepHourIndex;
             setSleepHours([idx, idx, idx, idx, idx, idx, idx]);
+          } else {
+            setSleepHours([null, null, null, null, null, null, null]);
           }
+        } else {
+          setSleepHours([null, null, null, null, null, null, null]);
         }
 
         // Sinkronisasi otomatis kebiasaan sehat dari Health Data Context
         const savedWater = localStorage.getItem('bunda_water_liters');
-        const waterLit = savedWater ? parseFloat(savedWater) : 2.0;
-        const isWaterTargetMet = waterLit >= 1.5;
+        const isWaterTargetMet = savedWater ? parseFloat(savedWater) >= 1.5 : false;
 
         const savedGoals = localStorage.getItem('bunda_activity_goals');
-        let isWalkTargetMet = true;
+        let isWalkTargetMet = false;
         if (savedGoals) {
           const parsedG = JSON.parse(savedGoals);
           if (typeof parsedG.walkMinutes === 'number') {
@@ -146,16 +149,21 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
 
         const savedMoods = localStorage.getItem(`bunda_daily_moods_w${week}`);
         if (savedMoods) {
-          setDailyMoods(JSON.parse(savedMoods));
+          try {
+            setDailyMoods(JSON.parse(savedMoods));
+          } catch {}
+        } else {
+          setDailyMoods([null, null, null, null, null, null, null]);
         }
 
-        setCheckedItems(prev => ({
-          ...prev,
-          'water-0': isWaterTargetMet, 'water-1': isWaterTargetMet, 'water-2': isWaterTargetMet,
-          'water-3': isWaterTargetMet, 'water-4': isWaterTargetMet, 'water-5': isWaterTargetMet, 'water-6': isWaterTargetMet,
-          'walk-0': isWalkTargetMet, 'walk-1': isWalkTargetMet, 'walk-2': isWalkTargetMet,
-          'walk-3': isWalkTargetMet, 'walk-4': isWalkTargetMet, 'walk-5': isWalkTargetMet, 'walk-6': isWalkTargetMet,
-        }));
+        const newChecks: Record<string, boolean> = {};
+        if (savedWater) {
+          for (let d = 0; d < 7; d++) newChecks[`water-${d}`] = isWaterTargetMet;
+        }
+        if (savedGoals) {
+          for (let d = 0; d < 7; d++) newChecks[`walk-${d}`] = isWalkTargetMet;
+        }
+        setCheckedItems(newChecks);
       } catch {}
     };
 
@@ -204,17 +212,13 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
   };
 
   // Health checklist interactive state (rows: vitamin, water, walk; cols: 7 days)
-  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({
-    'vit-0': true, 'vit-1': true, 'vit-2': true, 'vit-3': true, 'vit-4': true, 'vit-5': true, 'vit-6': true,
-    'water-0': true, 'water-1': true, 'water-2': true, 'water-3': true, 'water-4': true, 'water-5': true, 'water-6': true,
-    'walk-0': true, 'walk-1': false, 'walk-2': true, 'walk-3': false, 'walk-4': true, 'walk-5': true, 'walk-6': true,
-  });
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
 
   // Daily sleep hours state (0 to 3 index: 0=9+, 1=7-8, 2=5-6, 3=<5)
-  const [sleepHours, setSleepHours] = useState<number[]>([1, 1, 1, 2, 0, 0, 1]);
+  const [sleepHours, setSleepHours] = useState<(number | null)[]>([null, null, null, null, null, null, null]);
 
   // Daily mood state (0 to 3 index: 0=🥰, 1=😊, 2=🥺, 3=😫)
-  const [dailyMoods, setDailyMoods] = useState<number[]>([0, 1, 0, 2, 1, 0, 0]);
+  const [dailyMoods, setDailyMoods] = useState<(number | null)[]>([null, null, null, null, null, null, null]);
 
   const toggleCheck = (id: string) => {
     setCheckedItems(prev => ({ ...prev, [id]: !prev[id] }));
@@ -248,6 +252,11 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
     { key: 'Sab', label: 'Sab' },
     { key: 'Min', label: 'Min', isSunday: true },
   ];
+
+  // Helper cek apakah grafik ada isinya (jika belum diisi, grafik disembunyikan)
+  const hasSleepData = sleepHours.some(val => val !== null && val !== undefined);
+  const hasMoodData = dailyMoods.some(val => val !== null && val !== undefined);
+  const hasChecklistData = Object.values(checkedItems).some(val => val === true);
 
   return (
     <div className="flex flex-row items-center justify-center gap-0 w-full print:gap-0 print:block">
@@ -306,7 +315,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
             </div>
 
             {/* Cerita Harian (Senin - Minggu) */}
-            <div className="mb-2">
+            <div className={`mb-2 ${!hasSleepData && !hasChecklistData && !hasMoodData ? 'flex-1' : ''}`}>
               <div 
                 className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
                 style={{ 
@@ -333,7 +342,9 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                       placeholder={`Catatan hari ${dayObj.label}...`}
                       value={dailyTexts[dayObj.key] || ''}
                       onChange={(e) => handleDailyTextChange(dayObj.key, e.target.value)}
-                      className="flex-1 text-[8.5px] sm:text-[9px] font-serif italic text-stone-700 bg-transparent border-b border-stone-300 px-1 py-0.5 focus:bg-amber-50/40 focus:outline-hidden leading-[1.2] resize-none h-[25px] overflow-hidden"
+                      className={`flex-1 text-[8.5px] sm:text-[9px] font-serif italic text-stone-700 bg-transparent border-b border-stone-300 px-1 py-0.5 focus:bg-amber-50/40 focus:outline-hidden leading-[1.2] resize-none overflow-hidden ${
+                        !hasSleepData && !hasChecklistData && !hasMoodData ? 'h-[48px]' : 'h-[25px]'
+                      }`}
                       style={{ borderColor: theme.borderColor }}
                     />
                   </div>
@@ -342,51 +353,183 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
             </div>
 
             {/* Tracker Kombinasi (Sleep Graph & Ceklis Kesehatan) */}
-            <div className="flex gap-2 mb-2">
-              {/* Sleep Graph with Clickable Points */}
-              <div className="w-1/2 flex flex-col">
+            {(hasSleepData || hasChecklistData) && (
+              <div className="flex gap-2 mb-2">
+                {/* Sleep Graph with Clickable Points */}
+                {hasSleepData && (
+                  <div className={`${hasChecklistData ? 'w-1/2' : 'w-full'} flex flex-col`}>
+                    <div 
+                      className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
+                      style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor, color: theme.textColor }}
+                    >
+                      Grafik Tidur (Jam)
+                    </div>
+                    <div 
+                      className="h-[24mm] border bg-white p-1 flex rounded-xs"
+                      style={{ borderColor: theme.borderColor }}
+                    >
+                      {/* Sumbu Y (Jam) */}
+                      <div className="flex flex-col justify-between text-[7.5px] font-medium text-stone-500 pr-1 border-r border-stone-200">
+                        <span>9+</span>
+                        <span>7-8</span>
+                        <span>5-6</span>
+                        <span>&lt;5</span>
+                      </div>
+                      {/* Sumbu X & Interactive Sleep Matrix */}
+                      <div className="flex-1 flex flex-col relative">
+                        <div className="flex-1 grid grid-cols-7 gap-0">
+                          {[0, 1, 2, 3, 4, 5, 6].map((dayIdx) => (
+                            <div key={dayIdx} className="flex flex-col justify-between items-center py-0.5 border-r border-stone-100 last:border-r-0">
+                              {[0, 1, 2, 3].map((lvlIdx) => {
+                                const isSelected = sleepHours[dayIdx] === lvlIdx;
+                                return (
+                                  <button
+                                    key={lvlIdx}
+                                    type="button"
+                                    onClick={() => {
+                                      setSleepHours(prev => {
+                                        const next = [...prev];
+                                        next[dayIdx] = lvlIdx;
+                                        return next;
+                                      });
+                                    }}
+                                    className="w-3.5 h-3 flex items-center justify-center cursor-pointer"
+                                    title={`Pilih tidur hari ke-${dayIdx + 1}`}
+                                  >
+                                    <span className={`w-1.5 h-1.5 rounded-full transition-transform ${
+                                      isSelected ? 'scale-125' : 'bg-stone-200 hover:bg-stone-300'
+                                    }`} 
+                                    style={{ backgroundColor: isSelected ? theme.primaryColor : undefined }}
+                                    />
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="flex text-center text-[7px] text-stone-500 font-bold border-t border-stone-200 pt-0.5">
+                          <div className="flex-1">S</div>
+                          <div className="flex-1">S</div>
+                          <div className="flex-1">R</div>
+                          <div className="flex-1">K</div>
+                          <div className="flex-1">J</div>
+                          <div className="flex-1">S</div>
+                          <div className="flex-1 font-bold" style={{ color: theme.secondaryColor }}>M</div>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-[6px] text-stone-400 text-center mt-0.5 italic">Pola jam tidur harian</p>
+                  </div>
+                )}
+
+                {/* Ceklis Rutinitas with Interactive Tap */}
+                {hasChecklistData && (
+                  <div className={`${hasSleepData ? 'w-1/2' : 'w-full'} flex flex-col`}>
+                    <div 
+                      className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
+                      style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor, color: theme.textColor }}
+                    >
+                      Ceklis Kesehatan
+                    </div>
+                    <div 
+                      className="border bg-white flex-1 rounded-xs"
+                      style={{ borderColor: theme.borderColor }}
+                    >
+                      <table className="w-full text-center table-fixed border-collapse">
+                        <thead>
+                          <tr className="bg-stone-50 border-b border-stone-200 text-[7.5px]">
+                            <th className="w-[34%] border-r border-stone-200 py-0.5 text-left px-1 font-medium">Item</th>
+                            <th className="font-normal py-0.5">S</th>
+                            <th className="font-normal py-0.5">S</th>
+                            <th className="font-normal py-0.5">R</th>
+                            <th className="font-normal py-0.5">K</th>
+                            <th className="font-normal py-0.5">J</th>
+                            <th className="font-normal py-0.5">S</th>
+                            <th className="font-normal py-0.5 font-bold" style={{ color: theme.secondaryColor }}>M</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-[8.5px]">
+                          {[
+                            { key: 'vit', label: 'Vitamin' },
+                            { key: 'water', label: 'Air 2L' },
+                            { key: 'walk', label: 'Aktivitas' },
+                          ].map((row) => (
+                            <tr key={row.key} className="border-b border-stone-200 last:border-b-0">
+                              <td className="border-r border-stone-200 text-[7px] font-medium py-0.5 text-left px-1">{row.label}</td>
+                              {[0, 1, 2, 3, 4, 5, 6].map((dayIdx) => {
+                                const checkKey = `${row.key}-${dayIdx}`;
+                                const isDone = !!checkedItems[checkKey];
+                                return (
+                                  <td key={dayIdx} className="p-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleCheck(checkKey)}
+                                      className="w-full h-4 flex items-center justify-center cursor-pointer"
+                                    >
+                                      <div className={`w-2.5 h-2.5 rounded-full border flex items-center justify-center transition-colors ${
+                                        isDone ? 'bg-[#556B2F] border-[#556B2F] text-white' : 'border-stone-300'
+                                      }`}>
+                                        {isDone && <Check className="w-2 h-2 stroke-[3]" />}
+                                      </div>
+                                    </button>
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Mood Graph with Interactive Tap for each day */}
+            {hasMoodData && (
+              <div className="w-full flex flex-col mt-0.5">
                 <div 
                   className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
                   style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor, color: theme.textColor }}
                 >
-                  Grafik Tidur (Jam)
+                  Suasana Hati
                 </div>
                 <div 
-                  className="h-[24mm] border bg-white p-1 flex rounded-xs"
+                  className="h-[22mm] border bg-white p-1 flex rounded-xs"
                   style={{ borderColor: theme.borderColor }}
                 >
-                  {/* Sumbu Y (Jam) */}
-                  <div className="flex flex-col justify-between text-[7.5px] font-medium text-stone-500 pr-1 border-r border-stone-200">
-                    <span>9+</span>
-                    <span>7-8</span>
-                    <span>5-6</span>
-                    <span>&lt;5</span>
+                  {/* Sumbu Y (Emoji) */}
+                  <div className="flex flex-col justify-between text-[9px] pr-1.5 border-r border-stone-200 select-none">
+                    <span>🥰</span>
+                    <span>😊</span>
+                    <span>🥺</span>
+                    <span>😫</span>
                   </div>
-                  {/* Sumbu X & Interactive Sleep Matrix */}
+                  {/* Sumbu X & Mood Matrix */}
                   <div className="flex-1 flex flex-col relative">
                     <div className="flex-1 grid grid-cols-7 gap-0">
                       {[0, 1, 2, 3, 4, 5, 6].map((dayIdx) => (
                         <div key={dayIdx} className="flex flex-col justify-between items-center py-0.5 border-r border-stone-100 last:border-r-0">
-                          {[0, 1, 2, 3].map((lvlIdx) => {
-                            const isSelected = sleepHours[dayIdx] === lvlIdx;
+                          {[0, 1, 2, 3].map((moodLvl) => {
+                            const isSelected = dailyMoods[dayIdx] === moodLvl;
                             return (
                               <button
-                                key={lvlIdx}
+                                key={moodLvl}
                                 type="button"
                                 onClick={() => {
-                                  setSleepHours(prev => {
+                                  setDailyMoods(prev => {
                                     const next = [...prev];
-                                    next[dayIdx] = lvlIdx;
+                                    next[dayIdx] = moodLvl;
                                     return next;
                                   });
                                 }}
                                 className="w-3.5 h-3 flex items-center justify-center cursor-pointer"
-                                title={`Pilih tidur hari ke-${dayIdx + 1}`}
                               >
                                 <span className={`w-1.5 h-1.5 rounded-full transition-transform ${
                                   isSelected ? 'scale-125' : 'bg-stone-200 hover:bg-stone-300'
                                 }`} 
-                                style={{ backgroundColor: isSelected ? theme.primaryColor : undefined }}
+                                style={{ backgroundColor: isSelected ? theme.secondaryColor : undefined }}
                                 />
                               </button>
                             );
@@ -396,142 +539,18 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     </div>
 
                     <div className="flex text-center text-[7px] text-stone-500 font-bold border-t border-stone-200 pt-0.5">
-                      <div className="flex-1">S</div>
-                      <div className="flex-1">S</div>
-                      <div className="flex-1">R</div>
-                      <div className="flex-1">K</div>
-                      <div className="flex-1">J</div>
-                      <div className="flex-1">S</div>
-                      <div className="flex-1 font-bold" style={{ color: theme.secondaryColor }}>M</div>
+                      <div className="flex-1">Sen</div>
+                      <div className="flex-1">Sel</div>
+                      <div className="flex-1">Rab</div>
+                      <div className="flex-1">Kam</div>
+                      <div className="flex-1">Jum</div>
+                      <div className="flex-1">Sab</div>
+                      <div className="flex-1 font-bold" style={{ color: theme.secondaryColor }}>Min</div>
                     </div>
                   </div>
                 </div>
-                <p className="text-[6px] text-stone-400 text-center mt-0.5 italic">Pola jam tidur harian</p>
               </div>
-
-              {/* Ceklis Rutinitas with Interactive Tap */}
-              <div className="w-1/2 flex flex-col">
-                <div 
-                  className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
-                  style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor, color: theme.textColor }}
-                >
-                  Ceklis Kesehatan
-                </div>
-                <div 
-                  className="border bg-white flex-1 rounded-xs"
-                  style={{ borderColor: theme.borderColor }}
-                >
-                  <table className="w-full text-center table-fixed border-collapse">
-                    <thead>
-                      <tr className="bg-stone-50 border-b border-stone-200 text-[7.5px]">
-                        <th className="w-[34%] border-r border-stone-200 py-0.5 text-left px-1 font-medium">Item</th>
-                        <th className="font-normal py-0.5">S</th>
-                        <th className="font-normal py-0.5">S</th>
-                        <th className="font-normal py-0.5">R</th>
-                        <th className="font-normal py-0.5">K</th>
-                        <th className="font-normal py-0.5">J</th>
-                        <th className="font-normal py-0.5">S</th>
-                        <th className="font-normal py-0.5 font-bold" style={{ color: theme.secondaryColor }}>M</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-[8.5px]">
-                      {[
-                        { key: 'vit', label: 'Vitamin' },
-                        { key: 'water', label: 'Air 2L' },
-                        { key: 'walk', label: 'Aktivitas' },
-                      ].map((row) => (
-                        <tr key={row.key} className="border-b border-stone-200 last:border-b-0">
-                          <td className="border-r border-stone-200 text-[7px] font-medium py-0.5 text-left px-1">{row.label}</td>
-                          {[0, 1, 2, 3, 4, 5, 6].map((dayIdx) => {
-                            const checkKey = `${row.key}-${dayIdx}`;
-                            const isDone = !!checkedItems[checkKey];
-                            return (
-                              <td key={dayIdx} className="p-0">
-                                <button
-                                  type="button"
-                                  onClick={() => toggleCheck(checkKey)}
-                                  className="w-full h-4 flex items-center justify-center cursor-pointer"
-                                >
-                                  <div className={`w-2.5 h-2.5 rounded-full border flex items-center justify-center transition-colors ${
-                                    isDone ? 'bg-[#556B2F] border-[#556B2F] text-white' : 'border-stone-300'
-                                  }`}>
-                                    {isDone && <Check className="w-2 h-2 stroke-[3]" />}
-                                  </div>
-                                </button>
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-            {/* Mood Graph with Interactive Tap for each day */}
-            <div className="w-full flex flex-col mt-0.5">
-              <div 
-                className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
-                style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor, color: theme.textColor }}
-              >
-                Suasana Hati
-              </div>
-              <div 
-                className="h-[22mm] border bg-white p-1 flex rounded-xs"
-                style={{ borderColor: theme.borderColor }}
-              >
-                {/* Sumbu Y (Emoji) */}
-                <div className="flex flex-col justify-between text-[9px] pr-1.5 border-r border-stone-200 select-none">
-                  <span>🥰</span>
-                  <span>😊</span>
-                  <span>🥺</span>
-                  <span>😫</span>
-                </div>
-                {/* Sumbu X & Mood Matrix */}
-                <div className="flex-1 flex flex-col relative">
-                  <div className="flex-1 grid grid-cols-7 gap-0">
-                    {[0, 1, 2, 3, 4, 5, 6].map((dayIdx) => (
-                      <div key={dayIdx} className="flex flex-col justify-between items-center py-0.5 border-r border-stone-100 last:border-r-0">
-                        {[0, 1, 2, 3].map((moodLvl) => {
-                          const isSelected = dailyMoods[dayIdx] === moodLvl;
-                          return (
-                            <button
-                              key={moodLvl}
-                              type="button"
-                              onClick={() => {
-                                setDailyMoods(prev => {
-                                  const next = [...prev];
-                                  next[dayIdx] = moodLvl;
-                                  return next;
-                                });
-                              }}
-                              className="w-3.5 h-3 flex items-center justify-center cursor-pointer"
-                            >
-                              <span className={`w-1.5 h-1.5 rounded-full transition-transform ${
-                                isSelected ? 'scale-125' : 'bg-stone-200 hover:bg-stone-300'
-                              }`} 
-                              style={{ backgroundColor: isSelected ? theme.secondaryColor : undefined }}
-                              />
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex text-center text-[7px] text-stone-500 font-bold border-t border-stone-200 pt-0.5">
-                    <div className="flex-1">Sen</div>
-                    <div className="flex-1">Sel</div>
-                    <div className="flex-1">Rab</div>
-                    <div className="flex-1">Kam</div>
-                    <div className="flex-1">Jum</div>
-                    <div className="flex-1">Sab</div>
-                    <div className="flex-1 font-bold" style={{ color: theme.secondaryColor }}>Min</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Footer Page Number */}
@@ -606,6 +625,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     <img 
                       src={photo.src} 
                       alt={photo.caption} 
+                      crossOrigin="anonymous"
                       className="w-full h-full object-cover group-hover:scale-102 transition-transform" 
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[9.5px] gap-1 font-medium">

@@ -44,6 +44,7 @@ interface PrintBookStudioProps {
   photos: PhotoMemory[];
   pastEntries: JournalEntry[];
   currentWeek: number;
+  onUpdatePhoto?: (w: number, newPhoto: PhotoMemory) => void;
   onClose: () => void;
 }
 
@@ -60,6 +61,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   photos,
   pastEntries,
   currentWeek,
+  onUpdatePhoto,
   onClose,
 }) => {
   // Theme state
@@ -280,6 +282,17 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
 
   const handleUpdatePhoto = (w: number, newPhoto: PhotoMemory) => {
     setCustomPhotos(prev => ({ ...prev, [w]: newPhoto }));
+    if (onUpdatePhoto) {
+      onUpdatePhoto(w, newPhoto);
+    }
+    try {
+      const savedPhotosStr = localStorage.getItem('bunda_photos');
+      let currentList: PhotoMemory[] = savedPhotosStr ? JSON.parse(savedPhotosStr) : [];
+      currentList = currentList.filter(p => p.week !== w);
+      currentList.push(newPhoto);
+      localStorage.setItem('bunda_photos', JSON.stringify(currentList));
+      window.dispatchEvent(new Event('bunda_journal_updated'));
+    } catch {}
   };
 
   const getSpreadInfo = (spreadIdx: number) => {
@@ -452,7 +465,17 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
     if (info.type === 'weekly') {
       const w = info.week || 12;
       const matchedEntry = pastEntries.find(e => e.week === w);
-      const matchedPhoto = customPhotos[w] || photos.find(p => p.week === w);
+      let matchedPhoto = customPhotos[w] || photos.find(p => p.week === w);
+      if (!matchedPhoto) {
+        try {
+          const savedStr = localStorage.getItem('bunda_photos');
+          if (savedStr) {
+            const list: PhotoMemory[] = JSON.parse(savedStr);
+            const found = list.find(p => p.week === w);
+            if (found) matchedPhoto = found;
+          }
+        } catch {}
+      }
       return (
         <WeeklyJournalSpread 
           key={`weekly-spread-${w}`}
@@ -559,7 +582,16 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
       }
 
       // Check Right Page (Photo USG / Baby bump)
-      const hasPhoto = customPhotos[weekNum] || photos.some(p => p.week === weekNum && p.src);
+      let hasPhoto = !!customPhotos[weekNum] || photos.some(p => p.week === weekNum && p.src);
+      if (!hasPhoto) {
+        try {
+          const savedStr = localStorage.getItem('bunda_photos');
+          if (savedStr) {
+            const list: PhotoMemory[] = JSON.parse(savedStr);
+            if (list.some(p => p.week === weekNum && p.src)) hasPhoto = true;
+          }
+        } catch {}
+      }
       if (!hasPhoto) {
         empty.push({
           pageNum: rightPage,
