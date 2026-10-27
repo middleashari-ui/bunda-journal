@@ -391,7 +391,7 @@ export default function App() {
           }} />
         ) : (
           /* CONDITION 2: Authenticated App with 4 Tabs */
-          <div className="flex flex-col h-full min-h-screen bg-[#F5F2EB] text-[#292524] relative pb-24 select-none">
+          <div className="flex flex-col h-full min-h-screen bg-[#F5F2EB] text-[#292524] relative pb-[calc(5rem+env(safe-area-inset-bottom,0px))] select-none">
             {/* App Sticky Header */}
             <header className="px-5 pt-3 pb-2.5 flex items-center justify-between border-b border-stone-200/50 bg-[#F5F2EB]/95 backdrop-blur-md sticky top-0 z-30">
               <div className="flex items-center gap-2">
@@ -478,8 +478,7 @@ export default function App() {
             {!isBookPreviewOpen && (
               <nav 
                 id="bottom-navigation-bar"
-                className="fixed bottom-0 left-0 right-0 w-full max-w-[430px] md:max-w-md mx-auto bg-[#FAF8F5]/98 backdrop-blur-md border-t border-stone-200/90 px-3 py-2 flex justify-around items-center z-50 md:rounded-t-2xl shadow-sm"
-                style={{ position: 'fixed', bottom: 0 }}
+                className="fixed bottom-0 left-0 right-0 w-full max-w-[430px] md:max-w-md mx-auto bg-[#FAF8F5]/98 backdrop-blur-md border-t border-stone-200/90 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex justify-around items-center z-50 md:rounded-t-2xl shadow-sm"
               >
                 <button 
                   id="nav-tab-beranda"
