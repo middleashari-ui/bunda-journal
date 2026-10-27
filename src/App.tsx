@@ -504,23 +504,29 @@ export default function App() {
               >
                 <button 
                   id="nav-tab-beranda"
-                  onClick={() => setActiveTab('home')} 
+                  onClick={() => {
+                    setActiveTab('home');
+                    setIsBookPreviewOpen(false);
+                  }} 
                   className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
-                    activeTab === 'home' ? 'text-[#556B2F] font-semibold' : 'text-stone-400 hover:text-stone-700'
+                    activeTab === 'home' && !isBookPreviewOpen ? 'text-[#556B2F] font-semibold' : 'text-stone-400 hover:text-stone-700'
                   }`}
                 >
-                  <Home className={`w-5 h-5 ${activeTab === 'home' ? 'stroke-[2.5]' : 'stroke-1.5'}`} />
+                  <Home className={`w-5 h-5 ${activeTab === 'home' && !isBookPreviewOpen ? 'stroke-[2.5]' : 'stroke-1.5'}`} />
                   <span className="text-[11px] mt-0.5 tracking-tight font-sans">Beranda</span>
                 </button>
 
                 <button 
                   id="nav-tab-jurnal"
-                  onClick={() => setActiveTab('jurnal')} 
+                  onClick={() => {
+                    setActiveTab('jurnal');
+                    setIsBookPreviewOpen(false);
+                  }} 
                   className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
-                    activeTab === 'jurnal' ? 'text-[#556B2F] font-semibold' : 'text-stone-400 hover:text-stone-700'
+                    activeTab === 'jurnal' && !isBookPreviewOpen ? 'text-[#556B2F] font-semibold' : 'text-stone-400 hover:text-stone-700'
                   }`}
                 >
-                  <BookMarked className={`w-5 h-5 ${activeTab === 'jurnal' ? 'stroke-[2.5]' : 'stroke-1.5'}`} />
+                  <BookMarked className={`w-5 h-5 ${activeTab === 'jurnal' && !isBookPreviewOpen ? 'stroke-[2.5]' : 'stroke-1.5'}`} />
                   <span className="text-[11px] mt-0.5 tracking-tight font-sans">Jurnal</span>
                 </button>
 
@@ -540,12 +546,15 @@ export default function App() {
 
                 <button 
                   id="nav-tab-profil"
-                  onClick={() => setActiveTab('profil')} 
+                  onClick={() => {
+                    setActiveTab('profil');
+                    setIsBookPreviewOpen(false);
+                  }} 
                   className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
-                    activeTab === 'profil' ? 'text-[#556B2F] font-semibold' : 'text-stone-400 hover:text-stone-700'
+                    activeTab === 'profil' && !isBookPreviewOpen ? 'text-[#556B2F] font-semibold' : 'text-stone-400 hover:text-stone-700'
                   }`}
                 >
-                  <User className={`w-5 h-5 ${activeTab === 'profil' ? 'stroke-[2.5]' : 'stroke-1.5'}`} />
+                  <User className={`w-5 h-5 ${activeTab === 'profil' && !isBookPreviewOpen ? 'stroke-[2.5]' : 'stroke-1.5'}`} />
                   <span className="text-[11px] mt-0.5 tracking-tight font-sans">Profil</span>
                 </button>
               </nav>

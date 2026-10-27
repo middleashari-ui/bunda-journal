@@ -79,8 +79,11 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   // BAB 1 STATE (Awal Mula Kisah: Test Pack, USG, Ngidam)
   // -------------------------------------------------------------
   const [bab1Data, setBab1Data] = useState(() => {
-    const saved = localStorage.getItem('bunda_bab1');
-    return saved ? JSON.parse(saved) : {
+    try {
+      const saved = localStorage.getItem('bunda_bab1');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
       testPackDate: 'Sabtu, 14 September 2024',
       testPackTimePlace: '06:15 Pagi • Kamar Mandi Rumah',
       motherFeelings: 'Tangan bunda gemetar saat melihat garis samar itu berubah menjadi jelas. Air mata haru langsung menetes di atas wastafel...',
@@ -102,9 +105,12 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   // BAB 2 STATE (Jurnal Mingguan: Senin-Minggu, Fisik, Dokter)
   // -------------------------------------------------------------
   const [dailyNotes, setDailyNotes] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem(`bunda_daily_w${week}`);
-    return saved ? JSON.parse(saved) : {
-      Sen: journalText.slice(0, 70) || '',
+    try {
+      const saved = localStorage.getItem(`bunda_daily_w${week}`);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      Sen: (journalText || '').slice(0, 70) || '',
       Sel: '',
       Rab: '',
       Kam: '',
@@ -115,8 +121,11 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   });
 
   const [momStats, setMomStats] = useState(() => {
-    const saved = localStorage.getItem(`bunda_momstats_w${week}`);
-    return saved ? JSON.parse(saved) : {
+    try {
+      const saved = localStorage.getItem(`bunda_momstats_w${week}`);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
       weight: '54.5',
       waist: '82',
       bloodPressure: '118/76',
@@ -129,8 +138,11 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   // BAB 3 STATE (Persiapan: Nama, Kamar, Belanja, Tas RS)
   // -------------------------------------------------------------
   const [bab3Data, setBab3Data] = useState(() => {
-    const saved = localStorage.getItem('bunda_bab3');
-    return saved ? JSON.parse(saved) : {
+    try {
+      const saved = localStorage.getItem('bunda_bab3');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
       candidate1: 'Rayyan Al-Fatih (Pintu surga bagi yang berpuasa & penakluk berbudi luhur)',
       candidate2: 'Kinanti Ayudia (Tembang harapan yang anggun dan berhati lembut)',
       candidate3: 'Malik Ibrahim (Pemimpin bijaksana yang teguh hatinya)',
@@ -160,8 +172,11 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   // BAB 4 STATE (Kelahiran: Persalinan, Biodata Bayi, Cap Kaki)
   // -------------------------------------------------------------
   const [bab4Data, setBab4Data] = useState(() => {
-    const saved = localStorage.getItem('bunda_bab4');
-    return saved ? JSON.parse(saved) : {
+    try {
+      const saved = localStorage.getItem('bunda_bab4');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
       contractionTime: '02:30 Dini Hari',
       arrivalTime: '05:45 Subuh',
       laborStory: 'Setiap gelombang cinta kontraksi bunda hadapi dengan napas panjang. Ayah membisikkan doa dan memegang tangan bunda tanpa sedetik pun melepaskannya. Seluruh rasa sakit sirna seketika saat dokter berkata, "Kepalanya sudah terlihat, Bunda!"...',
@@ -185,8 +200,11 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   // BAB 5 STATE (Surat Kapsul Waktu: Bunda & Ayah)
   // -------------------------------------------------------------
   const [bab5Data, setBab5Data] = useState(() => {
-    const saved = localStorage.getItem('bunda_bab5');
-    return saved ? JSON.parse(saved) : {
+    try {
+      const saved = localStorage.getItem('bunda_bab5');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
       bundaLetter: 'Anakku sayang,\n\nSaat kamu membaca surat ini, mungkin jemari tanganmu sudah jauh lebih besar dari jemari mungil yang dulu bunda genggam erat di ruang bersalin. Waktu berlalu begitu cepat, nak.\n\nBunda menulis lembaran ini saat kamu baru beberapa hari terlelap di dada bunda. Rasanya baru kemarin bunda merasakan detak jantungmu pertama kali di layar USG yang remang. Ketahuilah, sejak hari pertama tahu kehadiranmu, doa bunda tidak pernah berhenti mengalir untuk setiap helaan napasmu...\n\nJadilah pribadi yang berhati lembut, teguh membela kebenaran, dan selalu bersyukur atas hal-hal sederhana. Di saat dunia luar terasa begitu bising dan melelahkan, ingatlah bahwa pelukan bunda dan rumah ini akan selalu menjadi dermaga teraman tempatmu berlabuh pulang.\n\nTerima kasih telah memilih bunda menjadi ibumu di dunia ini. Kamu adalah kebanggaan terbesar dalam hidup bunda.',
       bundaSignName: userProfile?.name || 'Bunda Jessica',
       ayahLetter: 'Wahai buah hatiku,\n\nSaat kamu membaca surat ini, mungkin pundak ayah sudah tak sekuat dulu lagi untuk menggendongmu di atas bahu mengelilingi taman. Namun ketahuilah, rasa cinta dan perlindungan ayah kepadamu tak akan pernah luntur sedetik pun.\n\nAyah mungkin tidak selalu pandai merangkai kata seindah bundamu. Tapi di setiap tetes peluh kerja keras ayah, ada namamu yang selalu ayah sebut dalam sujud. Ayah ingin kamu tumbuh menjadi insan yang jujur, berani bermimpi besar, dan pantang menyerah...\n\nJangan pernah takut gagal, nak. Gagal adalah tanda bahwa kamu sedang berjuang keras menggapai cita-cita mulia. Ayah akan selalu ada di belakangmu, menjadi dinding kokoh yang menopang langkahmu.\n\nHormatilah ibumu yang telah mengandungmu selama 9 bulan penuh pengorbanan suci. Bahagiakan dia di setiap hembusan usiamu.\n\nDengan rasa bangga yang tak terhingga,\nAyahmu.',

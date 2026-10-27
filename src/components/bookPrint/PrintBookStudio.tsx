@@ -33,7 +33,8 @@ import {
   CheckCircle2, 
   Loader2, 
   RotateCcw, 
-  ExternalLink 
+  ExternalLink,
+  BookMarked
 } from 'lucide-react';
 import { pdf } from '@react-pdf/renderer';
 import { JournalPdfDocument, PdfBookPageData } from '../../utils/JournalPdfDocument';
