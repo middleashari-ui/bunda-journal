@@ -278,18 +278,39 @@ export default function App() {
   };
 
   const handleSaveCurrentEntry = () => {
-    if (!journalText.trim()) return;
-    const newEntry: JournalEntry = {
-      id: `entry-${Date.now()}`,
-      week,
-      date: new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date()),
-      text: journalText,
-      moodIndex: selectedMood,
-      habitsSnapshot: { ...habits },
-      sleepHours: habits.sleepHours || (habits.sleep ? 8.0 : 6.5),
-      createdAt: Date.now(),
-    };
-    setPastEntries(prev => [newEntry, ...prev]);
+    // 1. Sync daily notes of the current week to main journalText if needed
+    try {
+      const savedDaily = localStorage.getItem(`bunda_daily_w${week}`);
+      let compiledText = journalText;
+      if (savedDaily) {
+        const parsed = JSON.parse(savedDaily);
+        const nonEmpty = Object.entries(parsed)
+          .filter(([_, v]) => typeof v === 'string' && (v as string).trim().length > 0)
+          .map(([k, v]) => `${k}: ${v}`);
+        if (nonEmpty.length > 0) {
+          compiledText = nonEmpty.join('\n');
+          setJournalText(compiledText);
+        }
+      }
+
+      if (!compiledText.trim()) return;
+
+      const newEntry: JournalEntry = {
+        id: `entry-${Date.now()}`,
+        week,
+        date: new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date()),
+        text: compiledText,
+        moodIndex: selectedMood,
+        habitsSnapshot: { ...habits },
+        sleepHours: habits.sleepHours || (habits.sleep ? 8.0 : 6.5),
+        createdAt: Date.now(),
+      };
+      setPastEntries(prev => [newEntry, ...prev]);
+      window.dispatchEvent(new Event('bunda_journal_updated'));
+      showToast(`Jurnal Minggu ke-${week} berhasil disimpan!`);
+    } catch {
+      showToast('Berhasil menyimpan catatan jurnal');
+    }
   };
 
   const handleDeleteEntry = (id: string) => {

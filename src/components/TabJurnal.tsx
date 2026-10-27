@@ -413,12 +413,6 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       {/* ============================================================== */}
       {activeChapter === 'bab2' && (
         <div className="space-y-3.5 animate-in fade-in duration-150">
-          {/* Pusat Input Harian Bunda: Suplemen & Hidrasi + Kebutuhan Jasmani */}
-          <div className="space-y-3.5">
-            <SupplementWaterCard />
-            <ActivityRingsCard />
-          </div>
-
           {/* Week Selector Slider */}
           <div className="bg-white p-3.5 rounded-2xl border border-stone-200/70 shadow-xs">
             <div className="flex items-center justify-between text-xs mb-2">
@@ -525,7 +519,15 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => setSelectedMood(idx)}
+                    onClick={() => {
+                      setSelectedMood(idx);
+                      try {
+                        const targetMoodIndex = idx <= 1 ? 0 : idx === 2 ? 1 : idx === 3 ? 3 : 2;
+                        const updatedMoods = [targetMoodIndex, targetMoodIndex, targetMoodIndex, targetMoodIndex, targetMoodIndex, targetMoodIndex, targetMoodIndex];
+                        localStorage.setItem(`bunda_daily_moods_w${week}`, JSON.stringify(updatedMoods));
+                        window.dispatchEvent(new Event('bunda_journal_updated'));
+                      } catch {}
+                    }}
                     className={`py-1.5 rounded-lg text-center transition-all cursor-pointer ${
                       selectedMood === idx
                         ? 'bg-[#C87A64] text-white font-bold shadow-2xs'

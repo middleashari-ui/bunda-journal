@@ -124,7 +124,38 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
           if (parsed.waist) setMomWaist(parsed.waist);
           if (parsed.bloodPressure) setMomBp(parsed.bloodPressure);
           if (parsed.doctorNote) setDoctorNote(parsed.doctorNote);
+          if (typeof parsed.sleepHourIndex === 'number') {
+            const idx = parsed.sleepHourIndex;
+            setSleepHours([idx, idx, idx, idx, idx, idx, idx]);
+          }
         }
+
+        // Sinkronisasi otomatis kebiasaan sehat dari Health Data Context
+        const savedWater = localStorage.getItem('bunda_water_liters');
+        const waterLit = savedWater ? parseFloat(savedWater) : 2.0;
+        const isWaterTargetMet = waterLit >= 1.5;
+
+        const savedGoals = localStorage.getItem('bunda_activity_goals');
+        let isWalkTargetMet = true;
+        if (savedGoals) {
+          const parsedG = JSON.parse(savedGoals);
+          if (typeof parsedG.walkMinutes === 'number') {
+            isWalkTargetMet = parsedG.walkMinutes >= 15;
+          }
+        }
+
+        const savedMoods = localStorage.getItem(`bunda_daily_moods_w${week}`);
+        if (savedMoods) {
+          setDailyMoods(JSON.parse(savedMoods));
+        }
+
+        setCheckedItems(prev => ({
+          ...prev,
+          'water-0': isWaterTargetMet, 'water-1': isWaterTargetMet, 'water-2': isWaterTargetMet,
+          'water-3': isWaterTargetMet, 'water-4': isWaterTargetMet, 'water-5': isWaterTargetMet, 'water-6': isWaterTargetMet,
+          'walk-0': isWalkTargetMet, 'walk-1': isWalkTargetMet, 'walk-2': isWalkTargetMet,
+          'walk-3': isWalkTargetMet, 'walk-4': isWalkTargetMet, 'walk-5': isWalkTargetMet, 'walk-6': isWalkTargetMet,
+        }));
       } catch {}
     };
 

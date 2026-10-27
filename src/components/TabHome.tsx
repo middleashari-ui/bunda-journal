@@ -4,7 +4,7 @@ import { getWeekData, AVAILABLE_WEEKS } from '../data/pregnancyWeeks';
 import { MoodTrendChart } from './MoodTrendChart';
 import { FetalGrowthChart } from './FetalGrowthChart';
 import { DashboardOverview } from './dashboard/DashboardOverview';
-import { Check, BookOpen, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { Check, BookOpen, ChevronLeft, ChevronRight, ArrowRight, PenLine, Sparkles, Scale, Heart } from 'lucide-react';
 
 interface TabHomeProps {
   week: number;
@@ -82,6 +82,67 @@ export const TabHome: React.FC<TabHomeProps> = ({
   const handleMouseUpOrLeave = () => {
     setIsDragging(false);
   };
+
+  // State ringkasan jurnal minggu ini
+  const [journalSummary, setJournalSummary] = useState<{
+    daysCount: number;
+    weight: string;
+    bloodPressure: string;
+    hasDoctorNote: boolean;
+    latestNotePreview: string;
+  }>({
+    daysCount: 0,
+    weight: '',
+    bloodPressure: '',
+    hasDoctorNote: false,
+    latestNotePreview: '',
+  });
+
+  useEffect(() => {
+    const loadSummary = () => {
+      try {
+        let count = 0;
+        let preview = '';
+        const savedDaily = localStorage.getItem(`bunda_daily_w${week}`);
+        if (savedDaily) {
+          const parsed = JSON.parse(savedDaily);
+          Object.values(parsed).forEach((text: any) => {
+            if (typeof text === 'string' && text.trim().length > 0) {
+              count++;
+              if (!preview) preview = text.trim();
+            }
+          });
+        }
+
+        let w = '';
+        let bp = '';
+        let doc = false;
+        const savedStats = localStorage.getItem(`bunda_momstats_w${week}`);
+        if (savedStats) {
+          const parsedStats = JSON.parse(savedStats);
+          if (parsedStats.weight) w = parsedStats.weight;
+          if (parsedStats.bloodPressure) bp = parsedStats.bloodPressure;
+          if (parsedStats.doctorNote && parsedStats.doctorNote.trim().length > 0) doc = true;
+        }
+
+        setJournalSummary({
+          daysCount: count,
+          weight: w,
+          bloodPressure: bp,
+          hasDoctorNote: doc,
+          latestNotePreview: preview,
+        });
+      } catch {}
+    };
+
+    loadSummary();
+    window.addEventListener('bunda_journal_updated', loadSummary);
+    window.addEventListener('storage', loadSummary);
+    return () => {
+      window.removeEventListener('bunda_journal_updated', loadSummary);
+      window.removeEventListener('storage', loadSummary);
+    };
+  }, [week]);
 
   return (
     <div className="px-5 py-4 space-y-4">
@@ -190,6 +251,72 @@ export const TabHome: React.FC<TabHomeProps> = ({
 
       {/* RINGKASAN DASHBOARD READ-ONLY (Toggle Harian / Mingguan / Bulanan) */}
       <DashboardOverview />
+
+      {/* KARTU KESIMPULAN JURNAL MINGGU INI (Tersambung Langsung ke Jurnal & Studio Buku) */}
+      <div className="bg-white p-4 rounded-3xl border border-stone-200/70 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-stone-100 pb-2.5">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#556B2F]/10 flex items-center justify-center text-[#556B2F]">
+              <PenLine className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-serif text-sm font-bold text-stone-850">
+                Kesimpulan Jurnal Minggu ke-{week}
+              </h3>
+              <p className="text-[10px] text-stone-400">
+                Terintegrasi otomatis ke Halaman Buku Cetak B5
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onGoToJournal}
+            className="text-[10.5px] font-semibold text-[#556B2F] hover:text-[#465926] bg-[#556B2F]/10 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+          >
+            <span>Tulis / Edit</span>
+            <ChevronRight className="w-3 h-3" />
+          </button>
+        </div>
+
+        {/* 3 Metrik Utama Mingguan */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-stone-50/80 p-2.5 rounded-2xl border border-stone-100 text-center">
+            <span className="text-[9.5px] text-stone-400 font-medium block">Catatan Terisi</span>
+            <span className="font-serif font-bold text-stone-800 text-xs sm:text-sm">
+              {journalSummary.daysCount}/7 Hari
+            </span>
+          </div>
+
+          <div className="bg-stone-50/80 p-2.5 rounded-2xl border border-stone-100 text-center">
+            <span className="text-[9.5px] text-stone-400 font-medium block">Berat Badan</span>
+            <span className="font-serif font-bold text-stone-800 text-xs sm:text-sm">
+              {journalSummary.weight ? `${journalSummary.weight} kg` : '-'}
+            </span>
+          </div>
+
+          <div className="bg-stone-50/80 p-2.5 rounded-2xl border border-stone-100 text-center">
+            <span className="text-[9.5px] text-stone-400 font-medium block">Tekanan Darah</span>
+            <span className="font-serif font-bold text-[#556B2F] text-xs sm:text-sm">
+              {journalSummary.bloodPressure || '-'}
+            </span>
+          </div>
+        </div>
+
+        {/* Cuplikan Catatan Terbaru Bunda */}
+        <div className="bg-[#FDFBF7] p-3 rounded-2xl border border-amber-900/10 text-xs">
+          <div className="flex items-center gap-1.5 text-stone-500 mb-1">
+            <Sparkles className="w-3.5 h-3.5 text-[#C87A64]" />
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-600">
+              Kutipan Catatan Minggu Ini
+            </span>
+          </div>
+          <p className="font-serif italic text-stone-700 leading-relaxed text-[11.5px] line-clamp-2">
+            {journalSummary.latestNotePreview 
+              ? `"${journalSummary.latestNotePreview}"`
+              : 'Belum ada catatan harian yang ditulis untuk minggu ini. Ketuk tombol untuk mulai menulis kenangan.'}
+          </p>
+        </div>
+      </div>
 
       {/* Growth Card */}
       <div className="bg-[#FAF8F5] p-5 rounded-3xl border border-stone-200/70 shadow-sm relative overflow-hidden text-center">
