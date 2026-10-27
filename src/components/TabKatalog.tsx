@@ -18,6 +18,7 @@ interface TabKatalogProps {
   photos: PhotoMemory[];
   journalText: string;
   onOpenBookPreview: () => void;
+  onGoToJournal?: () => void;
   onPlaceOrder: (order: BookOrder) => void;
 }
 
@@ -26,6 +27,7 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
   photos,
   journalText,
   onOpenBookPreview,
+  onGoToJournal,
   onPlaceOrder,
 }) => {
   const [selectedColor, setSelectedColor] = useState<BookOrder['coverColor']>('sage');
@@ -125,13 +127,25 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
             <p className="text-[10px] text-stone-500">Hemat 38% • Pre-order Bundling</p>
           </div>
 
+        <div className="flex items-center gap-2">
+          {onGoToJournal && (
+            <button
+              onClick={onGoToJournal}
+              className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 border border-stone-200"
+            >
+              <span>Isi Jurnal</span>
+              <ArrowRight className="w-3.5 h-3.5 text-[#556B2F]" />
+            </button>
+          )}
+
           <button
             onClick={onOpenBookPreview}
             className="px-3.5 py-2 bg-[#556B2F] hover:bg-[#465926] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
           >
             <Eye className="w-3.5 h-3.5" />
-            <span>Buka Studio 100 Hal</span>
+            <span>Preview 100 Hal</span>
           </button>
+        </div>
         </div>
       </div>
 
@@ -190,13 +204,24 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
           *Setiap minggu mendapat jatah 2 halaman berdampingan (halaman kiri untuk tracker tidur, mood & ceklis; halaman kanan untuk polaroid foto USG & catatan dokter).
         </p>
 
-        <button
-          onClick={onOpenBookPreview}
-          className="w-full py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
-        >
-          <BookOpen className="w-3.5 h-3.5 text-amber-300" />
-          <span>Buka Studio Cetak 100 Halaman (B5)</span>
-        </button>
+        <div className="flex gap-2">
+          {onGoToJournal && (
+            <button
+              onClick={onGoToJournal}
+              className="flex-1 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-stone-250 shadow-2xs"
+            >
+              <span>Lanjut Isi Jurnal</span>
+              <ArrowRight className="w-3.5 h-3.5 text-[#556B2F]" />
+            </button>
+          )}
+          <button
+            onClick={onOpenBookPreview}
+            className="flex-1 py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-300" />
+            <span>Tinjau 100 Halaman (B5)</span>
+          </button>
+        </div>
       </div>
 
       {/* Interactive Customizer */}

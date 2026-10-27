@@ -471,6 +471,7 @@ export default function App() {
                   photos={photos}
                   journalText={journalText}
                   onOpenBookPreview={() => setIsBookPreviewOpen(true)}
+                  onGoToJournal={() => setActiveTab('jurnal')}
                   onPlaceOrder={handlePlaceOrder}
                 />
               )}
@@ -527,13 +528,13 @@ export default function App() {
                   id="nav-tab-studio"
                   onClick={() => {
                     setActiveTab('studio');
-                    setIsBookPreviewOpen(true);
+                    setIsBookPreviewOpen(false);
                   }} 
                   className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
-                    activeTab === 'studio' || isBookPreviewOpen ? 'text-[#556B2F] font-semibold' : 'text-stone-400 hover:text-stone-700'
+                    activeTab === 'studio' ? 'text-[#556B2F] font-semibold' : 'text-stone-400 hover:text-stone-700'
                   }`}
                 >
-                  <BookOpen className={`w-5 h-5 ${activeTab === 'studio' || isBookPreviewOpen ? 'stroke-[2.5]' : 'stroke-1.5'}`} />
+                  <BookOpen className={`w-5 h-5 ${activeTab === 'studio' ? 'stroke-[2.5]' : 'stroke-1.5'}`} />
                   <span className="text-[11px] mt-0.5 tracking-tight font-sans">Studio</span>
                 </button>
 
@@ -579,6 +580,10 @@ export default function App() {
               });
             }}
             onClose={() => setIsBookPreviewOpen(false)}
+            onGoToJournal={() => {
+              setIsBookPreviewOpen(false);
+              setActiveTab('jurnal');
+            }}
           />
         )}
       </div>

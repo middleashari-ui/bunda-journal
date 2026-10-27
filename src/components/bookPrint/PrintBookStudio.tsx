@@ -46,6 +46,7 @@ interface PrintBookStudioProps {
   currentWeek: number;
   onUpdatePhoto?: (w: number, newPhoto: PhotoMemory) => void;
   onClose: () => void;
+  onGoToJournal?: () => void;
 }
 
 interface EmptyPageItem {
@@ -63,6 +64,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   currentWeek,
   onUpdatePhoto,
   onClose,
+  onGoToJournal,
 }) => {
   // Theme state
   const [selectedThemeId, setSelectedThemeId] = useState<BookThemeId>('kinfolk-sage');
@@ -680,6 +682,20 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
             <X className="w-4 h-4" />
           </button>
           <span className="font-serif font-bold text-base sm:text-lg text-stone-100 tracking-tight">bunda.</span>
+
+          {onGoToJournal && (
+            <button
+              onClick={() => {
+                onClose();
+                onGoToJournal();
+              }}
+              className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-amber-200 text-[11px] font-medium transition-colors cursor-pointer border border-stone-700"
+              title="Kembali ke Form Jurnal"
+            >
+              <BookMarked className="w-3.5 h-3.5" />
+              <span>Ke Jurnal</span>
+            </button>
+          )}
         </div>
 
         {/* Right: Tombol Edit, Download PDF, dan Menu Drawer */}
