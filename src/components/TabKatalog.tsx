@@ -81,7 +81,7 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
       {/* Header Banner */}
       <div className="text-center pt-2 pb-1">
         <span className="text-[11px] uppercase tracking-widest text-[#556B2F] font-semibold bg-[#556B2F]/10 px-3 py-1 rounded-full">
-          Studio Koleksi B5
+          Studio Koleksi
         </span>
         <h2 className="font-serif text-2xl font-bold text-stone-850 mt-2">
           Studio Buku Kenangan
@@ -156,10 +156,10 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
             <BookOpen className="w-5 h-5 text-[#556B2F]" />
             <div>
               <h4 className="font-serif text-sm font-bold text-stone-850">
-                Format Utama: 100 Halaman (50 Lembar B5)
+                Format Utama: 100 Halaman
               </h4>
               <p className="text-[10px] text-stone-500 font-light">
-                Standar cetak B5 (176 x 250 mm) dengan 5 pilihan tema tanpa merubah format
+                Standar cetak dengan 5 pilihan tema elegan
               </p>
             </div>
           </div>
@@ -219,7 +219,7 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
             className="flex-1 py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
           >
             <BookOpen className="w-3.5 h-3.5 text-amber-300" />
-            <span>Tinjau 100 Halaman (B5)</span>
+            <span>Tinjau 100 Halaman</span>
           </button>
         </div>
       </div>

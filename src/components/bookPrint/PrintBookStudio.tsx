@@ -1018,7 +1018,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 flex items-center gap-1.5">
                   <Palette className="w-3.5 h-3.5 text-[#556B2F]" />
-                  Pilihan Tema B5
+                  Pilihan Tema Buku
                 </span>
                 <span className="text-[9px] text-stone-500 font-sans">5 Palet Warna</span>
               </div>
@@ -1091,7 +1091,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
                 className="w-full py-2.5 bg-[#556B2F] hover:bg-[#465926] text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
-                <span>Opsi Download PDF Presisi B5</span>
+                <span>Opsi Download PDF Buku</span>
               </button>
             </div>
 
@@ -1235,7 +1235,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
       )}
 
       {/* ============================================================== */}
-      {/* 6. MODAL DOWNLOAD PDF B5 PILIHAN                              */}
+      {/* 6. MODAL DOWNLOAD PDF PILIHAN                                  */}
       {/* ============================================================== */}
       {isDownloadModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in duration-150">
@@ -1243,7 +1243,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-stone-800 mb-3">
               <div className="flex items-center gap-2">
                 <Download className="w-4 h-4 text-[#556B2F]" />
-                <h3 className="font-serif text-sm font-bold text-white">Download PDF Presisi B5</h3>
+                <h3 className="font-serif text-sm font-bold text-white">Download PDF Buku</h3>
               </div>
               <button 
                 onClick={() => setIsDownloadModalOpen(false)}
@@ -1270,7 +1270,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
                     Download Buku Jurnal (100 Halaman)
                   </span>
                   <span className="text-[10px] text-white/80 block font-light">
-                    Format Presisi Asli B5 (Anti-Bocor & Anti-Geser)
+                    Format Presisi Siap Cetak (Anti-Bocor & Anti-Geser)
                   </span>
                 </div>
                 <Download className="w-4 h-4 text-white shrink-0 ml-2" />

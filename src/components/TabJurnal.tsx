@@ -330,35 +330,6 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
 
   return (
     <div className="px-4 py-3 space-y-3.5 max-w-xl mx-auto">
-      {/* Top Banner: Sync with Catalog & Open Book Studio */}
-      <div className="bg-stone-900 text-stone-200 p-3 rounded-2xl flex items-center justify-between border border-stone-800 shadow-xs">
-        <div className="flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-[#708846]" />
-          <div>
-            <h3 className="font-serif text-xs font-bold text-white">
-              Formulir Jurnal 100 Halaman
-            </h3>
-            <p className="text-[9.5px] text-emerald-400 font-medium flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Langsung tersimpan otomatis ke buku Studio B5
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          {onOpenBookPreview && (
-            <button
-              onClick={onOpenBookPreview}
-              className="px-2.5 py-1.5 bg-[#556B2F] hover:bg-[#465926] text-white text-[10px] font-semibold rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95"
-              title="Buka Studio Cetak & Tinjau 100 Halaman B5"
-            >
-              <Eye className="w-3 h-3" />
-              <span>Lihat Studio</span>
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* Chapter Navigation Selector (Mirrors Catalog Structure) */}
       <div className="flex overflow-x-auto no-scrollbar gap-1.5 p-1 bg-stone-200/70 rounded-xl border border-stone-300/60">
         <button
@@ -1373,7 +1344,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           className="w-full py-3 bg-[#556B2F] hover:bg-[#465926] text-white font-semibold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
         >
           <BookOpen className="w-4 h-4 text-amber-200" />
-          <span>Buka Studio & Tinjau Seluruh 100 Halaman B5</span>
+          <span>Buka Studio & Tinjau Seluruh Halaman Buku</span>
         </button>
       </div>
     </div>

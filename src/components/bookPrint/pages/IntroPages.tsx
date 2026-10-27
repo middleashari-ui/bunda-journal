@@ -73,7 +73,7 @@ export const IntroPages: React.FC<IntroPagesProps> = ({ theme, userProfile, isFi
                   className="w-24 text-[9px] font-sans font-medium bg-transparent border-b border-stone-300 focus:outline-hidden"
                 />
               </div>
-              <span>Edisi Koleksi B5</span>
+              <span>Edisi Koleksi Kenangan</span>
             </div>
           </div>
         </div>

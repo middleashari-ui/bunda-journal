@@ -92,7 +92,7 @@ export const BookPreviewModal: React.FC<BookPreviewModalProps> = ({
               onClick={handleDownloadPdf}
               disabled={isGeneratingPdf}
               className="px-3 py-1.5 bg-[#556B2F] hover:bg-[#465926] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-70"
-              title="Download PDF B5"
+              title="Download PDF"
             >
               {isGeneratingPdf ? (
                 <>
@@ -139,7 +139,7 @@ export const BookPreviewModal: React.FC<BookPreviewModalProps> = ({
                   {userProfile.name}
                 </p>
                 <span className="text-[9.5px] sm:text-[10px] text-amber-200/60 uppercase tracking-widest mt-auto font-sans">
-                  Hardcover Linen Asli • Cetakan Presisi B5
+                  Hardcover Linen Asli • Cetakan Presisi Siap Cetak
                 </span>
               </div>
             </div>
