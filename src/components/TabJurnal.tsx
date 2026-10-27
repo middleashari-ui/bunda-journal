@@ -329,23 +329,14 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
 
         <div className="flex items-center gap-1.5 shrink-0">
           {onOpenBookPreview && (
-            <>
-              <button
-                onClick={onOpenBookPreview}
-                className="px-2.5 py-1.5 bg-[#C87A64] hover:bg-[#b56b56] text-white text-[10px] font-semibold rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95"
-                title="Buka Studio & Download PDF B5"
-              >
-                <Download className="w-3 h-3" />
-                <span>Download PDF B5</span>
-              </button>
-              <button
-                onClick={onOpenBookPreview}
-                className="px-2.5 py-1.5 bg-[#556B2F] hover:bg-[#465926] text-white text-[10px] font-semibold rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95"
-              >
-                <Eye className="w-3 h-3" />
-                <span>Lihat Studio</span>
-              </button>
-            </>
+            <button
+              onClick={onOpenBookPreview}
+              className="px-2.5 py-1.5 bg-[#556B2F] hover:bg-[#465926] text-white text-[10px] font-semibold rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95"
+              title="Buka Studio Cetak & Tinjau 100 Halaman B5"
+            >
+              <Eye className="w-3 h-3" />
+              <span>Lihat Studio</span>
+            </button>
           )}
         </div>
       </div>

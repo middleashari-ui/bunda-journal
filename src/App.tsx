@@ -367,10 +367,10 @@ export default function App() {
           <button
             onClick={() => setIsBookPreviewOpen(true)}
             className="px-2 py-0.5 rounded-lg font-semibold transition-colors cursor-pointer text-[10px] bg-[#C87A64]/15 hover:bg-[#C87A64]/25 text-[#C87A64] border border-[#C87A64]/30 flex items-center gap-1"
-            title="Format Utama Cetak 100 Halaman B5"
+            title="Buka Studio Cetak & Tinjau 100 Halaman Buku"
           >
             <BookOpen className="w-3 h-3" />
-            <span>Format B5 (100 Hal)</span>
+            <span>Studio Buku (100 Hal)</span>
           </button>
 
           <div className="h-3 w-px bg-stone-200 mx-0.5 hidden sm:block" />
