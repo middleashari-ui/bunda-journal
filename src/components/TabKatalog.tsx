@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PhotoMemory, JournalEntry, UserProfile, BookOrder } from '../types';
 import { PRICING_CONFIG } from '../config/pricing';
+import { UpgradeModal } from './UpgradeModal';
 import { 
   BookOpen, 
   Check, 
@@ -45,6 +46,8 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
   
   // Checkout Modal State
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  // Gate output: starter klik cetak fisik kena modal upgrade dulu.
+  const [upgradeGateOpen, setUpgradeGateOpen] = useState(false);
   const [recipientName, setRecipientName] = useState(userProfile.name || '');
   const [phone, setPhone] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
@@ -402,7 +405,13 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
           <p className="text-[11px] text-stone-500 font-normal">
             Mau cetak fisik?{' '}
             <button
-              onClick={() => setShowCheckoutModal(true)}
+              onClick={() => {
+                if (userTier !== 'vip') {
+                  setUpgradeGateOpen(true);
+                  return;
+                }
+                setShowCheckoutModal(true);
+              }}
               className="text-[#556B2F] font-semibold underline underline-offset-2 hover:text-[#465926] cursor-pointer"
             >
               Cetak Fisik {PRICING_CONFIG.hardcover.label} — Optional
@@ -413,6 +422,16 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Gate output 49k vs 129k: modal upgrade persis copy produk */}
+      <UpgradeModal
+        isOpen={upgradeGateOpen}
+        onClose={() => setUpgradeGateOpen(false)}
+        onUpgrade={() => {
+          setUpgradeGateOpen(false);
+          onOpenUpgradeModal?.();
+        }}
+      />
 
       {/* Checkout Drawer / Modal */}
       {showCheckoutModal && (

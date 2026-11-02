@@ -39,15 +39,18 @@ import {
 import { pdf } from '@react-pdf/renderer';
 import { JournalPdfDocument, PdfBookPageData } from '../../utils/JournalPdfDocument';
 import { generatePDF, exportPagesListToB5PDF, extractPagesFromContainer, PDFExportProgress } from '../../utils/pdfGenerator';
+import { UpgradeModal } from '../UpgradeModal';
 
 interface PrintBookStudioProps {
   userProfile: UserProfile;
   photos: PhotoMemory[];
   pastEntries: JournalEntry[];
   currentWeek: number;
+  userTier?: 'essential' | 'vip';
   onUpdatePhoto?: (w: number, newPhoto: PhotoMemory) => void;
   onClose: () => void;
   onGoToJournal?: () => void;
+  onOpenUpgradeModal?: () => void;
 }
 
 interface EmptyPageItem {
@@ -63,9 +66,11 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   photos,
   pastEntries,
   currentWeek,
+  userTier = 'essential',
   onUpdatePhoto,
   onClose,
   onGoToJournal,
+  onOpenUpgradeModal,
 }) => {
   // Theme state
   const [selectedThemeId, setSelectedThemeId] = useState<BookThemeId>('kinfolk-sage');
@@ -113,6 +118,17 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     return typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
   });
+
+  // Gate output 49k vs 129k: starter kena modal upgrade di export/cetak.
+  const [upgradeGate, setUpgradeGate] = useState<null | 'export_pdf' | 'cetak_hardcover'>(null);
+
+  const guardOutput = (action: 'export_pdf' | 'cetak_hardcover'): boolean => {
+    if (userTier !== 'vip') {
+      setUpgradeGate(action);
+      return false;
+    }
+    return true;
+  };
 
   // Standard B5 Dimensions at 96 DPI (176mm x 250mm)
   const B5_WIDTH_PX = 665.2;
@@ -742,9 +758,9 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
             )}
           </button>
 
-          {/* Tombol Simpan PDF (Icon Only) */}
+          {/* Tombol Simpan PDF (Icon Only) — gate: starter kena modal upgrade */}
           <button
-            onClick={handleOpenPrintWindow}
+            onClick={() => { if (guardOutput('export_pdf')) handleOpenPrintWindow(); }}
             className="w-8 h-8 rounded-lg bg-[#556B2F] hover:bg-[#465926] text-white flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95 border border-[#465926]"
             title="Download PDF (100 Halaman)"
             aria-label="Download PDF"
@@ -1261,7 +1277,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
               <button
                 onClick={() => {
                   setIsDownloadModalOpen(false);
-                  handleOpenPrintWindow();
+                  if (guardOutput('export_pdf')) handleOpenPrintWindow();
                 }}
                 className="w-full p-3 bg-[#556B2F] hover:bg-[#465926] text-white rounded-xl text-left transition-all cursor-pointer shadow-sm flex items-center justify-between"
               >
@@ -1343,6 +1359,15 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
           </div>
         </div>
       )}
+      {/* Gate output 49k vs 129k: modal upgrade persis copy produk */}
+      <UpgradeModal
+        isOpen={upgradeGate !== null}
+        onClose={() => setUpgradeGate(null)}
+        onUpgrade={() => {
+          setUpgradeGate(null);
+          onOpenUpgradeModal?.();
+        }}
+      />
     </div>
   );
 };

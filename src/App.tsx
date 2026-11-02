@@ -873,6 +873,7 @@ export default function App() {
             photos={photos}
             pastEntries={pastEntries}
             currentWeek={week}
+            userTier={userTier}
             onUpdatePhoto={(w, newPhoto) => {
               setPhotos(prev => {
                 const filtered = prev.filter(p => p.week !== w);
@@ -883,6 +884,11 @@ export default function App() {
             onGoToJournal={() => {
               setIsBookPreviewOpen(false);
               setActiveTab('jurnal');
+            }}
+            onOpenUpgradeModal={() => {
+              setIsBookPreviewOpen(false);
+              setCheckoutDefaultPlan('upgrade_vip');
+              setIsCheckoutOpen(true);
             }}
           />
         )}
