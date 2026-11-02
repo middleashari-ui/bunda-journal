@@ -876,3 +876,4 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
     </div>
   );
 };
+// trigger rebuild Pages logo h-10 md:h-12
