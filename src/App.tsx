@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   TabType, 
   HabitState, 
@@ -15,7 +15,16 @@ import { TabHome } from './components/TabHome';
 import { TabJurnal } from './components/TabJurnal';
 import { TabKatalog } from './components/TabKatalog';
 import { TabProfil } from './components/TabProfil';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { PrintBookStudio } from './components/bookPrint/PrintBookStudio';
+import { OnboardingModal } from './components/OnboardingModal';
+import { PicModal } from './components/PicModal';
+import { CheckoutModal } from './components/CheckoutModal';
+import { 
+  syncSubscriptionToSupabase, 
+  fetchUserTierFromSupabase 
+} from './lib/supabase';
+import { idbSet, idbGet, getPendingSyncCount, markQueueSynced, getPendingQueueItems } from './lib/idb';
 import { 
   Home, 
   BookMarked, 
@@ -31,135 +40,184 @@ import {
   Signal
 } from 'lucide-react';
 
-const INITIAL_PHOTOS: PhotoMemory[] = [
-  { 
-    id: 1, 
-    caption: 'USG Trimester 1 (12W)', 
-    date: '12 Okt 2024', 
-    src: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=400&q=80',
-    week: 12 
-  },
-  { 
-    id: 2, 
-    caption: 'Baby Bump Pertama', 
-    date: '08 Okt 2024', 
-    src: 'https://images.unsplash.com/photo-1544126592-807ade215a0b?auto=format&fit=crop&w=400&q=80',
-    week: 11 
-  }
-];
+const INITIAL_PHOTOS: PhotoMemory[] = [];
 
-const INITIAL_ENTRIES: JournalEntry[] = [
-  {
-    id: 'entry-1',
-    week: 12,
-    date: '12 Okt 2024',
-    text: 'Hari ini detak jantungmu terdengar begitu jelas saat kontrol dokter. Bahagia dan haru sekali, nak...',
-    moodIndex: 2,
-    habitsSnapshot: { water: true, vitamins: true, walk: true, sleep: true },
-    sleepHours: 8.5,
-    createdAt: Date.now() - 86400000 * 2,
-  },
-  {
-    id: 'entry-2',
-    week: 11,
-    date: '05 Okt 2024',
-    text: 'Bunda mulai merasakan mual berkurang. Ayah membawakan buah pir manis kesukaanmu pagi ini.',
-    moodIndex: 1,
-    habitsSnapshot: { water: true, vitamins: true, walk: false, sleep: true },
-    sleepHours: 8.0,
-    createdAt: Date.now() - 86400000 * 9,
-  },
-  {
-    id: 'entry-3',
-    week: 10,
-    date: '28 Sep 2024',
-    text: 'Tidur nyenyak semalam setelah prenatal yoga ringan. Nafsu makan mulai membaik.',
-    moodIndex: 0,
-    habitsSnapshot: { water: true, vitamins: true, walk: true, sleep: true },
-    sleepHours: 8.2,
-    createdAt: Date.now() - 86400000 * 16,
-  },
-  {
-    id: 'entry-4',
-    week: 9,
-    date: '21 Sep 2024',
-    text: 'Sedikit lelah di sore hari, tapi senyum ayah selalu menyemangati bunda.',
-    moodIndex: 3,
-    habitsSnapshot: { water: true, vitamins: true, walk: false, sleep: false },
-    sleepHours: 6.8,
-    createdAt: Date.now() - 86400000 * 23,
-  },
-  {
-    id: 'entry-5',
-    week: 8,
-    date: '14 Sep 2024',
-    text: 'Mendengarkan alunan lembut bersama si kecil di perut. Hati terasa begitu tenang.',
-    moodIndex: 0,
-    habitsSnapshot: { water: true, vitamins: true, walk: true, sleep: true },
-    sleepHours: 8.0,
-    createdAt: Date.now() - 86400000 * 30,
-  }
-];
+const INITIAL_ENTRIES: JournalEntry[] = [];
 
 export default function App() {
   // App navigation & layout state
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return localStorage.getItem('bunda_isLoggedIn') !== 'false';
+    const paid = localStorage.getItem('bunda_is_paid') === 'true';
+    const onboarded = localStorage.getItem('bunda_is_onboarded') === 'true';
+    const logged = localStorage.getItem('bunda_isLoggedIn') !== 'false';
+    return paid && onboarded && logged;
   });
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isPhoneFrame, setIsPhoneFrame] = useState<boolean>(true);
 
+  // TC03 / TC08: Paid status
+  const [isPaid, setIsPaid] = useState<boolean>(() => {
+    return localStorage.getItem('bunda_is_paid') === 'true';
+  });
+
+  // User Membership Tier: 'essential' | 'vip' (Diambil dari Supabase & fallback lokal)
+  const [userTier, setUserTier] = useState<'essential' | 'vip'>(() => {
+    const saved = localStorage.getItem('bunda_user_tier');
+    return (saved === 'vip') ? 'vip' : 'essential';
+  });
+
+  // Modal Checkout & Upgrade Plan State
+  const [checkoutDefaultPlan, setCheckoutDefaultPlan] = useState<'essential' | 'vip' | 'hardcover' | 'upgrade_vip'>('essential');
+
+  // TC05: Mandatory Onboarding state
+  const [isOnboarded, setIsOnboarded] = useState<boolean>(() => {
+    return localStorage.getItem('bunda_is_onboarded') === 'true';
+  });
+
+  // Checkout gate modal state
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
+  const [userEmail, setUserEmail] = useState<string>(() => {
+    return localStorage.getItem('bunda_user_email') || '';
+  });
+
   // Core Pregnancy Data State
   const [week, setWeek] = useState<number>(() => {
     const saved = localStorage.getItem('bunda_week');
-    return saved ? parseInt(saved, 10) : 12;
+    return saved ? parseInt(saved, 10) : 32;
   });
 
   const [journalText, setJournalText] = useState<string>(() => {
-    return localStorage.getItem('bunda_journal_text') || 
-      'Hari ini detak jantungmu terdengar begitu jelas saat kontrol dokter. Bahagia dan haru sekali, nak...';
+    return localStorage.getItem('bunda_journal_text') || '';
   });
   const [journalSaved, setJournalSaved] = useState<boolean>(true);
 
   const [habits, setHabits] = useState<HabitState>(() => {
-    const saved = localStorage.getItem('bunda_habits');
-    return saved ? JSON.parse(saved) : {
-      water: true,
-      vitamins: true,
-      walk: false,
-      sleep: true,
-      yoga: false,
-    };
+    try {
+      const saved = localStorage.getItem('bunda_habits');
+      return saved ? JSON.parse(saved) : {
+        water: false,
+        vitamins: false,
+        walk: false,
+        sleep: false,
+        yoga: false,
+      };
+    } catch {
+      return {
+        water: false,
+        vitamins: false,
+        walk: false,
+        sleep: false,
+        yoga: false,
+      };
+    }
   });
 
   const [selectedMood, setSelectedMood] = useState<number>(() => {
-    const saved = localStorage.getItem('bunda_mood');
-    return saved ? parseInt(saved, 10) : 2;
+    try {
+      const saved = localStorage.getItem('bunda_mood');
+      return saved ? parseInt(saved, 10) : 0;
+    } catch {
+      return 0;
+    }
   });
 
   const [photos, setPhotos] = useState<PhotoMemory[]>(() => {
-    const saved = localStorage.getItem('bunda_photos');
-    return saved ? JSON.parse(saved) : INITIAL_PHOTOS;
+    try {
+      const saved = localStorage.getItem('bunda_photos');
+      return saved ? JSON.parse(saved) : INITIAL_PHOTOS;
+    } catch {
+      return INITIAL_PHOTOS;
+    }
   });
 
   const [pastEntries, setPastEntries] = useState<JournalEntry[]>(() => {
-    const saved = localStorage.getItem('bunda_entries');
-    return saved ? JSON.parse(saved) : INITIAL_ENTRIES;
+    try {
+      const saved = localStorage.getItem('bunda_entries');
+      return saved ? JSON.parse(saved) : INITIAL_ENTRIES;
+    } catch {
+      return INITIAL_ENTRIES;
+    }
   });
 
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem('bunda_profile');
-    return saved ? JSON.parse(saved) : {
-      name: 'Bunda Jessica Anindya',
-      babyNickname: 'Si Kecil',
-      hplDate: '18 Mei 2025',
-      doctorName: 'dr. Anita, Sp.OG',
-      hospitalName: 'RSIA Bunda Menteng',
-      bloodType: 'O+'
-    };
+    try {
+      const saved = localStorage.getItem('bunda_profile');
+      return saved ? JSON.parse(saved) : {
+        name: '',
+        babyNickname: '',
+        hplDate: '',
+        doctorName: '',
+        hospitalName: '',
+        bloodType: ''
+      };
+    } catch {
+      return {
+        name: '',
+        babyNickname: '',
+        hplDate: '',
+        doctorName: '',
+        hospitalName: '',
+        bloodType: ''
+      };
+    }
   });
 
-  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(true);
+  // Offline banner & sync queue state
+  const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
+  const [showOfflineBanner, setShowOfflineBanner] = useState<boolean>(false);
+  const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
+  const [syncToast, setSyncToast] = useState<string | null>(null);
+
+  // Monitor network status & sync pending IndexedDB items
+  useEffect(() => {
+    let offlineTimeout: NodeJS.Timeout | null = null;
+
+    const handleOffline = () => {
+      // AFD 3.7: jangan langsung banner offline, tunggu 3 detik baru tampilkan jika koneksi benar putus
+      offlineTimeout = setTimeout(() => {
+        setIsOffline(true);
+        setShowOfflineBanner(true);
+      }, 3000);
+    };
+
+    const handleOnline = async () => {
+      if (offlineTimeout) clearTimeout(offlineTimeout);
+      setIsOffline(false);
+      setShowOfflineBanner(false);
+      // Process pending queue
+      try {
+        const count = await getPendingSyncCount();
+        if (count > 0) {
+          setSyncToast(`Menyinkronkan ${count} data tersimpan...`);
+          const items = await getPendingQueueItems();
+          for (const item of items) {
+            if (item.id) await markQueueSynced(item.id);
+          }
+          setPendingSyncCount(0);
+          setTimeout(() => {
+            setSyncToast('Semua data berhasil tersinkron');
+            setTimeout(() => setSyncToast(null), 4000);
+          }, 800);
+        }
+      } catch (err) {
+        console.error('Sync error:', err);
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    (window as any).__triggerOnlineSync = handleOnline;
+    (window as any).__setSyncToast = setSyncToast;
+
+    // Initial check pending queue
+    getPendingSyncCount().then(setPendingSyncCount).catch(() => {});
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      if (offlineTimeout) clearTimeout(offlineTimeout);
+    };
+  }, []);
   const [reminderSettings, setReminderSettings] = useState<ReminderSettings>(() => {
     const saved = localStorage.getItem('bunda_reminder_settings');
     return saved ? JSON.parse(saved) : {
@@ -180,10 +238,124 @@ export default function App() {
   // Book Preview Modal State
   const [isBookPreviewOpen, setIsBookPreviewOpen] = useState<boolean>(false);
 
-  // Apply saved color theme on startup
+  // TC10: PIC Modal state
+  const [isPicOpen, setIsPicOpen] = useState<boolean>(() => {
+    return window.location.pathname === '/pic' || window.location.hash === '#/pic';
+  });
+
+  // Listen for hash / popstate / keyboard shortcut for /pic and /app
   useEffect(() => {
-    applyAppColorTheme(getSavedAppColorTheme());
+    const handleLocation = () => {
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+
+      if (path === '/pic' || hash === '#/pic') {
+        setIsPicOpen(true);
+      }
+
+      // Intercept direct access to /app or #/app
+      if (path === '/app' || hash === '#/app') {
+        const paid = localStorage.getItem('bunda_is_paid') === 'true';
+        const onboarded = localStorage.getItem('bunda_is_onboarded') === 'true';
+
+        if (!paid) {
+          // Cecegat akses /app ke checkout modal
+          setIsLoggedIn(false);
+          setIsCheckoutOpen(true);
+          showToast('Selesaikan pembelian untuk mengakses aplikasi.');
+        } else if (!onboarded) {
+          // Sudah bayar tapi belum isi form Bunda
+          setIsLoggedIn(false);
+          showToast('Lengkapi formulir informasi Bunda terlebih dahulu.');
+        } else {
+          setIsLoggedIn(true);
+          setActiveTab('home');
+        }
+      }
+    };
+
+    handleLocation();
+    window.addEventListener('popstate', handleLocation);
+    window.addEventListener('hashchange', handleLocation);
+    return () => {
+      window.removeEventListener('popstate', handleLocation);
+      window.removeEventListener('hashchange', handleLocation);
+    };
   }, []);
+
+  // Auto return to today's week & date after 5 minutes of inactivity (Bukan Reset Data)
+  const lastActivityTimeRef = useRef<number>(Date.now());
+  useEffect(() => {
+    const updateActivity = () => {
+      lastActivityTimeRef.current = Date.now();
+    };
+
+    const checkIdleAndReturn = () => {
+      const now = Date.now();
+      const idleTime = now - lastActivityTimeRef.current;
+      // 5 minutes = 300,000 ms
+      if (idleTime >= 5 * 60 * 1000) {
+        try {
+          const profileStr = localStorage.getItem('bunda_profile');
+          let targetWeek = 32;
+          if (profileStr) {
+            const p = JSON.parse(profileStr);
+            if (p.hplDate) {
+              const hpl = new Date(p.hplDate);
+              const diffDays = Math.round((hpl.getTime() - now) / (1000 * 60 * 60 * 24));
+              const remWeeks = diffDays / 7;
+              const w = Math.round(40 - remWeeks);
+              if (w >= 5 && w <= 40) targetWeek = w;
+            } else if (p.week) {
+              targetWeek = p.week;
+            }
+          }
+          setWeek(targetWeek);
+          window.dispatchEvent(new CustomEvent('bunda_return_today', { detail: { week: targetWeek } }));
+          if ((window as any).__setSyncToast) {
+            (window as any).__setSyncToast('Kembali ke catatan hari ini');
+          }
+        } catch {}
+        lastActivityTimeRef.current = now;
+      }
+    };
+
+    const interval = setInterval(checkIdleAndReturn, 30000);
+    window.addEventListener('click', updateActivity, { passive: true });
+    window.addEventListener('touchstart', updateActivity, { passive: true });
+    window.addEventListener('keydown', updateActivity, { passive: true });
+    window.addEventListener('scroll', updateActivity, { passive: true });
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkIdleAndReturn();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('click', updateActivity);
+      window.removeEventListener('touchstart', updateActivity);
+      window.removeEventListener('keydown', updateActivity);
+      window.removeEventListener('scroll', updateActivity);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // Intercept direct access to /app or #/app and sync Tier from Supabase
+  useEffect(() => {
+    // Sinkronisasi status tier dari Supabase jika user punya email
+    const email = localStorage.getItem('bunda_user_email');
+    if (email) {
+      fetchUserTierFromSupabase(email).then((tierFromDb) => {
+        if (tierFromDb === 'vip' || tierFromDb === 'essential') {
+          setUserTier(tierFromDb);
+          localStorage.setItem('bunda_user_tier', tierFromDb);
+        }
+      });
+    }
+  }, [userEmail, isPaid]);
 
   // Save changes to localStorage
   useEffect(() => {
@@ -353,6 +525,15 @@ export default function App() {
           </button>
           <button
             onClick={() => {
+              if (!isPaid) {
+                setIsCheckoutOpen(true);
+                showToast('Selesaikan pembelian Rp 49rb untuk mengakses aplikasi.');
+                return;
+              }
+              if (!isOnboarded) {
+                showToast('Lengkapi formulir informasi Bunda.');
+                return;
+              }
               setIsLoggedIn(true);
               setActiveTab('home');
               localStorage.setItem('bunda_isLoggedIn', 'true');
@@ -365,12 +546,13 @@ export default function App() {
           </button>
 
           <button
+            id="btn-studio-header"
             onClick={() => setIsBookPreviewOpen(true)}
-            className="px-2 py-0.5 rounded-lg font-semibold transition-colors cursor-pointer text-[10px] bg-[#C87A64]/15 hover:bg-[#C87A64]/25 text-[#C87A64] border border-[#C87A64]/30 flex items-center gap-1"
-            title="Buka Studio Cetak & Tinjau 100 Halaman Buku"
+            className="p-1 rounded-md text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-colors cursor-pointer text-[10px] flex items-center gap-1 border border-transparent hover:border-stone-200"
+            title="Studio Buku Kenangan"
           >
-            <BookOpen className="w-3 h-3" />
-            <span>Studio Buku (100 Hal)</span>
+            <BookOpen className="w-3.5 h-3.5 text-[#556B2F]" />
+            <span className="hidden sm:inline font-medium">Studio</span>
           </button>
 
           <div className="h-3 w-px bg-stone-200 mx-0.5 hidden sm:block" />
@@ -387,7 +569,9 @@ export default function App() {
       {/* Main Screen Container (Smartphone Frame or Responsive Card) */}
       <div 
         className={`w-full bg-[#F5F2EB] shadow-2xl relative flex flex-col overflow-hidden transition-all duration-300 ${
-          isPhoneFrame 
+          !isLoggedIn
+            ? 'max-w-6xl min-h-screen rounded-2xl border border-stone-200'
+            : isPhoneFrame 
             ? 'max-w-[430px] min-h-screen md:min-h-[880px] md:rounded-[40px] md:border-[8px] md:border-[#2C2927]' 
             : 'max-w-2xl min-h-[90vh] rounded-3xl border border-stone-200'
         }`}
@@ -398,25 +582,73 @@ export default function App() {
           <div className="w-24 h-4 bg-stone-850 rounded-full mx-auto shadow-inner" />
           <div className="flex items-center gap-1.5">
             <Signal className="w-3.5 h-3.5" />
-            <Wifi className="w-3.5 h-3.5" />
+            <Wifi className={`w-3.5 h-3.5 ${isOffline ? 'text-amber-500' : 'text-stone-500'}`} />
             <Battery className="w-4 h-4" />
           </div>
         </div>
 
+        {/* Floating Toast Notification for Sync & Mode */}
+        {syncToast && (
+          <div 
+            id="toast-sync-status"
+            className="absolute top-12 left-1/2 -translate-x-1/2 z-50 bg-[#556B2F] text-white text-xs px-4 py-2 rounded-full shadow-lg font-medium flex items-center gap-2 whitespace-nowrap"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+            <span>{syncToast}</span>
+          </div>
+        )}
+
+        {/* Offline Banner: Only displayed when truly offline for >3s */}
+        {showOfflineBanner && (
+          <div className="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2 text-xs flex items-center justify-between z-40">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              <span className="font-medium">Mode Offline Aktif</span>
+              <span className="text-amber-700 text-[11px] hidden sm:inline">— Data tetap tersimpan di perangkat</span>
+            </div>
+            {pendingSyncCount > 0 && (
+              <span className="text-[10px] bg-amber-200/60 px-2 py-0.5 rounded-full font-bold">
+                {pendingSyncCount} antrean
+              </span>
+            )}
+          </div>
+        )}
+
         {/* CONDITION 1: Landing Page (Exact Match to screenshot Image_1) */}
         {!isLoggedIn ? (
-          <LandingPage onEnterApp={() => {
-            setIsLoggedIn(true);
-            setActiveTab('home');
-            localStorage.setItem('bunda_isLoggedIn', 'true');
-          }} />
+          <LandingPage 
+            isPaid={isPaid}
+            onStartCheckout={(amount) => {
+              if (amount === 129000) {
+                setCheckoutDefaultPlan('vip');
+              } else if (amount === 249000) {
+                setCheckoutDefaultPlan('hardcover');
+              } else {
+                setCheckoutDefaultPlan('essential');
+              }
+              setIsCheckoutOpen(true);
+            }}
+            onEnterApp={() => {
+              if (!isPaid) {
+                setIsCheckoutOpen(true);
+                return;
+              }
+              if (!isOnboarded) {
+                showToast('Lengkapi formulir informasi Bunda.');
+                return;
+              }
+              setIsLoggedIn(true);
+              setActiveTab('home');
+              localStorage.setItem('bunda_isLoggedIn', 'true');
+            }} 
+          />
         ) : (
           /* CONDITION 2: Authenticated App with 4 Tabs */
           <div className="flex flex-col h-full min-h-screen bg-[#F5F2EB] text-[#292524] relative pb-[calc(5rem+env(safe-area-inset-bottom,0px))] select-none">
             {/* App Sticky Header */}
             <header className="px-5 pt-3 pb-2.5 flex items-center justify-between border-b border-stone-200/50 bg-[#F5F2EB]/95 backdrop-blur-md sticky top-0 z-30">
               <div className="flex items-center gap-2">
-                <span className="font-serif text-2xl font-bold tracking-tight text-[#292524]">bunda.</span>
+                <img src="/bunda_journal_FINAL_BIG.png" className="h-10 md:h-12 w-auto" />
               </div>
               <div className="text-[11px] font-sans font-medium text-stone-600 bg-stone-200/50 px-2.5 py-0.5 rounded-full">
                 W{week} • Trimester {week <= 13 ? 1 : week <= 27 ? 2 : 3}
@@ -426,73 +658,132 @@ export default function App() {
             {/* Main Scrollable Content */}
             <main className="flex-1 overflow-y-auto no-scrollbar">
               {activeTab === 'home' && (
-                <TabHome 
-                  week={week}
-                  setWeek={setWeek}
-                  habits={habits}
-                  toggleHabit={toggleHabit}
-                  userProfile={userProfile}
-                  pastEntries={pastEntries}
-                  selectedMood={selectedMood}
-                  reminderSettings={reminderSettings}
-                  onUpdateReminderSettings={setReminderSettings}
-                  onShowToast={showToast}
-                  onGoToJournal={() => setActiveTab('jurnal')}
-                  onGoToKatalog={() => setActiveTab('studio')}
-                  onGoToStudio={() => setActiveTab('studio')}
-                />
+                <ErrorBoundary fallbackTitle="Kendala pada Beranda">
+                  <TabHome 
+                    week={week}
+                    setWeek={setWeek}
+                    habits={habits}
+                    toggleHabit={toggleHabit}
+                    userProfile={userProfile}
+                    pastEntries={pastEntries}
+                    selectedMood={selectedMood}
+                    reminderSettings={reminderSettings}
+                    onUpdateReminderSettings={setReminderSettings}
+                    onShowToast={showToast}
+                    onGoToJournal={() => setActiveTab('jurnal')}
+                    onGoToKatalog={() => setActiveTab('studio')}
+                    onGoToStudio={() => setActiveTab('studio')}
+                  />
+                </ErrorBoundary>
               )}
 
               {activeTab === 'jurnal' && (
-                <TabJurnal 
-                  week={week}
-                  setWeek={setWeek}
-                  journalText={journalText}
-                  setJournalText={setJournalText}
-                  journalSaved={journalSaved}
-                  setJournalSaved={setJournalSaved}
-                  habits={habits}
-                  toggleHabit={toggleHabit}
-                  selectedMood={selectedMood}
-                  setSelectedMood={setSelectedMood}
-                  photos={photos}
-                  setPhotos={setPhotos}
-                  pastEntries={pastEntries}
-                  userProfile={userProfile}
-                  onOpenBookPreview={() => setIsBookPreviewOpen(true)}
-                  onSaveCurrentEntry={handleSaveCurrentEntry}
-                  onDeleteEntry={handleDeleteEntry}
-                />
+                <ErrorBoundary fallbackTitle="Kendala pada Jurnal">
+                  <TabJurnal 
+                    week={week}
+                    setWeek={setWeek}
+                    journalText={journalText}
+                    setJournalText={setJournalText}
+                    journalSaved={journalSaved}
+                    setJournalSaved={setJournalSaved}
+                    habits={habits}
+                    toggleHabit={toggleHabit}
+                    selectedMood={selectedMood}
+                    setSelectedMood={setSelectedMood}
+                    photos={photos}
+                    setPhotos={setPhotos}
+                    pastEntries={pastEntries}
+                    userProfile={userProfile}
+                    onOpenBookPreview={() => setIsBookPreviewOpen(true)}
+                    onSaveCurrentEntry={handleSaveCurrentEntry}
+                    onDeleteEntry={handleDeleteEntry}
+                  />
+                </ErrorBoundary>
               )}
 
               {(activeTab === 'studio' || activeTab === 'katalog') && (
-                <TabKatalog 
-                  userProfile={userProfile}
-                  photos={photos}
-                  journalText={journalText}
-                  onOpenBookPreview={() => setIsBookPreviewOpen(true)}
-                  onGoToJournal={() => setActiveTab('jurnal')}
-                  onPlaceOrder={handlePlaceOrder}
-                />
+                <ErrorBoundary fallbackTitle="Kendala pada Studio">
+                  <TabKatalog 
+                    userProfile={userProfile}
+                    photos={photos}
+                    journalText={journalText}
+                    isPaid={isPaid}
+                    userTier={userTier}
+                    onOpenBookPreview={() => setIsBookPreviewOpen(true)}
+                    onGoToJournal={() => setActiveTab('jurnal')}
+                    onOpenUpgradeModal={() => {
+                      setCheckoutDefaultPlan('upgrade_vip');
+                      setIsCheckoutOpen(true);
+                    }}
+                    onPlaceOrder={handlePlaceOrder}
+                  />
+                </ErrorBoundary>
               )}
 
               {activeTab === 'profil' && (
-                <TabProfil 
-                  userProfile={userProfile}
-                  setUserProfile={setUserProfile}
-                  notificationsEnabled={notificationsEnabled}
-                  setNotificationsEnabled={setNotificationsEnabled}
-                  reminderSettings={reminderSettings}
-                  setReminderSettings={setReminderSettings}
-                  onShowToast={showToast}
-                  isSyncing={isSyncing}
-                  syncSuccess={syncSuccess}
-                  onSync={triggerGoogleDriveSync}
-                  onLogout={() => setIsLoggedIn(false)}
-                  journalEntries={pastEntries}
-                  photos={photos}
-                  habits={habits}
-                />
+                <ErrorBoundary fallbackTitle="Kendala pada Tab Profil">
+                  <TabProfil 
+                    userProfile={userProfile}
+                    setUserProfile={setUserProfile}
+                    notificationsEnabled={reminderSettings.enabled}
+                    setNotificationsEnabled={(enabled) => setReminderSettings(prev => ({ ...prev, enabled }))}
+                    reminderSettings={reminderSettings}
+                    setReminderSettings={setReminderSettings}
+                    onShowToast={showToast}
+                    isSyncing={isSyncing}
+                    syncSuccess={syncSuccess}
+                    onSync={triggerGoogleDriveSync}
+                    userTier={userTier}
+                    onOpenUpgradeModal={() => {
+                      setCheckoutDefaultPlan('upgrade_vip');
+                      setIsCheckoutOpen(true);
+                    }}
+                    onLogout={() => {
+                      setIsLoggedIn(false);
+                      setIsPaid(false);
+                      setIsOnboarded(false);
+                      setUserTier('essential');
+                      localStorage.removeItem('bunda_is_paid');
+                      localStorage.removeItem('bunda_is_onboarded');
+                      localStorage.removeItem('bunda_user_email');
+                      localStorage.removeItem('bunda_user_tier');
+                      localStorage.setItem('bunda_isLoggedIn', 'false');
+                      showToast('Berhasil keluar akun.');
+                    }}
+                    onResetAll={() => {
+                      localStorage.clear();
+                      setUserProfile({
+                        name: '',
+                        babyNickname: '',
+                        hplDate: '',
+                        doctorName: '',
+                        hospitalName: '',
+                        bloodType: ''
+                      });
+                      setJournalText('');
+                      setPastEntries([]);
+                      setPhotos([]);
+                      setHabits({
+                        water: false,
+                        vitamins: false,
+                        walk: false,
+                        sleep: false,
+                        yoga: false,
+                      });
+                      setSelectedMood(0);
+                      setIsPaid(false);
+                      setIsOnboarded(false);
+                      setIsLoggedIn(false);
+                      setUserTier('essential');
+                      setActiveTab('home');
+                      window.location.hash = '';
+                      window.location.reload();
+                    }}
+                    journalEntries={pastEntries}
+                    photos={photos}
+                    habits={habits}
+                  />
+                </ErrorBoundary>
               )}
             </main>
 
@@ -595,6 +886,75 @@ export default function App() {
             }}
           />
         )}
+
+        {/* Gate Checkout Modal */}
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          defaultPlan={checkoutDefaultPlan}
+          currentTier={isPaid ? userTier : 'none'}
+          onSuccess={(email, tier, amount) => {
+            setIsCheckoutOpen(false);
+            setIsPaid(true);
+            setUserEmail(email);
+            setUserTier(tier);
+            localStorage.setItem('bunda_is_paid', 'true');
+            localStorage.setItem('bunda_user_email', email);
+            localStorage.setItem('bunda_user_tier', tier);
+
+            // Sinkronisasi background ke Supabase
+            syncSubscriptionToSupabase(email, tier, amount);
+
+            if (tier === 'vip') {
+              showToast('Selamat! Paket VIP aktif seumur hidup.');
+            } else {
+              showToast('Pembayaran berhasil! Silakan lengkapi formulir Bunda.');
+            }
+          }}
+        />
+
+        {/* TC05: Mandatory Onboarding Dialog */}
+        <OnboardingModal
+          isOpen={(!isLoggedIn && isPaid && !isOnboarded) || (isLoggedIn && !isOnboarded)}
+          onComplete={(data) => {
+            const updatedProfile = {
+              ...userProfile,
+              name: data.name,
+              babyNickname: data.babyNickname,
+              hplDate: data.hplDate || userProfile.hplDate,
+              doctorName: data.doctorName || userProfile.doctorName,
+            };
+            setUserProfile(updatedProfile);
+            setWeek(data.week);
+            setIsOnboarded(true);
+            setIsLoggedIn(true);
+            setActiveTab('home');
+            localStorage.setItem('bunda_is_onboarded', 'true');
+            localStorage.setItem('bunda_isLoggedIn', 'true');
+            localStorage.setItem('bunda_week', String(data.week));
+            localStorage.setItem('bunda_profile', JSON.stringify(updatedProfile));
+
+            // Simpan profil ke Supabase
+            syncProfileToSupabase({
+              ...updatedProfile,
+              currentWeek: data.week,
+            });
+
+            showToast(`Selamat datang di Bunda Journal, Bunda ${data.name}!`);
+          }}
+        />
+
+        {/* TC10: PIC Management Dialog (/pic) */}
+        <PicModal 
+          isOpen={isPicOpen} 
+          onClose={() => {
+            setIsPicOpen(false);
+            if (window.location.pathname === '/pic' || window.location.hash === '#/pic') {
+              window.history.pushState({}, '', '/');
+            }
+          }}
+          onShowToast={showToast}
+        />
       </div>
     </div>
   );

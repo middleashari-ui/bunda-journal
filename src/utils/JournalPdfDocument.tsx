@@ -446,9 +446,9 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
   const bab4Data = getSavedStorage('bunda_bab4');
   const bab5Data = getSavedStorage('bunda_bab5');
 
-  const ownerName = userProfile?.name || 'Jessica Alana';
-  const hplDate = userProfile?.hplDate || '18 Mei 2025';
-  const babyNickname = userProfile?.babyNickname || 'Kalandra';
+  const ownerName = userProfile?.name || '';
+  const hplDate = userProfile?.hplDate || '';
+  const babyNickname = userProfile?.babyNickname || '';
 
   // Standard 50 spreads = 100 pages
   const spreadsToRender = bookPages && bookPages.length > 0 
@@ -613,9 +613,9 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
         if (sIdx === 1) {
           const testPackDate = bab1Data?.testPackDate || 'Sabtu, 14 September 2024';
           const testPackPlace = bab1Data?.testPackTimePlace || '06:15 Pagi • Kamar Mandi Rumah';
-          const motherFeelings = bab1Data?.motherFeelings || bab1Data?.motherFirstThought || 'Tangan bunda gemetar saat melihat dua garis merah itu tampak begitu jelas di pagi hari yang tenang. Rasa haru dan syukur tak terkira memenuhi rongga dada.';
-          const fatherReaction = bab1Data?.fatherReaction || 'Bunda meletakkan kotak kado kecil berisi test pack di samping cangkir kopi ayah. Saat membukanya, ayah terdiam haru lalu memeluk bunda erat sekali.';
-          const familyReaction = bab1Data?.familyReaction || 'Kakek dan nenek langsung sujud syukur dan menelepon semua keluarga. Doa-doa terbaik mengalir tiada henti menyambut hadirnya calon cucu tersayang.';
+          const motherFeelings = bab1Data?.motherFeelings || bab1Data?.motherFirstThought || '';
+          const fatherReaction = bab1Data?.fatherReaction || '';
+          const familyReaction = bab1Data?.familyReaction || '';
 
           return (
             <React.Fragment key={`spread-${sIdx}`}>
@@ -755,10 +755,10 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
         // --------------------------------------------------------------------
         if (sIdx === 2) {
           const doctorName = bab1Data?.doctor || userProfile?.doctorName || 'dr. Sarah Sp.OG';
-          const hospitalName = bab1Data?.hospital || userProfile?.hospitalName || 'RSIA Bunda Menteng';
-          const heartRate = bab1Data?.heartRate || '142 bpm (Normal & Kuat)';
-          const heartbeatImpression = bab1Data?.heartbeatImpression || 'Bunyinya cepat dan teratur seperti derap langkah kepakan sayap burung kecil. Air mata bunda menetes haru di ranjang periksa dokter.';
-          const cravings = bab1Data?.cravings || '1. Buah mangga muda asam manis potong dingin\n2. Sup kaldu ayam jahe hangat buatan nenek\n3. Es air kelapa muda murni di siang hari';
+          const hospitalName = bab1Data?.hospital || userProfile?.hospitalName || '';
+          const heartRate = bab1Data?.heartRate || '';
+          const heartbeatImpression = bab1Data?.heartbeatImpression || '';
+          const cravings = bab1Data?.cravings || '';
           const avoidedFoods = bab1Data?.avoidedFoods || '• Bau tumisan bawang putih dan minyak panas\n• Kopi hitam pekat\n• Parfum beraroma manis menyengat';
           const partnerSupport = bab1Data?.partnerSupport || 'Ayah yang rela membelikan biskuit jahe jam 11 malam dan memijat punggung bunda setiap subuh saat mual datang melanda.';
 
@@ -1387,7 +1387,7 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
         // SPREAD 42: HALAMAN 85 & 86 (Bab 3: Inspirasi Nama & Kamar Bayi)
         // --------------------------------------------------------------------
         if (sIdx === 42) {
-          const chosenName = bab3Data?.chosenName || 'Kalandra Atharrazka';
+          const chosenName = bab3Data?.chosenName || '';
           const chosenMeaning = bab3Data?.chosenMeaning || '"Penerang yang riang gembira dan senantiasa dilimpahi rezeki bersih."';
 
           return (

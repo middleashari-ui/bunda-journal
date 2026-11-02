@@ -28,34 +28,34 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
 
   // Page 3 & 4 editable states with localStorage persistence
   const [testPackPhoto, setTestPackPhoto] = useState<string | null>(savedBab1?.testPackPhoto || null);
-  const [testPackDate, setTestPackDate] = useState(savedBab1?.testPackDate || 'Sabtu, 14 September 2024');
-  const [testPackTimePlace, setTestPackTimePlace] = useState(savedBab1?.testPackTimePlace || '06:15 Pagi • Kamar Mandi Rumah');
+  const [testPackDate, setTestPackDate] = useState(savedBab1?.testPackDate || '');
+  const [testPackTimePlace, setTestPackTimePlace] = useState(savedBab1?.testPackTimePlace || '');
   const [motherFirstThought, setMotherFirstThought] = useState(
-    savedBab1?.motherFeelings || savedBab1?.motherFirstThought || 'Tangan bunda gemetar saat melihat garis samar itu berubah menjadi jelas. Air mata haru langsung menetes di atas wastafel...'
+    savedBab1?.motherFeelings || savedBab1?.motherFirstThought || ''
   );
   const [fatherReaction, setFatherReaction] = useState(
-    savedBab1?.fatherReaction || 'Bunda meletakkan kotak kado kecil berisi test pack di samping cangkir kopi ayah. Saat membukanya, ayah terdiam sejenak lalu memeluk bunda erat sekali...'
+    savedBab1?.fatherReaction || ''
   );
   const [familyReaction, setFamilyReaction] = useState(
-    savedBab1?.familyReaction || 'Nenek langsung sujud syukur dan menelepon semua keluarga. Doa-doa terbaik mengalir tiada henti untuk kesehatan calon cucu...'
+    savedBab1?.familyReaction || ''
   );
 
   // Page 5 & 6 editable states with localStorage persistence
   const [usgPhoto, setUsgPhoto] = useState<string | null>(savedBab1?.usgKantungPhoto || null);
-  const [hospital, setHospital] = useState(savedBab1?.hospital || userProfile.hospitalName || 'RSIA Bunda Menteng');
-  const [doctor, setDoctor] = useState(savedBab1?.doctor || userProfile.doctorName || 'dr. Sarah Sp.OG');
-  const [heartRate, setHeartRate] = useState(savedBab1?.heartRate || '142 bpm (Normal & Kuat)');
+  const [hospital, setHospital] = useState(savedBab1?.hospital || userProfile.hospitalName || '');
+  const [doctor, setDoctor] = useState(savedBab1?.doctor || userProfile.doctorName || '');
+  const [heartRate, setHeartRate] = useState(savedBab1?.heartRate || '');
   const [heartbeatImpression, setHeartbeatImpression] = useState(
-    savedBab1?.heartbeatImpression || 'Bunyinya cepat seperti derap kepakan sayap burung kecil. Air mata bunda menetes haru di ranjang periksa dokter...'
+    savedBab1?.heartbeatImpression || ''
   );
   const [cravings, setCravings] = useState(
-    savedBab1?.cravings || '1. Buah mangga muda asam manis potong dingin\n2. Sup kaldu ayam jahe hangat buatan nenek\n3. Es air kelapa muda murni di siang hari'
+    savedBab1?.cravings || ''
   );
   const [avoidedFoods, setAvoidedFoods] = useState(
-    savedBab1?.avoidedFoods || '• Bau tumisan bawang putih dan minyak panas\n• Kopi hitam pekat\n• Parfum beraroma manis menyengat'
+    savedBab1?.avoidedFoods || ''
   );
   const [partnerSupport, setPartnerSupport] = useState(
-    savedBab1?.partnerSupport || 'Ayah yang rela membelikan biskuit jahe jam 11 malam dan memijat punggung bunda setiap subuh...'
+    savedBab1?.partnerSupport || ''
   );
 
   // Save changes automatically so TabJurnal and PrintStudio stay in sync

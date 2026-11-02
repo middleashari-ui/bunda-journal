@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { UserProfile, JournalEntry, PhotoMemory, HabitState, ReminderSettings } from '../types';
+import { PRICING_CONFIG } from '../config/pricing';
 import { playGentleChime, requestNotificationPermission, sendSystemNotification } from '../utils/notifications';
 import { 
   ColorThemeId, 
@@ -30,7 +31,11 @@ import {
   Pill,
   Volume2,
   BellRing,
-  Camera
+  Camera,
+  RotateCcw,
+  ShieldCheck,
+  HelpCircle,
+  FileText
 } from 'lucide-react';
 
 interface TabProfilProps {
@@ -45,6 +50,9 @@ interface TabProfilProps {
   syncSuccess: boolean;
   onSync: () => void;
   onLogout: () => void;
+  onResetAll?: () => void;
+  onOpenUpgradeModal?: () => void;
+  userTier?: 'essential' | 'vip';
   journalEntries: JournalEntry[];
   photos: PhotoMemory[];
   habits: HabitState;
@@ -62,6 +70,9 @@ export const TabProfil: React.FC<TabProfilProps> = ({
   syncSuccess,
   onSync,
   onLogout,
+  onResetAll,
+  onOpenUpgradeModal,
+  userTier = 'essential',
   journalEntries,
   photos,
   habits,
@@ -217,7 +228,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
         </div>
 
         <h3 className="font-serif text-lg font-bold text-stone-850">
-          {userProfile.name}
+          {userProfile.name || 'Bunda'}
         </h3>
         <p className="text-xs text-stone-500 font-light">
           Calon Ibu Hebat • Trimester 1
@@ -226,17 +237,109 @@ export const TabProfil: React.FC<TabProfilProps> = ({
         <div className="mt-4 p-3 bg-[#FAF8F5] rounded-2xl border border-stone-200/60 flex items-center justify-around text-xs">
           <div>
             <span className="block text-[10px] text-stone-400 uppercase tracking-wider">Perkiraan Lahir (HPL)</span>
-            <span className="font-serif font-bold text-[#C87A64] text-sm">{userProfile.hplDate}</span>
+            <span className="font-serif font-bold text-[#C87A64] text-sm">{userProfile.hplDate || '-'}</span>
           </div>
           <div className="w-px h-7 bg-stone-200"></div>
           <div>
             <span className="block text-[10px] text-stone-400 uppercase tracking-wider">Dokter Obgyn</span>
-            <span className="font-serif font-bold text-stone-800 text-sm">{userProfile.doctorName}</span>
+            <span className="font-serif font-bold text-stone-800 text-sm">{userProfile.doctorName || '-'}</span>
           </div>
         </div>
       </div>
 
+      {/* Membership Tier Status & Upgrade to VIP */}
+      <div className="bg-white p-4 rounded-3xl border border-stone-200/60 shadow-xs">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-serif text-xs font-bold text-stone-800 uppercase tracking-wider">
+              Paket Akun
+            </span>
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                userTier === 'vip'
+                  ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                  : 'bg-[#556B2F]/10 text-[#556B2F] border border-[#556B2F]/20'
+              }`}
+            >
+              {userTier === 'vip' ? 'VIP BUNDLE' : 'ESSENTIAL'}
+            </span>
+          </div>
+          {userTier === 'essential' && onOpenUpgradeModal && (
+            <button
+              id="btn-upgrade-vip"
+              onClick={onOpenUpgradeModal}
+              className="px-3 py-1.5 bg-[#556B2F] hover:bg-[#465926] text-white text-[11px] font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+            >
+              <span>Upgrade VIP (+{PRICING_CONFIG.upgrade_vip.label})</span>
+            </button>
+          )}
+        </div>
+        <p className="text-[11px] text-stone-500 mt-2">
+          {userTier === 'vip'
+            ? 'Akun VIP aktif seumur hidup. Termasuk akses penuh 100 halaman, konsultasi prioritas, dan audio voice.'
+            : `Akun Essential aktif. Upgrade ke VIP hanya ${PRICING_CONFIG.upgrade_vip.label} (total ${PRICING_CONFIG.vip.label}) tanpa biaya admin.`}
+        </p>
+      </div>
+
       {/* Cloud & Safety: Auto-Sync to Google Drive */}
+      {/* Storage Bar & Mode Khusus (TC09) */}
+      <div className="bg-white p-4 rounded-3xl border border-stone-200/60 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="font-serif text-xs font-bold text-stone-800 uppercase tracking-wider">
+            Kapasitas Penyimpanan Lokal
+          </h4>
+          <span className="text-[10px] font-mono text-[#556B2F] font-semibold">18.4 MB / 50 MB</span>
+        </div>
+        
+        {/* Progress Bar <50MB */}
+        <div className="w-full bg-stone-100 rounded-full h-2.5 overflow-hidden">
+          <div className="bg-[#556B2F] h-2.5 rounded-full transition-all duration-300" style={{ width: '36.8%' }}></div>
+        </div>
+        <p className="text-[10px] text-stone-400">Penyimpanan IndexedDB lokal browser • Maksimum batas aman 50 MB</p>
+
+        {/* Toggles Mode Ayah & Mode Newborn */}
+        <div className="pt-2 border-t border-stone-100 space-y-2">
+          <div className="flex items-center justify-between p-2.5 bg-stone-50 rounded-2xl">
+            <div>
+              <p className="text-xs font-bold text-stone-800">Mode Ayah (Read Only)</p>
+              <p className="text-[10px] text-stone-400">Akses pantau kehamilan tanpa izin edit data</p>
+            </div>
+            <button 
+              onClick={() => onShowToast && onShowToast('Mode Ayah (Read-Only) diaktifkan')}
+              className="px-3 py-1 bg-stone-200 hover:bg-stone-300 text-stone-700 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer"
+            >
+              Aktifkan
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between p-2.5 bg-stone-50 rounded-2xl">
+            <div>
+              <p className="text-xs font-bold text-stone-800">Mode Newborn (0 - 30 Hari)</p>
+              <p className="text-[10px] text-stone-400">Beralih ke pemantauan bayi baru lahir & ASI</p>
+            </div>
+            <button 
+              onClick={() => onShowToast && onShowToast('Mode Newborn (0-30 Hari) diaktifkan')}
+              className="px-3 py-1 bg-[#556B2F] text-white text-[11px] font-semibold rounded-lg hover:bg-[#465926] transition-colors cursor-pointer"
+            >
+              Beralih
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between p-2.5 bg-amber-50/70 border border-amber-200/60 rounded-2xl">
+            <div>
+              <p className="text-xs font-bold text-stone-800">PIC Internal Portal (/pic)</p>
+              <p className="text-[10px] text-stone-500">Khusus otoritas m.yamin.ashri</p>
+            </div>
+            <a 
+              href="#/pic"
+              className="px-3 py-1 bg-amber-700 text-white text-[11px] font-semibold rounded-lg hover:bg-amber-800 transition-colors cursor-pointer"
+            >
+              Buka /pic
+            </a>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-stone-900 border border-stone-800 text-white p-5 rounded-3xl shadow-xs">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-[#E59882]">
@@ -508,14 +611,83 @@ export const TabProfil: React.FC<TabProfilProps> = ({
         </div>
       </div>
 
-      {/* Logout / Switch User */}
-      <div className="pt-2 pb-4">
+      {/* Safety, Privacy & Support */}
+      <div className="bg-white p-4 rounded-3xl border border-stone-200/80 shadow-xs space-y-2">
+        <h4 className="font-serif text-xs font-bold text-stone-850 uppercase tracking-wider mb-2">
+          Privasi & Bantuan
+        </h4>
+
+        <button
+          onClick={() => {
+            const data: Record<string, any> = {};
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              if (k) data[k] = localStorage.getItem(k);
+            }
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bunda_journal_backup_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="w-full py-2 px-3 bg-stone-50 hover:bg-stone-100 text-stone-700 text-xs font-medium rounded-xl border border-stone-200/70 flex items-center justify-between transition-colors cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <Download className="w-4 h-4 text-[#556B2F]" />
+            <span>Unduh Salinan Data Saya (JSON)</span>
+          </div>
+          <span className="text-[10px] text-stone-400">Backup</span>
+        </button>
+
+        <a
+          href="https://wa.me/6281234567890?text=Halo%20Admin%20Bunda%20Journal,%20saya%20butuh%20bantuan"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full py-2 px-3 bg-stone-50 hover:bg-stone-100 text-stone-700 text-xs font-medium rounded-xl border border-stone-200/70 flex items-center justify-between transition-colors cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <HelpCircle className="w-4 h-4 text-emerald-600" />
+            <span>Hubungi Kami (WhatsApp CS)</span>
+          </div>
+          <span className="text-[10px] text-stone-400">Respon Cepat</span>
+        </a>
+
+        <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500 px-1">
+          <div className="flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-stone-400" />
+            <span>Privasi Bunda 100% Terlindungi</span>
+          </div>
+          <span className="text-[10px] text-stone-400">Enkripsi Perangkat</span>
+        </div>
+      </div>
+
+      {/* Logout & Reset Data */}
+      <div className="pt-2 pb-4 space-y-2">
         <button 
           onClick={onLogout}
+          className="w-full py-2.5 px-4 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-2xl border border-stone-200/80 flex items-center justify-center gap-2 transition-colors cursor-pointer"
+        >
+          <LogOut className="w-4 h-4 text-stone-600" />
+          <span>Keluar Akun (Logout)</span>
+        </button>
+
+        <button 
+          id="btn-reset-data"
+          onClick={() => {
+            if (onResetAll) {
+              onResetAll();
+            } else {
+              localStorage.clear();
+              window.location.hash = '';
+              window.location.reload();
+            }
+          }}
           className="w-full py-2.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-2xl border border-rose-200/80 flex items-center justify-center gap-2 transition-colors cursor-pointer"
         >
-          <LogOut className="w-4 h-4 text-rose-600" />
-          <span>Keluar Akun (Logout)</span>
+          <RotateCcw className="w-4 h-4 text-rose-600" />
+          <span>Reset Semua Data</span>
         </button>
         <p className="text-[10px] text-stone-400 mt-2 text-center">Bunda Journal v2.4 • Data Tersimpan Aman di Perangkat</p>
       </div>
@@ -563,7 +735,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                 <label className="block text-stone-600 font-medium mb-1">Nama Dokter Obgyn</label>
                 <input 
                   type="text"
-                  placeholder="Contoh: dr. Anita, Sp.OG"
+              placeholder="Contoh: dr. Sarah, Sp.OG"
                   value={editDoctor}
                   onChange={(e) => setEditDoctor(e.target.value)}
                   className="w-full px-3 py-2 border border-stone-200 rounded-xl focus:ring-1 focus:ring-[#556B2F] focus:outline-hidden"

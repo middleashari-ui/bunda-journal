@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PhotoMemory, JournalEntry, UserProfile, BookOrder } from '../types';
+import { PRICING_CONFIG } from '../config/pricing';
 import { 
   BookOpen, 
   Check, 
@@ -10,15 +11,19 @@ import {
   Eye, 
   Gift, 
   X,
-  CreditCard
+  CreditCard,
+  Sparkles
 } from 'lucide-react';
 
 interface TabKatalogProps {
   userProfile: UserProfile;
   photos: PhotoMemory[];
   journalText: string;
+  isPaid?: boolean;
+  userTier?: 'essential' | 'vip';
   onOpenBookPreview: () => void;
   onGoToJournal?: () => void;
+  onOpenUpgradeModal?: () => void;
   onPlaceOrder: (order: BookOrder) => void;
 }
 
@@ -26,20 +31,23 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
   userProfile,
   photos,
   journalText,
+  isPaid = false,
+  userTier = 'essential',
   onOpenBookPreview,
   onGoToJournal,
+  onOpenUpgradeModal,
   onPlaceOrder,
 }) => {
   const [selectedColor, setSelectedColor] = useState<BookOrder['coverColor']>('sage');
   const [selectedFoil, setSelectedFoil] = useState<BookOrder['foilColor']>('gold');
   const [bookTitle, setBookTitle] = useState('Surat Pertama untuk Malaikat Kecilku');
-  const [authorName, setAuthorName] = useState(userProfile.name || 'Bunda Jessica');
+  const [authorName, setAuthorName] = useState(userProfile.name || '');
   
   // Checkout Modal State
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
-  const [recipientName, setRecipientName] = useState(userProfile.name || 'Bunda Jessica');
-  const [phone, setPhone] = useState('0812-3456-7890');
-  const [shippingAddress, setShippingAddress] = useState('Jl. Senopati No. 42, Kebayoran Baru, Jakarta Selatan');
+  const [recipientName, setRecipientName] = useState(userProfile.name || '');
+  const [phone, setPhone] = useState('');
+  const [shippingAddress, setShippingAddress] = useState('');
   const [isOrdering, setIsOrdering] = useState(false);
 
   const colors = [
@@ -119,33 +127,53 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
 
         {/* Price & Action Strip */}
         <div className="flex items-center justify-between px-2 pt-1">
-          <div className="text-left">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-stone-400 line-through">Rp 399.000</span>
-              <span className="font-serif text-2xl font-bold text-[#C87A64]">Rp 249.000</span>
+          {userTier === 'vip' ? (
+            <div className="text-left">
+              <span className="inline-block px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                ✓ VIP ACCESS AKTIF
+              </span>
+              <p className="text-[10px] text-stone-500 mt-0.5">Format 100 Halaman + Voice QR siap diproses</p>
             </div>
-            <p className="text-[10px] text-stone-500">Hemat 38% • Pre-order Bundling</p>
-          </div>
-
-        <div className="flex items-center gap-2">
-          {onGoToJournal && (
-            <button
-              onClick={onGoToJournal}
-              className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 border border-stone-200"
-            >
-              <span>Isi Jurnal</span>
-              <ArrowRight className="w-3.5 h-3.5 text-[#556B2F]" />
-            </button>
+          ) : (
+            <div className="text-left">
+              <span className="inline-block px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 text-[10px] font-bold">
+                Tier: Essential (30 Hal)
+              </span>
+              <p className="text-[10px] text-stone-500 mt-0.5">Upgrade VIP untuk 100 Hal + Voice QR</p>
+            </div>
           )}
 
-          <button
-            onClick={onOpenBookPreview}
-            className="px-3.5 py-2 bg-[#556B2F] hover:bg-[#465926] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>Preview 100 Hal</span>
-          </button>
-        </div>
+          <div className="flex items-center gap-2">
+            {onGoToJournal && (
+              <button
+                onClick={onGoToJournal}
+                className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-[11px] font-medium flex items-center gap-1 transition-all shadow-2xs cursor-pointer border border-stone-200"
+              >
+                <span>Isi Jurnal</span>
+                <ArrowRight className="w-3 h-3 text-[#556B2F]" />
+              </button>
+            )}
+
+            {userTier === 'vip' ? (
+              <button
+                id="btn-lihat-100-hal"
+                onClick={onOpenBookPreview}
+                className="px-3 py-1.5 bg-[#556B2F] hover:bg-[#465926] text-white rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Lihat 100 Halaman</span>
+              </button>
+            ) : (
+              <button
+                id="btn-upgrade-studio"
+                onClick={onOpenUpgradeModal}
+                className="px-3 py-1.5 bg-[#C87A64] hover:bg-[#b56b56] text-white rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Upgrade ke VIP - Tambah {PRICING_CONFIG.upgrade_vip.label}</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -208,19 +236,29 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
           {onGoToJournal && (
             <button
               onClick={onGoToJournal}
-              className="flex-1 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-stone-250 shadow-2xs"
+              className="flex-1 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-stone-250 shadow-2xs"
             >
               <span>Lanjut Isi Jurnal</span>
               <ArrowRight className="w-3.5 h-3.5 text-[#556B2F]" />
             </button>
           )}
-          <button
-            onClick={onOpenBookPreview}
-            className="flex-1 py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-amber-300" />
-            <span>Tinjau 100 Halaman</span>
-          </button>
+          {userTier === 'vip' ? (
+            <button
+              onClick={onOpenBookPreview}
+              className="flex-1 py-2 bg-[#556B2F] hover:bg-[#465926] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Lihat 100 Halaman</span>
+            </button>
+          ) : (
+            <button
+              onClick={onOpenUpgradeModal}
+              className="flex-1 py-2 bg-[#C87A64] hover:bg-[#b56b56] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Upgrade VIP ({PRICING_CONFIG.upgrade_vip.label})</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -337,18 +375,43 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
         </div>
       </div>
 
-      {/* CTA Button */}
-      <div className="pt-1">
-        <button 
-          onClick={() => setShowCheckoutModal(true)}
-          className="w-full py-4 px-6 rounded-full bg-[#556B2F] text-white font-medium text-sm tracking-wide shadow-md hover:bg-[#465926] active:scale-98 transition-all flex items-center justify-center gap-2 group cursor-pointer"
-        >
-          <span>Cetak Jurnalku Sekarang - Rp 249.000</span>
-          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </button>
-        <p className="text-[10px] text-center text-stone-400 mt-2 font-light">
-          Bisa dipesan sekarang dan dicetak saat masa kehamilan bunda selesai
-        </p>
+      {/* CTA Button & Optional Physical Print */}
+      <div className="pt-2 flex flex-col items-center text-center">
+        {userTier === 'vip' ? (
+          <button 
+            id="btn-studio-cta-main"
+            onClick={onOpenBookPreview}
+            className="w-3/5 py-2.5 px-4 rounded-xl bg-[#556B2F] text-white font-medium text-xs tracking-wide shadow-md hover:bg-[#465926] active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Lihat 100 Halaman</span>
+          </button>
+        ) : (
+          <button 
+            id="btn-studio-cta-main"
+            onClick={onOpenUpgradeModal}
+            className="w-3/5 py-2.5 px-4 rounded-xl bg-[#C87A64] text-white font-medium text-xs tracking-wide shadow-md hover:bg-[#b56b56] active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Upgrade ke VIP — Tambah {PRICING_CONFIG.upgrade_vip.label}</span>
+          </button>
+        )}
+
+        {/* Tulisan Kecil Optional Hardcover Fisik di Bawah */}
+        <div className="mt-3 text-center">
+          <p className="text-[11px] text-stone-500 font-normal">
+            Mau cetak fisik?{' '}
+            <button
+              onClick={() => setShowCheckoutModal(true)}
+              className="text-[#556B2F] font-semibold underline underline-offset-2 hover:text-[#465926] cursor-pointer"
+            >
+              Cetak Fisik {PRICING_CONFIG.hardcover.label} — Optional
+            </button>
+          </p>
+          <p className="text-[10px] text-stone-400 mt-0.5 font-light">
+            Buku hardcover linen mewah dikirim ke rumah saat masa kehamilan selesai.
+          </p>
+        </div>
       </div>
 
       {/* Checkout Drawer / Modal */}
@@ -376,7 +439,7 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
                   <p className="font-serif font-bold text-stone-800">{bookTitle}</p>
                   <p className="text-[11px] text-stone-500">Linen: {selectedColor} • Foil: {selectedFoil}</p>
                 </div>
-                <span className="font-bold text-[#C87A64] text-sm">Rp 249.000</span>
+                <span className="font-bold text-[#C87A64] text-sm">{PRICING_CONFIG.hardcover.label}</span>
               </div>
 
               <div>
@@ -414,20 +477,20 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
 
               <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200/50 space-y-1.5 text-[11px]">
                 <div className="flex justify-between text-stone-600">
-                  <span>Harga Buku Hardcover Linen:</span>
-                  <span>Rp 399.000</span>
-                </div>
-                <div className="flex justify-between text-emerald-700 font-medium">
-                  <span>Diskon Bundling Spesial Bunda:</span>
-                  <span>- Rp 150.000</span>
+                  <span>Paket:</span>
+                  <span className="font-semibold text-stone-800">{PRICING_CONFIG.hardcover.name}</span>
                 </div>
                 <div className="flex justify-between text-stone-600">
                   <span>Ongkos Kirim Seluruh Indonesia:</span>
                   <span className="font-bold text-emerald-700">GRATIS</span>
                 </div>
+                <div className="flex justify-between text-stone-500 text-[10px]">
+                  <span>Biaya Admin:</span>
+                  <span>{PRICING_CONFIG.hardcover.adminFeeText}</span>
+                </div>
                 <div className="border-t border-stone-200 pt-1.5 flex justify-between font-bold text-stone-900 text-xs">
                   <span>Total Pembayaran:</span>
-                  <span className="text-[#C87A64] text-sm font-serif">Rp 249.000</span>
+                  <span className="text-[#C87A64] text-sm font-serif">{PRICING_CONFIG.hardcover.label}</span>
                 </div>
               </div>
 

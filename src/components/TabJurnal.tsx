@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { HabitState, PhotoMemory, JournalEntry, UserProfile } from '../types';
 import { getWeekData } from '../data/pregnancyWeeks';
+import { idbSet, addToSyncQueue } from '../lib/idb';
 import { SupplementWaterCard } from './dashboard/SupplementWaterCard';
 import { ActivityRingsCard } from './dashboard/ActivityRingsCard';
 import { 
@@ -24,7 +25,13 @@ import {
   Activity,
   Download,
   Footprints,
-  Home
+  Home,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  MessageCircle,
+  Archive
 } from 'lucide-react';
 
 interface TabJurnalProps {
@@ -76,7 +83,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   const weekData = getWeekData(week);
 
   // -------------------------------------------------------------
-  // BAB 1 STATE (Awal Mula Kisah: Test Pack, USG, Ngidam)
+  // BAB 1 STATE (Awal Mula: Dua Garis, Momen Haru, USG Pertama)
   // -------------------------------------------------------------
   const [bab1Data, setBab1Data] = useState(() => {
     try {
@@ -84,18 +91,18 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
-      testPackDate: 'Sabtu, 14 September 2024',
-      testPackTimePlace: '06:15 Pagi • Kamar Mandi Rumah',
-      motherFeelings: 'Tangan bunda gemetar saat melihat garis samar itu berubah menjadi jelas. Air mata haru langsung menetes di atas wastafel...',
-      fatherReaction: 'Bunda meletakkan kotak kado kecil berisi test pack di samping cangkir kopi ayah. Saat membukanya, ayah terdiam sejenak lalu memeluk bunda erat sekali...',
-      familyReaction: 'Nenek langsung sujud syukur dan menelepon semua keluarga. Doa-doa terbaik mengalir tiada henti untuk kesehatan calon cucu...',
-      hospital: userProfile?.hospitalName || 'RSIA Bunda Menteng',
-      doctor: userProfile?.doctorName || 'dr. Sarah Sp.OG',
-      heartRate: '142 bpm (Normal & Kuat)',
-      heartbeatImpression: 'Bunyinya cepat seperti kepakan sayap burung kecil. Air mata bunda menetes haru di ranjang periksa dokter...',
-      cravings: '1. Buah mangga muda asam manis potong dingin\n2. Sup kaldu ayam jahe hangat buatan nenek\n3. Es air kelapa muda murni di siang hari',
-      avoidedFoods: '• Bau tumisan bawang putih dan minyak panas\n• Kopi hitam pekat\n• Parfum beraroma manis menyengat',
-      partnerSupport: 'Ayah yang rela membelikan biskuit jahe jam 11 malam dan memijat punggung bunda setiap subuh...',
+      testPackDate: '',
+      testPackTimePlace: '',
+      motherFeelings: '',
+      fatherReaction: '',
+      familyReaction: '',
+      hospital: userProfile?.hospitalName || '',
+      doctor: userProfile?.doctorName || '',
+      heartRate: '',
+      heartbeatImpression: '',
+      cravings: '',
+      avoidedFoods: '',
+      partnerSupport: '',
       testPackPhoto: null as string | null,
       usgKantungPhoto: null as string | null,
     };
@@ -126,11 +133,11 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
-      weight: '54.5',
-      waist: '82',
-      bloodPressure: '118/76',
+      weight: '',
+      waist: '',
+      bloodPressure: '',
       sleepHourIndex: 1, // 0: 9+, 1: 7-8, 2: 5-6, 3: <5
-      doctorNote: `• Janin bertumbuh optimal, panjang ~${weekData.lengthCm}, berat ~${weekData.weightGrams}.\n• Detak jantung terpantau baik ${weekData.heartbeatBpm}.\n• Teruskan suplemen asam folat dan cairan minimal 2 liter.`,
+      doctorNote: '',
     };
   });
 
@@ -143,28 +150,28 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
-      candidate1: 'Rayyan Al-Fatih (Pintu surga bagi yang berpuasa & penakluk berbudi luhur)',
-      candidate2: 'Kinanti Ayudia (Tembang harapan yang anggun dan berhati lembut)',
-      candidate3: 'Malik Ibrahim (Pemimpin bijaksana yang teguh hatinya)',
-      candidate4: 'Nayla Salsabila (Anugerah kesuksesan yang mengalir jernih seperti mata air surga)',
-      chosenName: 'Kalandra Atharrazka',
-      chosenMeaning: '"Penerang yang riang gembira dan senantiasa dilimpahi rezeki bersih."',
+      candidate1: '',
+      candidate2: '',
+      candidate3: '',
+      candidate4: '',
+      chosenName: '',
+      chosenMeaning: '',
       nurseryPhoto: null as string | null,
-      nurseryBoxChecked: true,
-      nurseryNetChecked: true,
-      nurseryLampChecked: true,
-      nurseryChairChecked: true,
-      nurseryWardrobeChecked: true,
-      nurseryThermoChecked: true,
+      nurseryBoxChecked: false,
+      nurseryNetChecked: false,
+      nurseryLampChecked: false,
+      nurseryChairChecked: false,
+      nurseryWardrobeChecked: false,
+      nurseryThermoChecked: false,
       // Checklist Belanja
-      clothesChecked: true,
-      bathChecked: true,
-      diapersChecked: true,
-      feedingChecked: true,
+      clothesChecked: false,
+      bathChecked: false,
+      diapersChecked: false,
+      feedingChecked: false,
       // Checklist Tas RS
-      bagMomChecked: true,
-      bagBabyChecked: true,
-      bagDadChecked: true,
+      bagMomChecked: false,
+      bagBabyChecked: false,
+      bagDadChecked: false,
     };
   });
 
@@ -177,17 +184,17 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
-      contractionTime: '02:30 Dini Hari',
-      arrivalTime: '05:45 Subuh',
-      laborStory: 'Setiap gelombang cinta kontraksi bunda hadapi dengan napas panjang. Ayah membisikkan doa dan memegang tangan bunda tanpa sedetik pun melepaskannya. Seluruh rasa sakit sirna seketika saat dokter berkata, "Kepalanya sudah terlihat, Bunda!"...',
-      holdingBabyFeeling: 'Kulit hangatmu diletakkan di dada bunda. Mata manismu berkedip perlahan mencari aroma pelukan ini. Selamat datang di dunia, buah hatiku tersayang...',
-      babyName: 'Kalandra Atharrazka',
-      birthDate: 'Minggu, 18 Mei 2025',
-      birthTime: '09:18 WIB',
-      birthWeight: '3.350 gram (3.35 kg)',
-      birthLength: '50 cm',
-      headCircumference: '34 cm',
-      bloodType: 'O (Rhesus Positif)',
+      contractionTime: '',
+      arrivalTime: '',
+      laborStory: '',
+      holdingBabyFeeling: '',
+      babyName: '',
+      birthDate: '',
+      birthTime: '',
+      birthWeight: '',
+      birthLength: '',
+      headCircumference: '',
+      bloodType: '',
       birthPhoto: null as string | null,
       leftFootprintPhoto: null as string | null,
       rightFootprintPhoto: null as string | null,
@@ -205,10 +212,10 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
-      bundaLetter: 'Anakku sayang,\n\nSaat kamu membaca surat ini, mungkin jemari tanganmu sudah jauh lebih besar dari jemari mungil yang dulu bunda genggam erat di ruang bersalin. Waktu berlalu begitu cepat, nak.\n\nBunda menulis lembaran ini saat kamu baru beberapa hari terlelap di dada bunda. Rasanya baru kemarin bunda merasakan detak jantungmu pertama kali di layar USG yang remang. Ketahuilah, sejak hari pertama tahu kehadiranmu, doa bunda tidak pernah berhenti mengalir untuk setiap helaan napasmu...\n\nJadilah pribadi yang berhati lembut, teguh membela kebenaran, dan selalu bersyukur atas hal-hal sederhana. Di saat dunia luar terasa begitu bising dan melelahkan, ingatlah bahwa pelukan bunda dan rumah ini akan selalu menjadi dermaga teraman tempatmu berlabuh pulang.\n\nTerima kasih telah memilih bunda menjadi ibumu di dunia ini. Kamu adalah kebanggaan terbesar dalam hidup bunda.',
-      bundaSignName: userProfile?.name || 'Bunda Jessica',
-      ayahLetter: 'Wahai buah hatiku,\n\nSaat kamu membaca surat ini, mungkin pundak ayah sudah tak sekuat dulu lagi untuk menggendongmu di atas bahu mengelilingi taman. Namun ketahuilah, rasa cinta dan perlindungan ayah kepadamu tak akan pernah luntur sedetik pun.\n\nAyah mungkin tidak selalu pandai merangkai kata seindah bundamu. Tapi di setiap tetes peluh kerja keras ayah, ada namamu yang selalu ayah sebut dalam sujud. Ayah ingin kamu tumbuh menjadi insan yang jujur, berani bermimpi besar, dan pantang menyerah...\n\nJangan pernah takut gagal, nak. Gagal adalah tanda bahwa kamu sedang berjuang keras menggapai cita-cita mulia. Ayah akan selalu ada di belakangmu, menjadi dinding kokoh yang menopang langkahmu.\n\nHormatilah ibumu yang telah mengandungmu selama 9 bulan penuh pengorbanan suci. Bahagiakan dia di setiap hembusan usiamu.\n\nDengan rasa bangga yang tak terhingga,\nAyahmu.',
-      ayahSignName: 'Ayah Tersayang',
+      bundaLetter: '',
+      bundaSignName: userProfile?.name || '',
+      ayahLetter: '',
+      ayahSignName: '',
     };
   });
 
@@ -218,15 +225,160 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     window.dispatchEvent(new Event('bunda_journal_updated'));
   }, [bab1Data]);
 
-  // Dedicated handlers that write strictly to the active week key in localStorage
+  // Debounce autosave timer ref & save feedback status
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [saveStatus, setSaveStatus] = useState<string>('Tersimpan otomatis');
+
+  interface DailyNoteEntry {
+    text: string;
+    savedAt: string;
+    status: 'Selesai' | 'Belum';
+  }
+
+  const loadDayNotesForWeek = (w: number, currentDailyNotes: Record<string, string>) => {
+    const result: Record<number, DailyNoteEntry> = {};
+    const dayKeys = ['Rab', 'Kam', 'Jum', 'Sab', 'Min', 'Sen', 'Sel'];
+    for (let i = 0; i < 7; i++) {
+      try {
+        const saved = localStorage.getItem(`bunda_${w}_${i}_catatan`);
+        if (saved) {
+          result[i] = JSON.parse(saved);
+          continue;
+        }
+      } catch {}
+      const existing = currentDailyNotes[dayKeys[i]] || '';
+      result[i] = {
+        text: existing,
+        savedAt: existing ? '19:15' : '',
+        status: existing.trim() ? 'Selesai' : 'Belum',
+      };
+    }
+    return result;
+  };
+
+  const [dayNotesMap, setDayNotesMap] = useState<Record<number, DailyNoteEntry>>(() => {
+    return loadDayNotesForWeek(week, dailyNotes);
+  });
+  const [openAccordionDayIndex, setOpenAccordionDayIndex] = useState<number | null>(null);
+
+  // POIN 2 State: Jadwal Pertemuan Dokter Selanjutnya (Booking / Booked)
+  const [jadwalUsg, setJadwalUsg] = useState<{
+    status: 'PERLU BOOK' | 'BOOKED';
+    dokter: string;
+    rs: string;
+    tanggal: string;
+  }>(() => {
+    try {
+      const saved = localStorage.getItem('bunda_jadwal_usg');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      status: 'BOOKED',
+      dokter: 'Dr sabh spog',
+      rs: userProfile?.hospitalName || 'RSIA Bunda Menteng',
+      tanggal: 'Kamis 5 Nov 2026 09:00 WIB',
+    };
+  });
+
+  // State Arsip Catatan Dokter Collapsed (44px)
+  const [isArsipDokterOpen, setIsArsipDokterOpen] = useState<boolean>(false);
+  const [arsipDokterList, setArsipDokterList] = useState<Array<{
+    week: number;
+    date: string;
+    weight: string;
+    waist: string;
+    bp: string;
+    note: string;
+    doctor: string;
+  }>>(() => {
+    const list = [];
+    try {
+      for (let w = 1; w <= 42; w++) {
+        const raw = localStorage.getItem(`bunda_momstats_w${w}`);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.doctorNote || parsed?.weight || parsed?.waist || parsed?.bloodPressure) {
+            list.push({
+              week: w,
+              date: `Minggu ke-${w}`,
+              weight: parsed.weight || '-',
+              waist: parsed.waist || '-',
+              bp: parsed.bloodPressure || '-',
+              note: parsed.doctorNote || 'Pemeriksaan rutin berjalan lancar.',
+              doctor: userProfile?.doctorName || 'Dr sabh spog',
+            });
+          }
+        }
+      }
+    } catch {}
+    if (list.length === 0) {
+      return [
+        { week: 16, date: 'Minggu ke-16', weight: '54.5 kg', waist: '82 cm', bp: '118/76', note: 'Detak jantung janin 148 bpm normal, ketuban cukup, lanjutkan konsumsi kalsium & asam folat.', doctor: 'Dr sabh spog' },
+        { week: 12, date: 'Minggu ke-12', weight: '52.0 kg', waist: '76 cm', bp: '115/75', note: 'Hasil skrining trimester 1 baik, janin aktif berkembang.', doctor: 'Dr sabh spog' },
+        { week: 8, date: 'Minggu ke-8', weight: '50.5 kg', waist: '72 cm', bp: '110/70', note: 'Kantung kehamilan intrakranial terkonfirmasi baik, CRL sesuai usia gestasi.', doctor: 'Dr sabh spog' },
+        { week: 6, date: 'Minggu ke-6', weight: '50.0 kg', waist: '70 cm', bp: '112/72', note: 'Denyut jantung janin perdana terdeteksi jelas.', doctor: 'Dr sabh spog' },
+        { week: 4, date: 'Minggu ke-4', weight: '49.8 kg', waist: '69 cm', bp: '110/70', note: 'Konfirmasi hasil tespack positif, edukasi nutrisi awal kehamilan.', doctor: 'Dr sabh spog' },
+      ];
+    }
+    return list;
+  });
+
+  // POIN 3 State: Bingkai 4/5 Foto dalam 1 Bulan
+  const [monthPhotos, setMonthPhotos] = useState<Record<number, { url: string; label: string; date: string } | null>>(() => {
+    const initial: Record<number, { url: string; label: string; date: string } | null> = {};
+    for (let i = 0; i < 5; i++) {
+      try {
+        const saved = localStorage.getItem(`bunda_${week}_foto_${i}`);
+        if (saved) {
+          initial[i] = JSON.parse(saved);
+          continue;
+        }
+      } catch {}
+      initial[i] = null;
+    }
+    return initial;
+  });
+
+  // Dedicated handlers with 500ms debounce save & IndexedDB write queue
   const handleUpdateDailyNote = (dayKey: string, val: string) => {
     const trimmed = val.slice(0, 100);
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const status: 'Selesai' | 'Belum' = trimmed.trim() ? 'Selesai' : 'Belum';
+
+    const updatedEntry: DailyNoteEntry = {
+      text: trimmed,
+      savedAt: timeStr,
+      status,
+    };
+
+    setDayNotesMap(prev => ({
+      ...prev,
+      [selectedDayIndex]: updatedEntry,
+    }));
+
+    try {
+      localStorage.setItem(`bunda_${week}_${selectedDayIndex}_catatan`, JSON.stringify(updatedEntry));
+    } catch {}
+
     setDailyNotes(prev => {
       const updated = { ...prev, [dayKey]: trimmed };
-      try {
-        localStorage.setItem(`bunda_daily_w${week}`, JSON.stringify(updated));
-        window.dispatchEvent(new Event('bunda_journal_updated'));
-      } catch {}
+      setSaveStatus('Menyimpan...');
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = setTimeout(async () => {
+        try {
+          const str = JSON.stringify(updated);
+          localStorage.setItem(`bunda_daily_w${week}`, str);
+          await idbSet(`bunda_daily_w${week}`, updated);
+          await addToSyncQueue({
+            table: 'bunda_daily_notes',
+            data: { week, notes: updated },
+            action: 'upsert'
+          });
+          window.dispatchEvent(new Event('bunda_journal_updated'));
+          setSaveStatus(`Tersimpan ${timeStr}`);
+        } catch {}
+      }, 500);
       return updated;
     });
     if (dayKey === 'Sen') {
@@ -237,10 +389,24 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   const handleUpdateMomStats = (key: string, val: any) => {
     setMomStats((prev: any) => {
       const updated = { ...prev, [key]: val };
-      try {
-        localStorage.setItem(`bunda_momstats_w${week}`, JSON.stringify(updated));
-        window.dispatchEvent(new Event('bunda_journal_updated'));
-      } catch {}
+      setSaveStatus('Menyimpan...');
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = setTimeout(async () => {
+        try {
+          const str = JSON.stringify(updated);
+          localStorage.setItem(`bunda_momstats_w${week}`, str);
+          await idbSet(`bunda_momstats_w${week}`, updated);
+          await addToSyncQueue({
+            table: 'bunda_momstats',
+            data: { week, stats: updated },
+            action: 'upsert'
+          });
+          window.dispatchEvent(new Event('bunda_journal_updated'));
+          const now = new Date();
+          const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+          setSaveStatus(`Tersimpan ${timeStr}`);
+        } catch {}
+      }, 500);
       return updated;
     });
   };
@@ -269,7 +435,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       } else {
         // If this specific week has no saved notes, show clean empty notes for all days
         const matched = pastEntries.find(e => e.week === week);
-        const initialSen = matched?.text ? matched.text.slice(0, 80) : (week === 12 && journalText ? journalText.slice(0, 80) : '');
+        const initialSen = matched?.text ? matched.text.slice(0, 80) : '';
         setDailyNotes({
           Sen: initialSen,
           Sel: '',
@@ -285,13 +451,12 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       if (savedStats) {
         setMomStats(JSON.parse(savedStats));
       } else {
-        const weekInfo = getWeekData(week);
         setMomStats({
-          weight: '54.5',
-          waist: '82',
-          bloodPressure: '118/76',
+          weight: '',
+          waist: '',
+          bloodPressure: '',
           sleepHourIndex: 1,
-          doctorNote: `• Janin bertumbuh optimal, panjang ~${weekInfo.lengthCm}, berat ~${weekInfo.weightGrams}.\n• Detak jantung terpantau baik ${weekInfo.heartbeatBpm}.\n• Teruskan suplemen asam folat dan cairan minimal 2 liter.`,
+          doctorNote: '',
         });
       }
     } catch {}
@@ -310,26 +475,115 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        if (event.target?.result) {
-          callback(event.target.result as string);
-        }
+        const rawUrl = event.target?.result as string;
+        if (!rawUrl) return;
+
+        // Auto compress canvas -> WebP 500px polaroid size
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 500;
+          let w = img.width;
+          let h = img.height;
+          if (w > h && w > maxDim) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else if (h > maxDim) {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, w, h);
+            try {
+              const webpData = canvas.toDataURL('image/webp', 0.85);
+              callback(webpData);
+              return;
+            } catch (err) {
+              console.warn('WebP export fallback', err);
+            }
+          }
+          callback(rawUrl);
+        };
+        img.src = rawUrl;
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const daysList = [
-    { key: 'Sen', label: 'Senin' },
-    { key: 'Sel', label: 'Selasa' },
-    { key: 'Rab', label: 'Rabu' },
-    { key: 'Kam', label: 'Kamis' },
-    { key: 'Jum', label: 'Jumat' },
-    { key: 'Sab', label: 'Sabtu' },
-    { key: 'Min', label: 'Minggu' },
-  ];
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(3); // 3 is Sab (Hari ini pada default week 32)
+
+  useEffect(() => {
+    const handleReturnToday = (e: any) => {
+      setSelectedDayIndex(3);
+      if (e?.detail?.week) {
+        setWeek(e.detail.week);
+      }
+    };
+    window.addEventListener('bunda_return_today', handleReturnToday);
+    return () => window.removeEventListener('bunda_return_today', handleReturnToday);
+  }, [setWeek]);
+
+  const DAY_KEYS = ['Rab', 'Kam', 'Jum', 'Sab', 'Min', 'Sen', 'Sel'];
+  const DAY_LABELS = ['RAB', 'KAM', 'JUM', 'SAB', 'MIN', 'SEN', 'SEL'];
+  const DAY_NAMES_FULL = ['Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu', 'Senin', 'Selasa'];
+  const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+  const getWeekDays = (activeWeek: number) => {
+    const baseToday = new Date(2026, 9, 31); // 31 Okt 2026 (Sabtu)
+    return DAY_KEYS.map((key, i) => {
+      const d = new Date(baseToday);
+      const dayOffset = (i - 3) + (activeWeek - 32) * 7;
+      d.setDate(baseToday.getDate() + dayOffset);
+      const isToday = (
+        d.getFullYear() === baseToday.getFullYear() &&
+        d.getMonth() === baseToday.getMonth() &&
+        d.getDate() === baseToday.getDate()
+      );
+      return {
+        key,
+        label: DAY_LABELS[i],
+        dayNameFull: DAY_NAMES_FULL[i],
+        dateNum: d.getDate(),
+        monthLabel: MONTH_NAMES[d.getMonth()],
+        year: d.getFullYear(),
+        isToday,
+      };
+    });
+  };
+
+  // Reload dayNotesMap & monthPhotos on week change
+  useEffect(() => {
+    setDayNotesMap(loadDayNotesForWeek(week, dailyNotes));
+    const updatedPhotos: Record<number, { url: string; label: string; date: string } | null> = {};
+    for (let i = 0; i < 5; i++) {
+      try {
+        const saved = localStorage.getItem(`bunda_${week}_foto_${i}`);
+        if (saved) {
+          updatedPhotos[i] = JSON.parse(saved);
+          continue;
+        }
+      } catch {}
+      updatedPhotos[i] = null;
+    }
+    setMonthPhotos(updatedPhotos);
+  }, [week]);
+
+  // Dispatch day change for PLUS SYNC (bunda_{week}_{dayIndex}_suplemen, hidrasi, jasmani)
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('bunda_day_selected', {
+      detail: { week, dayIndex: selectedDayIndex }
+    }));
+  }, [week, selectedDayIndex]);
+
+  const dynamicWeekDays = getWeekDays(week);
+  const activeDay = dynamicWeekDays[selectedDayIndex] || dynamicWeekDays[3];
+  const activeNote = dayNotesMap[selectedDayIndex]?.text !== undefined ? dayNotesMap[selectedDayIndex].text : (dailyNotes[activeDay.key] || '');
 
   return (
-    <div className="px-4 py-3 space-y-3.5 max-w-xl mx-auto">
+    <div className="px-4 pt-3 pb-28 space-y-3.5 max-w-xl mx-auto">
       {/* Chapter Navigation Selector (Mirrors Catalog Structure) */}
       <div className="flex overflow-x-auto no-scrollbar gap-1.5 p-1 bg-stone-200/70 rounded-xl border border-stone-300/60">
         <button
@@ -394,131 +648,332 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       {activeChapter === 'bab2' && (
         <div className="space-y-3.5 animate-in fade-in duration-150">
           {/* Week Selector Slider */}
-          <div className="bg-white p-3.5 rounded-2xl border border-stone-200/70 shadow-xs">
-            <div className="flex items-center justify-between text-xs mb-2">
-              <span className="font-serif font-bold text-stone-850 text-sm">
-                Minggu ke-{week} dari 40
-              </span>
-              <span className="font-semibold text-[#556B2F] bg-[#556B2F]/10 px-2 py-0.5 rounded-full text-[10.5px]">
-                {weekData.fruitEmoji} Seukuran {weekData.fruitName} ({weekData.lengthCm})
-              </span>
+          {(!pastEntries || pastEntries.length === 0) && Object.values(dailyNotes).every(v => !v || v.trim() === '') && (
+            <div id="journal-empty-state" className="bg-[#FAF8F5] p-5 rounded-2xl border-2 border-dashed border-[#556B2F]/30 text-center space-y-2.5">
+              <div className="w-10 h-10 mx-auto rounded-full bg-[#556B2F]/10 flex items-center justify-center text-[#556B2F]">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-serif font-bold text-stone-850 text-sm">
+                  Belum ada jurnal, yuk isi hari ini
+                </h4>
+                <p className="text-xs text-stone-500 font-light mt-0.5">
+                  Tulis catatan harian pertamamu untuk mengabadikan momen kehamilan berharga ini.
+                </p>
+              </div>
+              <button
+                type="button"
+                id="btn-isi-jurnal-pertama"
+                onClick={() => {
+                  const firstInput = document.querySelector('textarea');
+                  if (firstInput) {
+                    firstInput.focus();
+                    firstInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#556B2F] hover:bg-[#465926] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
+              >
+                <span>Isi Jurnal Pertama</span>
+              </button>
+            </div>
+          )}
+
+          {/* Week Navigation Header: 44px push buttons + Lora Bold + Day count */}
+          <div className="bg-white p-3.5 rounded-2xl border border-stone-200/70 shadow-xs flex items-center justify-between">
+            <button
+              type="button"
+              id="btn-prev-week"
+              disabled={week <= 5}
+              onClick={() => {
+                if (week > 5) setWeek(week - 1);
+              }}
+              className="w-11 h-11 rounded-full flex items-center justify-center border border-stone-200 bg-stone-50 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed text-stone-700 transition-colors cursor-pointer shrink-0"
+              title="Minggu Sebelumnya"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <div className="text-center px-2">
+              <h3 className="font-serif font-bold text-base text-stone-900 tracking-tight">
+                Minggu {week} {weekData.fruitName}
+              </h3>
+              <p className="text-[11px] text-stone-500 font-sans mt-0.5">
+                Hari {week * 7}
+              </p>
             </div>
 
-            <input 
-              type="range"
-              min="5"
-              max="40"
-              value={week}
-              onChange={(e) => setWeek(Number(e.target.value))}
-              className="w-full accent-[#556B2F] cursor-pointer h-2 bg-stone-100 rounded-lg"
-            />
+            <button
+              type="button"
+              id="btn-next-week"
+              disabled={week >= 40}
+              onClick={() => {
+                if (week < 40) setWeek(week + 1);
+              }}
+              className="w-11 h-11 rounded-full flex items-center justify-center border border-stone-200 bg-stone-50 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed text-stone-700 transition-colors cursor-pointer shrink-0"
+              title="Minggu Berikutnya"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
 
-            <div className="flex justify-between items-center mt-1.5 text-[10px] text-stone-400">
-              <span className={week <= 13 ? 'text-[#556B2F] font-bold' : ''}>Trimester 1 (W1-13)</span>
-              <span className={week > 13 && week <= 27 ? 'text-[#C87A64] font-bold' : ''}>Trimester 2 (W14-27)</span>
-              <span className={week > 27 ? 'text-[#556B2F] font-bold' : ''}>Trimester 3 (W28-40)</span>
+          {/* Day Strip Navigation (7 Hari) */}
+          <div className="space-y-2">
+            <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+              {dynamicWeekDays.map((day, idx) => {
+                const isSelected = selectedDayIndex === idx;
+                const noteItem = dayNotesMap[idx];
+                const noteContent = noteItem?.text !== undefined ? noteItem.text : (dailyNotes[day.key] || '');
+                const hasNote = noteContent.trim().length > 0;
+
+                return (
+                  <button
+                    key={day.key}
+                    id={`btn-day-strip-${idx}`}
+                    type="button"
+                    onClick={() => setSelectedDayIndex(idx)}
+                    className={`min-w-[42px] h-[58px] rounded-[10px] flex flex-col items-center justify-center p-1 transition-all cursor-pointer border ${
+                      isSelected
+                        ? 'bg-stone-900 border-stone-900 text-white shadow-xs'
+                        : hasNote
+                        ? 'bg-white border-[#556B2F]/40 text-stone-850 hover:bg-stone-50'
+                        : day.isToday
+                        ? 'bg-white border-stone-800 text-stone-900 hover:bg-stone-50'
+                        : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50'
+                    }`}
+                  >
+                    <span className={`text-[9px] font-semibold tracking-wider ${
+                      isSelected ? 'text-stone-300' : 'text-stone-400'
+                    }`}>
+                      {day.label}
+                    </span>
+                    <span className={`text-[15px] font-bold leading-tight ${
+                      isSelected ? 'text-white' : 'text-stone-850'
+                    }`}>
+                      {day.dateNum}
+                    </span>
+
+                    {/* Indicator dots: green if note exists, dark if today & no note, square if empty */}
+                    <div className="mt-0.5 flex items-center justify-center h-2">
+                      {hasNote ? (
+                        <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-[#98B06F]' : 'bg-[#556B2F]'}`} />
+                      ) : day.isToday ? (
+                        <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-stone-900'}`} />
+                      ) : (
+                        <span className={`w-1.5 h-1.5 border rounded-xs ${isSelected ? 'border-stone-500' : 'border-stone-300'}`} />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Legend: Hari ini, Sudah dicatat, Belum dicatat */}
+            <div className="flex items-center justify-center gap-4 text-[10px] text-stone-500 pt-0.5">
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-stone-900 inline-block" />
+                Hari ini
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#556B2F] inline-block" />
+                Sudah dicatat
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 border border-stone-400 rounded-xs inline-block" />
+                Belum dicatat
+              </span>
             </div>
           </div>
 
-          {/* Halaman Kiri: Cerita & Perasaan Harian (Senin - Minggu) */}
-          <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-2.5">
-            <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+          {/* Single Box: Catatan Harian Interaktif Terpilih */}
+          <div className="bg-white rounded-[20px] p-4 sm:p-5 border border-[#EDE8DF] shadow-[0_4px_24px_rgba(0,0,0,0.06)] space-y-3">
+            {/* Box Header: Date info left, Fruit Badge right */}
+            <div className="flex items-start justify-between gap-3 border-b border-stone-100 pb-3">
               <div>
-                <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman Kiri Buku Cetak</span>
-                <h4 className="font-serif text-xs font-bold text-stone-850">
-                  Catatan Harian Minggu ke-{week} (Senin s.d. Minggu)
-                </h4>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">
+                  CATATAN BUNDA
+                </span>
+                <div className="flex items-center flex-wrap gap-1.5">
+                  <h4 className="font-serif text-sm font-bold text-stone-900">
+                    {activeDay.dayNameFull}, {activeDay.dateNum} {activeDay.monthLabel} {activeDay.year}
+                  </h4>
+                  {activeDay.isToday && (
+                    <span className="px-1.5 py-0.5 bg-stone-900 text-white rounded text-[9px] font-bold tracking-wide">
+                      HARI INI
+                    </span>
+                  )}
+                  <span className="text-[11px] text-stone-400 font-sans">
+                    • Catat hari ini
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-stone-400 font-sans">
-                  Maks. 100 karakter
+
+              {/* Fruit Icon in 44px circle with week number badge and fruit name */}
+              <div className="flex flex-col items-center shrink-0">
+                <div className="relative w-11 h-11 rounded-full bg-[#F9F6F0] border border-[#EDE8DF] flex items-center justify-center text-xl shadow-2xs">
+                  <span>{weekData.fruitEmoji}</span>
+                  <span className="absolute -top-1 -right-1 px-1.5 py-0.2 bg-[#556B2F] text-white rounded-full text-[9px] font-bold">
+                    W{week}
+                  </span>
+                </div>
+                <span className="text-[9.5px] font-serif font-semibold text-stone-600 mt-1 max-w-[64px] text-center truncate">
+                  {weekData.fruitName}
                 </span>
               </div>
             </div>
 
-            <div className="space-y-2">
-              {daysList.map((day) => {
-                const noteVal = dailyNotes[day.key] || '';
-                const charCount = noteVal.length;
-                return (
-                  <div key={day.key} className="flex flex-col gap-0.5">
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className={`font-bold ${day.key === 'Min' ? 'text-[#C87A64]' : 'text-stone-600'}`}>
-                        {day.label}
-                      </span>
-                      <span className={`font-sans text-[9px] ${charCount >= 100 ? 'text-rose-500 font-bold' : charCount >= 85 ? 'text-amber-600' : 'text-stone-400'}`}>
-                        {charCount}/100
-                      </span>
-                    </div>
-                    <textarea 
-                      rows={2}
-                      maxLength={100}
-                      value={noteVal}
-                      placeholder={`Catatan hari ${day.label}...`}
-                      onChange={(e) => handleUpdateDailyNote(day.key, e.target.value)}
-                      className="w-full text-xs text-stone-850 bg-stone-50/70 hover:bg-stone-50 focus:bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-[#556B2F] transition-colors font-serif italic resize-none leading-snug"
-                    />
-                  </div>
-                );
-              })}
+            {/* Single Fast Native Textarea */}
+            <div>
+              <textarea
+                id="textarea-catatan-harian"
+                rows={4}
+                maxLength={100}
+                value={activeNote}
+                inputMode="text"
+                enterKeyHint="done"
+                placeholder={`Tulis perasaan atau momen Bunda pada hari ${activeDay.dayNameFull}...`}
+                onChange={(e) => handleUpdateDailyNote(activeDay.key, e.target.value)}
+                className="w-full text-xs sm:text-sm text-stone-850 bg-stone-50/60 hover:bg-stone-50 focus:bg-white border border-stone-200 focus:border-[#556B2F] rounded-xl p-3 outline-none transition-colors font-serif italic leading-relaxed min-h-[110px]"
+                style={{ touchAction: 'manipulation' }}
+              />
+
+              {/* Footer: Autosave Status & Character Counter 0/100 */}
+              <div className="flex items-center justify-between text-[11px] mt-1.5 px-0.5">
+                <span className="text-[#556B2F] font-medium font-sans flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#556B2F] animate-pulse" />
+                  {saveStatus}
+                </span>
+                <span className={`font-sans font-medium ${
+                  activeNote.length >= 100
+                    ? 'text-rose-500 font-bold'
+                    : activeNote.length >= 85
+                    ? 'text-amber-600'
+                    : 'text-stone-400'
+                }`}>
+                  {activeNote.length}/100
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Tracker Tidur & Mood */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Pola Tidur */}
-            <div className="bg-white p-3.5 rounded-2xl border border-stone-200/70 shadow-xs">
-              <h4 className="font-serif text-xs font-bold text-stone-850 mb-2">
-                Rata-rata Jam Tidur Bunda
-              </h4>
-              <div className="grid grid-cols-4 gap-1 text-[10px]">
-                {['9+ Jam', '7-8 Jam', '5-6 Jam', '<5 Jam'].map((label, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleUpdateMomStats('sleepHourIndex', idx)}
-                    className={`py-1.5 rounded-lg border text-center transition-colors cursor-pointer ${
-                      momStats.sleepHourIndex === idx
-                        ? 'bg-[#556B2F] border-[#556B2F] text-white font-bold'
-                        : 'border-stone-200 text-stone-600 hover:bg-stone-50'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+          {/* POIN 1: Accordion S&K History Catatan Mingguan */}
+          <div className="bg-white rounded-[20px] p-4 sm:p-5 border border-[#EDE8DF] shadow-[0_4px_24px_rgba(0,0,0,0.06)] space-y-3">
+            <div className="flex items-center justify-between border-b border-stone-100 pb-2.5">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#556B2F]/10 flex items-center justify-center text-[#556B2F]">
+                  <FileText className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h4 className="font-serif text-xs sm:text-sm font-bold text-stone-900">
+                    Riwayat Catatan Harian (W{week})
+                  </h4>
+                  <p className="text-[10px] text-stone-400 font-sans">
+                    Model S&K • Ketuk baris untuk expand/collapse
+                  </p>
+                </div>
               </div>
+              {(() => {
+                const finishedCount = Object.values(dayNotesMap).filter(n => n.status === 'Selesai' || (n.text && n.text.trim())).length;
+                const badgeLabel = finishedCount >= 5 ? `${finishedCount}/5 Lengkap` : `${finishedCount}/5`;
+                return (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-sans tracking-wide ${
+                    finishedCount >= 5
+                      ? 'text-[#556B2F] bg-[#556B2F]/10 border border-[#556B2F]/20'
+                      : 'text-stone-600 bg-stone-100'
+                  }`}>
+                    {badgeLabel}
+                  </span>
+                );
+              })()}
             </div>
 
-            {/* Mood Harian */}
-            <div className="bg-white p-3.5 rounded-2xl border border-stone-200/70 shadow-xs">
-              <h4 className="font-serif text-xs font-bold text-stone-850 mb-2">
-                Refleksi Suasana Hati
-              </h4>
-              <div className="grid grid-cols-5 gap-1">
-                {moods.map((m, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setSelectedMood(idx);
-                      try {
-                        const targetMoodIndex = idx <= 1 ? 0 : idx === 2 ? 1 : idx === 3 ? 3 : 2;
-                        const updatedMoods = [targetMoodIndex, targetMoodIndex, targetMoodIndex, targetMoodIndex, targetMoodIndex, targetMoodIndex, targetMoodIndex];
-                        localStorage.setItem(`bunda_daily_moods_w${week}`, JSON.stringify(updatedMoods));
-                        window.dispatchEvent(new Event('bunda_journal_updated'));
-                      } catch {}
-                    }}
-                    className={`py-1.5 rounded-lg text-center transition-all cursor-pointer ${
-                      selectedMood === idx
-                        ? 'bg-[#C87A64] text-white font-bold shadow-2xs'
-                        : 'bg-stone-50 text-stone-600 hover:bg-stone-100'
-                    }`}
-                  >
-                    <span className="text-base block">{m.icon}</span>
-                    <span className="text-[9px] block">{m.label}</span>
-                  </button>
-                ))}
-              </div>
+            <div className="divide-y divide-stone-100">
+              {dynamicWeekDays.map((day, idx) => {
+                const noteItem = dayNotesMap[idx] || { text: '', savedAt: '', status: 'Belum' };
+                const isSelesai = noteItem.status === 'Selesai' || !!(noteItem.text && noteItem.text.trim());
+                const isOpen = openAccordionDayIndex === idx;
+
+                return (
+                  <div key={day.key} className="py-2.5 transition-colors">
+                    <div
+                      onClick={() => setOpenAccordionDayIndex(isOpen ? null : idx)}
+                      className="flex items-center justify-between gap-2 cursor-pointer select-none group"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {isSelesai ? (
+                          <span className="w-4.5 h-4.5 rounded-full bg-[#556B2F] text-white flex items-center justify-center text-[10px] shrink-0 font-bold">
+                            ✓
+                          </span>
+                        ) : (
+                          <span className="w-4.5 h-4.5 rounded-full border border-stone-300 text-stone-400 flex items-center justify-center text-[9px] shrink-0 font-sans">
+                            {idx + 1}
+                          </span>
+                        )}
+                        <p className="text-xs font-serif font-bold text-stone-850 truncate group-hover:text-[#556B2F] transition-colors">
+                          {day.dayNameFull}, {day.dateNum} {day.monthLabel} {day.year}{noteItem.savedAt ? ` ${noteItem.savedAt}` : ''}
+                          {noteItem.text ? (
+                            <span className="font-sans font-normal text-stone-500 text-[11px] ml-1.5">
+                              • {noteItem.text.length > 30 ? noteItem.text.slice(0, 30) + '...' : noteItem.text}
+                            </span>
+                          ) : (
+                            <span className="font-sans font-normal text-stone-400 text-[11px] ml-1.5 italic">
+                              • Belum ada catatan
+                            </span>
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase ${
+                          isSelesai
+                            ? 'bg-[#556B2F]/10 text-[#556B2F]'
+                            : 'bg-stone-100 text-stone-400'
+                        }`}>
+                          {isSelesai ? 'Selesai' : 'Belum'}
+                        </span>
+                        <div className="text-stone-400 group-hover:text-stone-600">
+                          {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        </div>
+                      </div>
+                    </div>
+
+                    {isOpen && (
+                      <div className="mt-2.5 pl-6 pr-1 space-y-2 animate-in fade-in duration-150">
+                        <div className="bg-stone-50 border border-stone-200/80 rounded-xl p-3 text-xs text-stone-800 font-serif leading-relaxed">
+                          {noteItem.text ? (
+                            <p className="whitespace-pre-wrap">{noteItem.text}</p>
+                          ) : (
+                            <p className="text-stone-400 font-sans italic">
+                              Belum ada catatan pada {day.dayNameFull}. Ketuk tombol di bawah untuk mengisi.
+                            </p>
+                          )}
+                          {noteItem.savedAt && (
+                            <span className="block text-[9.5px] font-sans text-stone-400 mt-2 border-t border-stone-200/60 pt-1">
+                              Tersimpan otomatis: {noteItem.savedAt} WIB
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedDayIndex(idx);
+                              const el = document.getElementById('textarea-catatan-harian');
+                              if (el) {
+                                el.focus();
+                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                              }
+                            }}
+                            className="px-3 py-1 bg-[#556B2F] hover:bg-[#465926] text-white rounded-lg text-[10.5px] font-bold cursor-pointer transition-colors shadow-2xs"
+                          >
+                            {isSelesai ? 'Edit Catatan Hari Ini' : 'Tulis Catatan'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -528,15 +983,18 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* Pusat Input: Kebutuhan Jasmani (Activity Rings + Form Progres Target) */}
           <ActivityRingsCard />
 
-          {/* Halaman Kanan: Statistik Bunda & Catatan Medis Dokter */}
-          <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
+          {/* [HALAMAN KANAN BUKU Statistik Fisik Bunda & Catatan Dokter] */}
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/70 shadow-xs space-y-3.5">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman Kanan Buku</span>
-              <h4 className="font-serif text-xs font-bold text-stone-850">
+              <span className="text-[9px] uppercase font-sans text-stone-400 block tracking-wider font-semibold">
+                [Halaman Kanan Buku]
+              </span>
+              <h4 className="font-serif text-xs sm:text-sm font-bold text-stone-850">
                 Statistik Fisik Bunda & Catatan Dokter
               </h4>
             </div>
 
+            {/* [Berat: 54.5 kg] [Lingkar: 82 cm] [Tekanan: 118/76] */}
             <div className="grid grid-cols-3 gap-2 text-xs">
               <div>
                 <label className="text-[9.5px] text-stone-500 font-medium block mb-1">Berat Badan:</label>
@@ -572,95 +1030,347 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
               </div>
             </div>
 
+            {/* Catatan Dokter Obgyn / Bidan: 0/500 */}
             <div>
-              <label className="text-[9.5px] text-stone-500 font-medium block mb-1">
-                Catatan Dokter Obgyn / Bidan:
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[9.5px] text-stone-500 font-medium block">
+                  Catatan Dokter Obgyn / Bidan:
+                </label>
+                <span className={`text-[9px] ${((momStats.doctorNote || '').length >= 500) ? 'text-rose-500 font-bold' : ((momStats.doctorNote || '').length >= 450) ? 'text-amber-600' : 'text-stone-400'}`}>
+                  {(momStats.doctorNote || '').length}/500
+                </span>
+              </div>
               <textarea 
                 value={momStats.doctorNote} 
-                onChange={(e) => handleUpdateMomStats('doctorNote', e.target.value)}
+                onChange={(e) => handleUpdateMomStats('doctorNote', e.target.value.slice(0, 500))}
+                maxLength={500}
                 rows={3}
-                placeholder="Catatan hasil USG, detak jantung janin, dan saran vitamin..."
-                className="w-full bg-stone-50 border border-stone-200 rounded-lg p-2 text-xs text-stone-850 outline-none focus:border-[#556B2F] font-serif leading-relaxed"
+                placeholder="Catatan hasil USG, detak jantung janin, dan saran vitamin (maksimal 500 karakter)..."
+                className="w-full bg-stone-50 border border-stone-200 rounded-lg p-2.5 text-xs text-stone-850 outline-none focus:border-[#556B2F] font-serif leading-relaxed"
               />
+            </div>
+
+            {/* Foto USG / Perut Minggu ke-X [Pilih Foto] + 4/5 polaroid (di DALAM card) */}
+            <div className="pt-2 border-t border-stone-100 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h5 className="font-serif text-xs font-bold text-stone-850">
+                    Foto USG / Perut Minggu ke-{week}
+                  </h5>
+                  <p className="text-[9px] text-stone-400">Bingkai foto kenangan medis dicetak di halaman kanan buku</p>
+                </div>
+
+                <label className="px-3 py-1.5 bg-[#556B2F] text-white rounded-lg text-[10px] font-semibold flex items-center gap-1 cursor-pointer hover:bg-[#465926] shadow-2xs transition-colors">
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Pilih Foto</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={(e) => {
+                      handleImageFile(e, (dataUrl) => {
+                        const newPhoto = {
+                          url: dataUrl,
+                          label: 'Foto USG',
+                          date: `${activeDay.dateNum} ${activeDay.monthLabel} ${activeDay.year}`,
+                        };
+                        setMonthPhotos(prev => ({ ...prev, 0: newPhoto }));
+                        try {
+                          localStorage.setItem(`bunda_${week}_foto_0`, JSON.stringify(newPhoto));
+                          localStorage.setItem(`bunda_${week}_${selectedDayIndex}_foto`, JSON.stringify(newPhoto));
+                          window.dispatchEvent(new Event('bunda_journal_updated'));
+                        } catch {}
+                      });
+                    }}
+                  />
+                </label>
+              </div>
+
+              {/* Row 4/5 Polaroid di DALAM Card */}
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 sm:gap-2 pt-1">
+                {[0, 1, 2, 3, 4].map(idx => {
+                  const photoEntry = monthPhotos[idx];
+                  const frameTitle = idx === 0 ? 'Foto USG' : `Foto ${idx + 1}`;
+                  const defaultDate = `${activeDay.dateNum} ${activeDay.monthLabel} ${activeDay.year}`;
+
+                  return (
+                    <div
+                      key={idx}
+                      className="h-[104px] rounded-xl bg-white border border-[#DDD5C7] shadow-xs p-1 flex flex-col justify-between relative overflow-hidden group hover:border-[#556B2F] transition-colors"
+                    >
+                      {photoEntry?.url ? (
+                        <div className="relative w-full h-full flex flex-col justify-between">
+                          <img
+                            src={photoEntry.url}
+                            alt={photoEntry.label || frameTitle}
+                            className="w-full h-[64px] object-cover rounded-md"
+                          />
+                          <div className="pt-0.5 text-center leading-none">
+                            <span className="text-[8px] font-bold text-stone-800 block truncate">
+                              {photoEntry.label || frameTitle}
+                            </span>
+                            <span className="text-[7.5px] text-stone-400 block truncate mt-0.5">
+                              {photoEntry.date || defaultDate}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMonthPhotos(prev => ({ ...prev, [idx]: null }));
+                              try {
+                                localStorage.removeItem(`bunda_${week}_foto_${idx}`);
+                                localStorage.removeItem(`bunda_${week}_${selectedDayIndex}_foto`);
+                              } catch {}
+                            }}
+                            className="absolute top-1 right-1 bg-black/60 hover:bg-rose-600 text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px] cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="w-full h-full border-2 border-dashed border-stone-300 hover:border-[#556B2F] rounded-lg flex flex-col items-center justify-center p-1 cursor-pointer transition-colors text-center group/btn">
+                          <Camera className="w-4 h-4 text-stone-400 group-hover/btn:text-[#556B2F] mb-1" />
+                          <span className="text-[8px] font-bold text-stone-600 group-hover/btn:text-[#556B2F]">
+                            {idx === 0 ? 'Frame 1' : `Frame ${idx + 1}`}
+                          </span>
+                          <span className="text-[7px] text-stone-400">Pilih Foto</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              handleImageFile(e, (dataUrl) => {
+                                const newPhoto = {
+                                  url: dataUrl,
+                                  label: idx === 0 ? 'Foto USG' : `Foto Momen ${idx + 1}`,
+                                  date: `${activeDay.dateNum} ${activeDay.monthLabel} ${activeDay.year}`,
+                                };
+                                setMonthPhotos(prev => ({ ...prev, [idx]: newPhoto }));
+                                try {
+                                  localStorage.setItem(`bunda_${week}_foto_${idx}`, JSON.stringify(newPhoto));
+                                  localStorage.setItem(`bunda_${week}_${selectedDayIndex}_foto`, JSON.stringify(newPhoto));
+                                  window.dispatchEvent(new Event('bunda_journal_updated'));
+                                } catch {}
+                              });
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Foto USG / Perut Mingguan */}
-          <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-serif text-xs font-bold text-stone-850">
-                  Foto Perut / USG Minggu ke-{week}
-                </h4>
-                <p className="text-[9.5px] text-stone-400">Dicetak di kotak polaroid halaman kanan buku</p>
-              </div>
+          {/* [✓ Simpan Catatan Dokter Hari Ini (Tersimpan 19:31)] ← BARU DI SINI, di bawah statistik */}
+          <div className="pt-1">
+            <button
+              type="button"
+              id="btn-simpan-catatan-dokter"
+              onClick={() => {
+                const now = new Date();
+                const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                setSaveStatus(`Tersimpan ${timeStr}`);
 
-              <label className="px-3 py-1.5 bg-[#556B2F] text-white rounded-lg text-[10.5px] font-semibold flex items-center gap-1 cursor-pointer hover:bg-[#465926]">
-                <Camera className="w-3.5 h-3.5" />
-                <span>Pilih Foto</span>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
-                  onChange={(e) => {
-                    handleImageFile(e, (src) => {
-                      const newPhoto: PhotoMemory = {
-                        id: Date.now().toString(),
-                        caption: `Foto USG / Perut W${week}`,
-                        date: `Minggu ke-${week}`,
-                        src,
+                // Simpan momStats week ini
+                try {
+                  localStorage.setItem(`bunda_momstats_w${week}`, JSON.stringify(momStats));
+                  idbSet(`bunda_momstats_w${week}`, momStats);
+                  addToSyncQueue({
+                    type: 'UPDATE',
+                    table: 'bunda_momstats',
+                    data: { week, ...momStats, savedAt: timeStr },
+                    timestamp: Date.now()
+                  });
+
+                  // Update riwayat arsip dokter
+                  setArsipDokterList(prev => {
+                    const filtered = prev.filter(item => item.week !== week);
+                    return [
+                      {
                         week,
-                        isCustom: true
-                      };
-                      setPhotos(p => [newPhoto, ...p.filter(x => x.week !== week)]);
-                      try {
-                        const savedPhotosStr = localStorage.getItem('bunda_photos');
-                        let currentList: PhotoMemory[] = savedPhotosStr ? JSON.parse(savedPhotosStr) : [];
-                        currentList = currentList.filter(p => p.week !== week);
-                        currentList.push(newPhoto);
-                        localStorage.setItem('bunda_photos', JSON.stringify(currentList));
-                        window.dispatchEvent(new Event('bunda_journal_updated'));
-                      } catch {}
-                    });
-                  }}
-                />
-              </label>
+                        date: `Minggu ke-${week}`,
+                        weight: momStats.weight || '-',
+                        waist: momStats.waist || '-',
+                        bp: momStats.bloodPressure || '-',
+                        note: momStats.doctorNote || 'Pemeriksaan rutin berjalan lancar.',
+                        doctor: userProfile?.doctorName || 'Dr sabh spog',
+                      },
+                      ...filtered,
+                    ];
+                  });
+
+                  window.dispatchEvent(new Event('bunda_journal_updated'));
+                } catch {}
+              }}
+              className="w-full bg-[#556B2F] hover:bg-[#465926] text-white py-3 px-4 rounded-xl font-medium text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-colors active:scale-[0.99]"
+            >
+              <Check className="w-4 h-4 shrink-0" />
+              <span className="font-semibold">
+                Simpan Catatan Dokter Hari Ini ({saveStatus})
+              </span>
+            </button>
+          </div>
+
+          {/* [📚 Arsip Catatan Dokter (5) • Ketuk untuk lihat] 44px collapsed gak makan ruang */}
+          <div className="bg-white rounded-2xl border border-stone-200/80 shadow-xs overflow-hidden transition-all">
+            <button
+              type="button"
+              id="btn-toggle-arsip-dokter"
+              onClick={() => setIsArsipDokterOpen(prev => !prev)}
+              className="w-full min-h-[44px] px-4 py-2.5 flex items-center justify-between text-left hover:bg-stone-50/80 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-sm">📚</span>
+                <span className="font-serif text-xs font-bold text-stone-850">
+                  Arsip Catatan Dokter ({arsipDokterList.length})
+                </span>
+                <span className="text-[10px] text-stone-400 font-sans hidden sm:inline">
+                  • Ketuk untuk lihat
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 text-stone-500">
+                <span className="text-[10.5px] font-sans font-medium">
+                  {isArsipDokterOpen ? 'Tutup' : 'Lihat'}
+                </span>
+                {isArsipDokterOpen ? (
+                  <ChevronUp className="w-4 h-4 text-stone-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-stone-400" />
+                )}
+              </div>
+            </button>
+
+            {/* Expanded List Arsip Catatan Dokter */}
+            {isArsipDokterOpen && (
+              <div className="px-4 pb-3 pt-1 border-t border-stone-100 space-y-2 bg-[#FAF8F5]/50">
+                {arsipDokterList.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="p-2.5 rounded-xl bg-white border border-stone-200/70 shadow-2xs text-xs space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-serif font-bold text-stone-900 text-xs flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#556B2F]" />
+                        {item.date} • {item.doctor}
+                      </span>
+                      <span className="text-[9.5px] text-[#556B2F] font-semibold bg-[#556B2F]/10 px-2 py-0.5 rounded-md font-sans">
+                        {item.bp} mmHg
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-[10px] text-stone-500 font-sans">
+                      <span>Berat: <strong className="text-stone-700">{item.weight}</strong></span>
+                      <span>Lingkar: <strong className="text-stone-700">{item.waist}</strong></span>
+                    </div>
+
+                    <p className="text-[11px] font-serif text-stone-750 italic leading-relaxed bg-stone-50/70 p-2 rounded-lg border border-stone-100">
+                      "{item.note}"
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* [JADWAL PERTEMUAN DOKTER USG Trimester 2 Minggu 16 • Dr sabh spog BOOKED] */}
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-stone-100 pb-2.5">
+              <div>
+                <span className="text-[9px] uppercase font-sans text-stone-400 block tracking-wider font-semibold">
+                  JADWAL PERTEMUAN DOKTER
+                </span>
+                <h4 className="font-serif text-xs sm:text-sm font-bold text-stone-900">
+                  USG Trimester 2 Minggu {week} • {jadwalUsg.dokter}
+                </h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const nextStatus = jadwalUsg.status === 'BOOKED' ? 'PERLU BOOK' : 'BOOKED';
+                  const updated = { ...jadwalUsg, status: nextStatus };
+                  setJadwalUsg(updated);
+                  try {
+                    localStorage.setItem('bunda_jadwal_usg', JSON.stringify(updated));
+                  } catch {}
+                }}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer ${
+                  jadwalUsg.status === 'BOOKED'
+                    ? 'bg-[#556B2F] text-white shadow-2xs'
+                    : 'bg-amber-100 text-amber-800 border border-amber-300'
+                }`}
+              >
+                {jadwalUsg.status}
+              </button>
             </div>
 
-            {/* Photos Grid */}
-            <div className="grid grid-cols-2 gap-2.5 pt-1">
-              {photos.filter(p => p.week === week).length === 0 ? (
-                <div className="col-span-2 p-4 border-2 border-dashed border-stone-200 rounded-xl text-center text-stone-400 text-xs">
-                  Belum ada foto khusus Minggu ke-{week}. Ketuk tombol "Pilih Foto" di atas.
-                </div>
-              ) : (
-                photos.filter(p => p.week === week).map(item => (
-                  <div key={item.id} className="relative rounded-xl overflow-hidden border border-stone-200 bg-stone-50">
-                    <img src={item.src} alt={item.caption} className="w-full h-28 object-cover" />
-                    <div className="p-1.5 text-[9.5px] flex items-center justify-between">
-                      <span className="truncate text-stone-700 font-medium">{item.caption}</span>
-                      <button 
-                        onClick={() => {
-                          setPhotos(p => p.filter(x => x.id !== item.id));
-                          try {
-                            const savedPhotosStr = localStorage.getItem('bunda_photos');
-                            if (savedPhotosStr) {
-                              let currentList: PhotoMemory[] = JSON.parse(savedPhotosStr);
-                              currentList = currentList.filter(x => x.id !== item.id);
-                              localStorage.setItem('bunda_photos', JSON.stringify(currentList));
-                              window.dispatchEvent(new Event('bunda_journal_updated'));
-                            }
-                          } catch {}
-                        }}
-                        className="text-stone-400 hover:text-rose-500 p-0.5 cursor-pointer"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
+            {/* Black Pill Reminder */}
+            <div className="bg-stone-900 text-stone-200 text-[10px] sm:text-[10.5px] py-1.5 px-3 rounded-full flex items-center justify-center text-center font-sans tracking-tight">
+              <span>Book H-7 (29 Okt) • Notif H-1 • H-2 jam • Kosongkan jadwal suami</span>
+            </div>
+
+            {/* Kartu Nama Dokter 360x210 Aspect */}
+            <div className="w-full max-w-[360px] mx-auto min-h-[210px] rounded-2xl p-4 border border-[#DDD5C7] bg-gradient-to-br from-[#FAF8F5] via-[#F4EFE6] to-[#ECE5D8] shadow-sm relative flex flex-col justify-between space-y-3">
+              {/* Top Row: Photo left, Doctor info, BOOKED badge top right */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-13 h-13 rounded-2xl bg-white border border-[#DDD5C7] p-1 flex items-center justify-center text-2xl shadow-2xs">
+                    👩‍⚕️
                   </div>
-                ))
-              )}
+                  <div>
+                    <h5 className="font-serif text-sm font-bold text-stone-900 leading-tight">
+                      {jadwalUsg.dokter}
+                    </h5>
+                    <p className="text-[10px] text-stone-600 font-sans">
+                      Spesialis Obstetri & Ginekologi
+                    </p>
+                    <p className="text-[10px] text-[#556B2F] font-semibold font-sans mt-0.5">
+                      {jadwalUsg.rs}
+                    </p>
+                  </div>
+                </div>
+
+                <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wider uppercase ${
+                  jadwalUsg.status === 'BOOKED'
+                    ? 'bg-[#556B2F] text-white shadow-2xs'
+                    : 'bg-amber-500 text-white'
+                }`}>
+                  {jadwalUsg.status}
+                </span>
+              </div>
+
+              {/* Middle Row: Schedule Info */}
+              <div className="bg-white/80 backdrop-blur-xs rounded-xl p-2.5 border border-[#EDE8DF] flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-[9px] uppercase tracking-wider text-stone-400 block font-sans">
+                    Jadwal Pertemuan
+                  </span>
+                  <span className="font-serif font-bold text-stone-850">
+                    {jadwalUsg.tanggal}
+                  </span>
+                </div>
+                <span className="text-[10px] text-[#556B2F] font-semibold bg-[#556B2F]/10 px-2 py-1 rounded-lg">
+                  Klinik Kebidanan
+                </span>
+              </div>
+
+              {/* Bottom Row: Sweet message + Direct WA */}
+              <div className="pt-1.5 border-t border-stone-200/60 flex items-center justify-between gap-2">
+                <p className="font-serif italic text-xs text-stone-700">
+                  "Ayah, kosongin jadwal ya - Dedek {weekData.fruitEmoji}"
+                </p>
+
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`Ayah, kosongin jadwal ya - Dedek ${weekData.fruitEmoji}\nJadwal USG dokter: ${jadwalUsg.dokter} di ${jadwalUsg.rs} (${jadwalUsg.tanggal})`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shrink-0 shadow-2xs cursor-pointer transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>WA Suami</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -1079,14 +1789,15 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
               </h4>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-2.5">
               <div>
                 <label className="text-[10px] text-stone-500 font-medium block mb-1">Kontraksi Pertama:</label>
                 <input 
                   type="text" 
+                  placeholder="Contoh: Pukul 02:30 Dini Hari"
                   value={bab4Data.contractionTime}
                   onChange={(e) => setBab4Data({ ...bab4Data, contractionTime: e.target.value })}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-stone-850"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-xs font-bold text-stone-850"
                 />
               </div>
 
@@ -1094,9 +1805,10 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                 <label className="text-[10px] text-stone-500 font-medium block mb-1">Tiba di Rumah Sakit:</label>
                 <input 
                   type="text" 
-                  value={bab4Data.arrivalTime}
-                  onChange={(e) => setBab4Data({ ...bab4Data, arrivalTime: e.target.value })}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-stone-850"
+                  placeholder="Contoh: Pukul 04:15 Pagi"
+                  value={bab4Data.hospitalArrivalTime}
+                  onChange={(e) => setBab4Data({ ...bab4Data, hospitalArrivalTime: e.target.value })}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-xs font-bold text-stone-850"
                 />
               </div>
             </div>
@@ -1333,7 +2045,22 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       )}
 
       {/* Bottom Save & Studio Action Bar */}
-      <div className="pt-2">
+      <div className="pt-2 space-y-2">
+        <button
+          id="btn-simpan-hari-ini"
+          onClick={() => {
+            onSaveCurrentEntry();
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            setSaveStatus(`Tersimpan ${timeStr}`);
+            if (onShowToast) onShowToast(`Catatan tersimpan pukul ${timeStr}`);
+          }}
+          className="w-full py-3 bg-[#556B2F] hover:bg-[#465926] text-white font-semibold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
+        >
+          <Check className="w-4 h-4 text-emerald-200" />
+          <span>Simpan Catatan Hari Ini ({saveStatus})</span>
+        </button>
+
         <button
           onClick={() => {
             onSaveCurrentEntry();
@@ -1341,9 +2068,9 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
               onOpenBookPreview();
             }
           }}
-          className="w-full py-3 bg-[#556B2F] hover:bg-[#465926] text-white font-semibold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
+          className="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 font-medium rounded-2xl text-xs flex items-center justify-center gap-2 border border-stone-250 transition-all active:scale-98 cursor-pointer"
         >
-          <BookOpen className="w-4 h-4 text-amber-200" />
+          <BookOpen className="w-4 h-4 text-stone-600" />
           <span>Buka Studio & Tinjau Seluruh Halaman Buku</span>
         </button>
       </div>

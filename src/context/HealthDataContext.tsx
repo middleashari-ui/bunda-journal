@@ -63,9 +63,25 @@ const DEFAULT_ACTIVITY: ActivityGoals = {
 const HealthDataContext = createContext<HealthDataContextType | undefined>(undefined);
 
 export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Active Day Tracking for per-day sync: bunda_{week}_{dayIndex}_...
+  const [activeDayKey, setActiveDayKey] = useState<{ week: number; dayIndex: number }>(() => {
+    try {
+      const w = Number(localStorage.getItem('bunda_week')) || 32;
+      return { week: w, dayIndex: 3 };
+    } catch {
+      return { week: 32, dayIndex: 3 };
+    }
+  });
+
   // Water State
   const [waterLiters, setWaterLiters] = useState<number>(() => {
     try {
+      const w = Number(localStorage.getItem('bunda_week')) || 32;
+      const savedPerDay = localStorage.getItem(`bunda_${w}_3_hidrasi`);
+      if (savedPerDay) {
+        const parsed = JSON.parse(savedPerDay);
+        if (parsed?.current !== undefined) return parsed.current / 1000;
+      }
       const saved = localStorage.getItem('bunda_water_liters');
       if (saved !== null) return Number(saved);
     } catch {}
@@ -74,35 +90,82 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const waterTarget = 2.0;
 
-  useEffect(() => {
+  const savePerDayHidrasi = (liters: number, w: number, dIdx: number) => {
     try {
-      localStorage.setItem('bunda_water_liters', waterLiters.toString());
+      const currentMl = Math.round(liters * 1000);
+      localStorage.setItem(`bunda_${w}_${dIdx}_hidrasi`, JSON.stringify({ current: currentMl, target: 2000 }));
     } catch {}
-  }, [waterLiters]);
+  };
 
   const changeWater = (delta: number) => {
-    setWaterLiters(prev => Math.max(0, Math.min(4.0, Number((prev + delta).toFixed(2)))));
+    setWaterLiters(prev => {
+      const next = Math.max(0, Math.min(4.0, Number((prev + delta).toFixed(2))));
+      try {
+        localStorage.setItem('bunda_water_liters', next.toString());
+        savePerDayHidrasi(next, activeDayKey.week, activeDayKey.dayIndex);
+      } catch {}
+      return next;
+    });
   };
 
   // Supplements State
   const [supplements, setSupplements] = useState<SupplementItem[]>(() => {
     try {
+      const w = Number(localStorage.getItem('bunda_week')) || 32;
+      const savedPerDay = localStorage.getItem(`bunda_${w}_3_suplemen`);
+      if (savedPerDay) {
+        const parsed = JSON.parse(savedPerDay);
+        return DEFAULT_SUPPLEMENTS.map(item => {
+          const keyMap: Record<string, string> = {
+            folat: 'asamFolat',
+            vitd: 'vitaminD',
+            dha: 'dha',
+            kalsium: 'kalsium',
+            besi: 'zatBesi',
+          };
+          const mappedKey = keyMap[item.id] || item.id;
+          return {
+            ...item,
+            taken: parsed[mappedKey] !== undefined ? !!parsed[mappedKey] : item.taken,
+          };
+        });
+      }
       const saved = localStorage.getItem('bunda_supplements_list');
       if (saved) return JSON.parse(saved);
     } catch {}
     return DEFAULT_SUPPLEMENTS;
   });
 
-  useEffect(() => {
+  const savePerDaySuplemen = (items: SupplementItem[], w: number, dIdx: number) => {
     try {
-      localStorage.setItem('bunda_supplements_list', JSON.stringify(supplements));
+      const keyMap: Record<string, string> = {
+        folat: 'asamFolat',
+        vitd: 'vitaminD',
+        dha: 'dha',
+        kalsium: 'kalsium',
+        besi: 'zatBesi',
+      };
+      const res: Record<string, any> = {};
+      let count = 0;
+      items.forEach(item => {
+        const k = keyMap[item.id] || item.id;
+        res[k] = !!item.taken;
+        if (item.taken) count++;
+      });
+      res.count = count;
+      localStorage.setItem(`bunda_${w}_${dIdx}_suplemen`, JSON.stringify(res));
     } catch {}
-  }, [supplements]);
+  };
 
   const toggleSupplement = (id: string) => {
-    setSupplements(prev =>
-      prev.map(item => (item.id === id ? { ...item, taken: !item.taken } : item))
-    );
+    setSupplements(prev => {
+      const updated = prev.map(item => (item.id === id ? { ...item, taken: !item.taken } : item));
+      try {
+        localStorage.setItem('bunda_supplements_list', JSON.stringify(updated));
+        savePerDaySuplemen(updated, activeDayKey.week, activeDayKey.dayIndex);
+      } catch {}
+      return updated;
+    });
   };
 
   const addSupplement = (name: string) => {
@@ -113,35 +176,141 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       name: trimmed,
       taken: false,
     };
-    setSupplements(prev => [...prev, newItem]);
+    setSupplements(prev => {
+      const updated = [...prev, newItem];
+      try {
+        localStorage.setItem('bunda_supplements_list', JSON.stringify(updated));
+        savePerDaySuplemen(updated, activeDayKey.week, activeDayKey.dayIndex);
+      } catch {}
+      return updated;
+    });
   };
 
   const deleteSupplement = (id: string) => {
     if (supplements.length <= 1) return;
-    setSupplements(prev => prev.filter(item => item.id !== id));
+    setSupplements(prev => {
+      const updated = prev.filter(item => item.id !== id);
+      try {
+        localStorage.setItem('bunda_supplements_list', JSON.stringify(updated));
+        savePerDaySuplemen(updated, activeDayKey.week, activeDayKey.dayIndex);
+      } catch {}
+      return updated;
+    });
   };
 
   // Activity Goals State
   const [activityGoals, setActivityGoals] = useState<ActivityGoals>(() => {
     try {
+      const w = Number(localStorage.getItem('bunda_week')) || 32;
+      const savedPerDay = localStorage.getItem(`bunda_${w}_3_jasmani`);
+      if (savedPerDay) {
+        const parsed = JSON.parse(savedPerDay);
+        return {
+          walkMinutes: parsed.jalan ?? 20,
+          workoutMinutes: parsed.senam ?? 15,
+          sleepHours: parsed.tidur ?? 7.5,
+        };
+      }
       const saved = localStorage.getItem('bunda_activity_goals');
       if (saved) return JSON.parse(saved);
     } catch {}
     return DEFAULT_ACTIVITY;
   });
 
-  useEffect(() => {
+  const savePerDayJasmani = (goals: ActivityGoals, w: number, dIdx: number) => {
     try {
-      localStorage.setItem('bunda_activity_goals', JSON.stringify(activityGoals));
+      const percent = Math.min(100, Math.round(((goals.walkMinutes / 30 + goals.workoutMinutes / 20 + goals.sleepHours / 8) / 3) * 100));
+      localStorage.setItem(`bunda_${w}_${dIdx}_jasmani`, JSON.stringify({
+        jalan: goals.walkMinutes,
+        senam: goals.workoutMinutes,
+        tidur: goals.sleepHours,
+        percent,
+      }));
     } catch {}
-  }, [activityGoals]);
+  };
 
   const updateActivityGoal = (key: keyof ActivityGoals, value: number) => {
-    setActivityGoals(prev => ({
-      ...prev,
-      [key]: Math.max(0, value),
-    }));
+    setActivityGoals(prev => {
+      const updated = {
+        ...prev,
+        [key]: Math.max(0, value),
+      };
+      try {
+        localStorage.setItem('bunda_activity_goals', JSON.stringify(updated));
+        savePerDayJasmani(updated, activeDayKey.week, activeDayKey.dayIndex);
+      } catch {}
+      return updated;
+    });
   };
+
+  // Listen to Day Selection in DayStrip to load per-day data
+  useEffect(() => {
+    const handleDayChange = (e: any) => {
+      const { week: targetWeek, dayIndex: targetDayIndex } = e.detail || {};
+      if (targetWeek === undefined || targetDayIndex === undefined) return;
+      setActiveDayKey({ week: targetWeek, dayIndex: targetDayIndex });
+
+      // Load suplemen for target day
+      try {
+        const savedSupp = localStorage.getItem(`bunda_${targetWeek}_${targetDayIndex}_suplemen`);
+        if (savedSupp) {
+          const parsed = JSON.parse(savedSupp);
+          const keyMap: Record<string, string> = {
+            folat: 'asamFolat',
+            vitd: 'vitaminD',
+            dha: 'dha',
+            kalsium: 'kalsium',
+            besi: 'zatBesi',
+          };
+          setSupplements(prev =>
+            prev.map(item => {
+              const k = keyMap[item.id] || item.id;
+              return {
+                ...item,
+                taken: parsed[k] !== undefined ? !!parsed[k] : false,
+              };
+            })
+          );
+        } else {
+          // If no entry yet, uncheck or keep default
+          setSupplements(prev => prev.map(item => ({ ...item, taken: false })));
+        }
+      } catch {}
+
+      // Load hidrasi for target day
+      try {
+        const savedWater = localStorage.getItem(`bunda_${targetWeek}_${targetDayIndex}_hidrasi`);
+        if (savedWater) {
+          const parsed = JSON.parse(savedWater);
+          if (parsed?.current !== undefined) setWaterLiters(parsed.current / 1000);
+        } else {
+          setWaterLiters(0);
+        }
+      } catch {}
+
+      // Load jasmani for target day
+      try {
+        const savedJasmani = localStorage.getItem(`bunda_${targetWeek}_${targetDayIndex}_jasmani`);
+        if (savedJasmani) {
+          const parsed = JSON.parse(savedJasmani);
+          setActivityGoals({
+            walkMinutes: parsed.jalan ?? 0,
+            workoutMinutes: parsed.senam ?? 0,
+            sleepHours: parsed.tidur ?? 0,
+          });
+        } else {
+          setActivityGoals({
+            walkMinutes: 0,
+            workoutMinutes: 0,
+            sleepHours: 0,
+          });
+        }
+      } catch {}
+    };
+
+    window.addEventListener('bunda_day_selected', handleDayChange);
+    return () => window.removeEventListener('bunda_day_selected', handleDayChange);
+  }, []);
 
   // Weekly History: 7 Days (6 past days + today reflecting live state)
   const daysName = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];

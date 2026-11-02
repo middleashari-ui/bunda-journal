@@ -1,10 +1,11 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, lazy, Suspense } from 'react';
 import { HabitState, UserProfile, JournalEntry, ReminderSettings } from '../types';
 import { getWeekData, AVAILABLE_WEEKS } from '../data/pregnancyWeeks';
-import { MoodTrendChart } from './MoodTrendChart';
-import { FetalGrowthChart } from './FetalGrowthChart';
 import { DashboardOverview } from './dashboard/DashboardOverview';
 import { Check, BookOpen, ChevronLeft, ChevronRight, ArrowRight, PenLine, Sparkles, Scale, Heart } from 'lucide-react';
+
+const MoodTrendChart = lazy(() => import('./MoodTrendChart').then(m => ({ default: m.MoodTrendChart })));
+const FetalGrowthChart = lazy(() => import('./FetalGrowthChart').then(m => ({ default: m.FetalGrowthChart })));
 
 interface TabHomeProps {
   week: number;
@@ -157,7 +158,7 @@ export const TabHome: React.FC<TabHomeProps> = ({
           </span>
         </div>
         <h2 className="font-serif text-xl font-bold text-stone-850 mt-1.5 leading-snug">
-          Halo {userProfile.name.split(' ')[0] || 'Bunda'}, selamat datang di Minggu ke-{week}!
+          Halo {userProfile.name ? userProfile.name.split(' ')[0] : 'Bunda'}, selamat datang di Minggu ke-{week}!
         </h2>
         <p className="text-xs text-stone-500 mt-1 font-light leading-relaxed">
           Tubuh Bunda sedang bekerja luar biasa merajut organ-organ kecil buah hati tersayang.
@@ -372,19 +373,31 @@ export const TabHome: React.FC<TabHomeProps> = ({
         </div>
       </div>
 
-      {/* KURVA PERTUMBUHAN JANIN (WHO & Hadlock Standards) */}
-      <FetalGrowthChart
-        currentWeek={week}
-        onSelectWeek={setWeek}
-      />
+      {/* KURVA PERTUMBUHAN JANIN (WHO & Hadlock Standards) - Lazy Loaded */}
+      <Suspense fallback={
+        <div className="bg-white p-6 rounded-3xl border border-stone-200/70 shadow-xs flex items-center justify-center min-h-[140px] text-stone-400 text-xs">
+          <span>Memuat kurva pertumbuhan janin...</span>
+        </div>
+      }>
+        <FetalGrowthChart
+          currentWeek={week}
+          onSelectWeek={setWeek}
+        />
+      </Suspense>
 
-      {/* VISUAL MOOD & SLEEP TREND CHART (Recharts) */}
-      <MoodTrendChart 
-        entries={pastEntries}
-        currentMoodIndex={selectedMood}
-        habits={habits}
-        onGoToJournal={onGoToJournal}
-      />
+      {/* VISUAL MOOD & SLEEP TREND CHART (Recharts) - Lazy Loaded */}
+      <Suspense fallback={
+        <div className="bg-white p-6 rounded-3xl border border-stone-200/70 shadow-xs flex items-center justify-center min-h-[140px] text-stone-400 text-xs">
+          <span>Memuat tren suasana hati...</span>
+        </div>
+      }>
+        <MoodTrendChart 
+          entries={pastEntries}
+          currentMoodIndex={selectedMood}
+          habits={habits}
+          onGoToJournal={onGoToJournal}
+        />
+      </Suspense>
 
 
       {/* Quick Access Card */}

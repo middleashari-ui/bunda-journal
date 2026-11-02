@@ -30,24 +30,24 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
   const savedBab4 = getSavedBab4();
 
   // Page 91 & 92 state with localStorage persistence
-  const [contractionTime, setContractionTime] = useState(savedBab4?.contractionTime || 'Pukul 02:30 Dini Hari');
-  const [arrivalTime, setArrivalTime] = useState(savedBab4?.arrivalTime || 'Pukul 05:45 Subuh');
+  const [contractionTime, setContractionTime] = useState(savedBab4?.contractionTime || '');
+  const [arrivalTime, setArrivalTime] = useState(savedBab4?.arrivalTime || '');
   const [laborStory, setLaborStory] = useState(
-    savedBab4?.laborStory || 'Setiap gelombang cinta kontraksi bunda hadapi dengan napas panjang. Ayah membisikkan doa dan memegang tangan bunda tanpa sedetik pun melepaskannya. Seluruh rasa sakit sirna seketika saat dokter berkata, "Kepalanya sudah terlihat, Bunda!"...'
+    savedBab4?.laborStory || ''
   );
   const [birthPhoto, setBirthPhoto] = useState<string | null>(savedBab4?.birthPhoto || null);
   const [holdingBabyFeeling, setHoldingBabyFeeling] = useState(
-    savedBab4?.holdingBabyFeeling || 'Kulit hangatmu diletakkan di dada bunda. Mata manismu berkedip perlahan mencari aroma pelukan ini. Selamat datang di dunia, buah hatiku tersayang...'
+    savedBab4?.holdingBabyFeeling || ''
   );
 
   // Page 93 & 94 state with localStorage persistence
-  const [babyName, setBabyName] = useState(savedBab4?.babyName || userProfile.babyNickname || 'Kalandra Atharrazka');
-  const [birthDate, setBirthDate] = useState(savedBab4?.birthDate || userProfile.hplDate || 'Minggu, 18 Mei 2025');
-  const [birthTime, setBirthTime] = useState(savedBab4?.birthTime || '09:18 WIB');
-  const [birthWeight, setBirthWeight] = useState(savedBab4?.birthWeight || '3.350 gram (3.35 kg)');
-  const [birthLength, setBirthLength] = useState(savedBab4?.birthLength || '50 cm');
-  const [headCircumference, setHeadCircumference] = useState(savedBab4?.headCircumference || '34 cm');
-  const [bloodType, setBloodType] = useState(savedBab4?.bloodType || userProfile.bloodType || 'O (Rhesus Positif)');
+  const [babyName, setBabyName] = useState(savedBab4?.babyName || userProfile.babyNickname || '');
+  const [birthDate, setBirthDate] = useState(savedBab4?.birthDate || userProfile.hplDate || '');
+  const [birthTime, setBirthTime] = useState(savedBab4?.birthTime || '');
+  const [birthWeight, setBirthWeight] = useState(savedBab4?.birthWeight || '');
+  const [birthLength, setBirthLength] = useState(savedBab4?.birthLength || '');
+  const [headCircumference, setHeadCircumference] = useState(savedBab4?.headCircumference || '');
+  const [bloodType, setBloodType] = useState(savedBab4?.bloodType || userProfile.bloodType || '');
   const [leftFootprint, setLeftFootprint] = useState<string | null>(savedBab4?.leftFootprint || null);
   const [rightFootprint, setRightFootprint] = useState<string | null>(savedBab4?.rightFootprint || null);
 
@@ -123,12 +123,13 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                     {isFillMode ? (
                       <input 
                         type="text" 
+                        placeholder="Contoh: Pukul 02:30 Dini Hari"
                         value={contractionTime}
                         onChange={(e) => setContractionTime(e.target.value)}
-                        className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none"
+                        className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none whitespace-normal break-words"
                       />
                     ) : (
-                      <span className="text-stone-400 font-serif">________________</span>
+                      <span className="text-stone-850 font-serif whitespace-normal break-words">{contractionTime || '________________'}</span>
                     )}
                   </div>
 
@@ -137,12 +138,13 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                     {isFillMode ? (
                       <input 
                         type="text" 
+                        placeholder="Contoh: Pukul 04:15 Pagi"
                         value={arrivalTime}
                         onChange={(e) => setArrivalTime(e.target.value)}
-                        className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none"
+                        className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none whitespace-normal break-words"
                       />
                     ) : (
-                      <span className="text-stone-400 font-serif">________________</span>
+                      <span className="text-stone-850 font-serif whitespace-normal break-words">{arrivalTime || '________________'}</span>
                     )}
                   </div>
                 </div>
@@ -363,7 +365,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
 
                 <div className="border-t border-stone-200 pt-2 text-[9.5px] text-stone-600 flex justify-between">
                   <span>RS: <strong>{userProfile.hospitalName || 'RSIA Bunda'}</strong></span>
-                  <span>Dokter: <strong>{userProfile.doctorName || 'dr. Sarah Sp.OG'}</strong></span>
+                  <span>Dokter: <strong>{userProfile.doctorName || '-'}</strong></span>
                 </div>
               </div>
             </div>

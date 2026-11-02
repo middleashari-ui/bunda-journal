@@ -30,25 +30,21 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
 
   // Bunda's letters with localStorage persistence
   const [bundaLetterPart1, setBundaLetterPart1] = useState(
-    savedBab5?.bundaLetterPart1 ||
-    'Anakku sayang,\n\nSaat kamu membaca surat ini, mungkin jemari tanganmu sudah jauh lebih besar dari jemari mungil yang dulu bunda genggam erat di ruang bersalin. Waktu berlalu begitu cepat, nak.\n\nBunda menulis lembaran ini saat kamu baru beberapa hari terlelap di dada bunda. Rasanya baru kemarin bunda merasakan detak jantungmu pertama kali di layar USG yang remang. Ketahuilah, sejak hari pertama tahu kehadiranmu, doa bunda tidak pernah berhenti mengalir untuk setiap helaan napasmu...'
+    savedBab5?.bundaLetterPart1 || ''
   );
   const [bundaLetterPart2, setBundaLetterPart2] = useState(
-    savedBab5?.bundaLetterPart2 ||
-    'Jadilah pribadi yang berhati lembut, teguh membela kebenaran, dan selalu bersyukur atas hal-hal sederhana. Di saat dunia luar terasa begitu bising dan melelahkan, ingatlah bahwa pelukan bunda dan rumah ini akan selalu menjadi dermaga teraman tempatmu berlabuh pulang.\n\nTerima kasih telah memilih bunda menjadi ibumu di dunia ini. Kamu adalah anugerah dan kebanggaan terbesar dalam hidup bunda.'
+    savedBab5?.bundaLetterPart2 || ''
   );
-  const [bundaSignName, setBundaSignName] = useState(savedBab5?.bundaSignName || userProfile.name || 'Bunda Jessica');
+  const [bundaSignName, setBundaSignName] = useState(savedBab5?.bundaSignName || userProfile.name || '');
 
   // Ayah's letters with localStorage persistence
   const [ayahLetterPart1, setAyahLetterPart1] = useState(
-    savedBab5?.ayahLetterPart1 ||
-    'Wahai buah hatiku,\n\nSaat kamu membaca surat ini, mungkin pundak ayah sudah tak sekuat dulu lagi untuk menggendongmu di atas bahu mengelilingi taman. Namun ketahuilah, rasa cinta dan perlindungan ayah kepadamu tak akan pernah luntur sedetik pun.\n\nAyah mungkin tidak selalu pandai merangkai kata seindah bundamu. Tapi di setiap tetes peluh kerja keras ayah, ada namamu yang selalu ayah sebut dalam sujud. Ayah ingin kamu tumbuh menjadi insan yang jujur, berani bermimpi besar, dan pantang menyerah...'
+    savedBab5?.ayahLetterPart1 || ''
   );
   const [ayahLetterPart2, setAyahLetterPart2] = useState(
-    savedBab5?.ayahLetterPart2 ||
-    'Jangan pernah takut gagal, nak. Gagal adalah tanda bahwa kamu sedang berjuang keras menggapai cita-cita mulia. Ayah akan selalu ada di belakangmu, menjadi dinding kokoh yang menopang langkahmu.\n\nHormatilah ibumu yang telah mengandungmu selama 9 bulan penuh pengorbanan suci. Bahagiakan dia di setiap hembusan usiamu.\n\nDengan rasa bangga yang tak terhingga,\nAyahmu.'
+    savedBab5?.ayahLetterPart2 || ''
   );
-  const [ayahSignName, setAyahSignName] = useState(savedBab5?.ayahSignName || 'Ayah Tersayang');
+  const [ayahSignName, setAyahSignName] = useState(savedBab5?.ayahSignName || '');
 
   // Persist back to bunda_bab5 automatically
   useEffect(() => {

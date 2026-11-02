@@ -51,7 +51,7 @@ export const BookPreviewModal: React.FC<BookPreviewModalProps> = ({
   const currentPhoto = photos[0] || {
     caption: 'USG Trimester 1 (12W)',
     date: '12 Okt 2024',
-    src: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=600&q=80',
+    src: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=600&q=80',
   };
 
   return (
@@ -243,7 +243,7 @@ export const BookPreviewModal: React.FC<BookPreviewModalProps> = ({
 
                 <div className="my-auto py-2">
                   <p className="font-serif italic text-stone-700 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap first-letter:text-3xl first-letter:font-bold first-letter:mr-2 first-letter:float-left first-letter:text-[#556B2F]">
-                    {journalText || 'Hari ini detak jantungmu terdengar begitu jelas saat kontrol dokter. Bahagia dan haru sekali, nak... Semoga tumbuh sehat selalu dalam dekapan bunda.'}
+                    {journalText || 'Belum ada catatan jurnal untuk minggu ini.'}
                   </p>
                 </div>
 

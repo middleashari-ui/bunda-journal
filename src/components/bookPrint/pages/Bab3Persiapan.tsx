@@ -28,25 +28,25 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
 
   // Baby names state with localStorage persistence
   const [candidates, setCandidates] = useState([
-    { name: savedBab3?.candidate1 ? `1. ${savedBab3.candidate1.replace(/^\d+\.\s*/, '')}` : '1. Rayyan Al-Fatih', meaning: 'Pintu surga bagi orang yang berpuasa & sang penakluk berbudi luhur' },
-    { name: savedBab3?.candidate2 ? `2. ${savedBab3.candidate2.replace(/^\d+\.\s*/, '')}` : '2. Kinanti Ayudia', meaning: 'Tembang harapan yang anggun dan memancarkan kelembutan' },
-    { name: savedBab3?.candidate3 ? `3. ${savedBab3.candidate3.replace(/^\d+\.\s*/, '')}` : '3. Malik Ibrahim', meaning: 'Pemimpin bijaksana yang teguh hatinya' },
-    { name: savedBab3?.candidate4 ? `4. ${savedBab3.candidate4.replace(/^\d+\.\s*/, '')}` : '4. Nayla Salsabila', meaning: 'Anugerah kesuksesan yang mengalir jernih seperti mata air surga' },
+    { name: savedBab3?.candidate1 ? `1. ${savedBab3.candidate1.replace(/^\d+\.\s*/, '')}` : '', meaning: '' },
+    { name: savedBab3?.candidate2 ? `2. ${savedBab3.candidate2.replace(/^\d+\.\s*/, '')}` : '', meaning: '' },
+    { name: savedBab3?.candidate3 ? `3. ${savedBab3.candidate3.replace(/^\d+\.\s*/, '')}` : '', meaning: '' },
+    { name: savedBab3?.candidate4 ? `4. ${savedBab3.candidate4.replace(/^\d+\.\s*/, '')}` : '', meaning: '' },
   ]);
-  const [chosenName, setChosenName] = useState(savedBab3?.chosenName || 'Kalandra Atharrazka');
+  const [chosenName, setChosenName] = useState(savedBab3?.chosenName || '');
   const [chosenMeaning, setChosenMeaning] = useState(
-    savedBab3?.chosenMeaning || '"Penerang yang riang gembira dan senantiasa dilimpahi rezeki bersih."'
+    savedBab3?.chosenMeaning || ''
   );
 
   // Nursery photo & checklist state with localStorage persistence
   const [nurseryPhoto, setNurseryPhoto] = useState<string | null>(savedBab3?.nurseryPhoto || null);
   const [nurseryItems, setNurseryItems] = useState([
-    { label: 'Box Tidur Bayi & Matras Empuk', checked: savedBab3?.nurseryBoxChecked ?? true },
-    { label: 'Kelambu Nyamuk Halus', checked: savedBab3?.nurseryNetChecked ?? true },
-    { label: 'Lampu Tidur Redup Hangat', checked: savedBab3?.nurseryLampChecked ?? true },
-    { label: 'Kursi Menyusui Nyaman Bunda', checked: savedBab3?.nurseryChairChecked ?? true },
-    { label: 'Lemari Pakaian & Laci Popok', checked: savedBab3?.nurseryWardrobeChecked ?? true },
-    { label: 'Termometer & Pengatur Suhu', checked: savedBab3?.nurseryThermometerChecked ?? true },
+    { label: 'Box Tidur Bayi & Matras Empuk', checked: savedBab3?.nurseryBoxChecked ?? false },
+    { label: 'Kelambu Nyamuk Halus', checked: savedBab3?.nurseryNetChecked ?? false },
+    { label: 'Lampu Tidur Redup Hangat', checked: savedBab3?.nurseryLampChecked ?? false },
+    { label: 'Kursi Menyusui Nyaman Bunda', checked: savedBab3?.nurseryChairChecked ?? false },
+    { label: 'Lemari Pakaian & Laci Popok', checked: savedBab3?.nurseryWardrobeChecked ?? false },
+    { label: 'Termometer & Pengatur Suhu', checked: savedBab3?.nurseryThermometerChecked ?? false },
   ]);
 
   // Persist back to bunda_bab3 automatically
