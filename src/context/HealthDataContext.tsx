@@ -250,7 +250,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (targetWeek === undefined || targetDayIndex === undefined) return;
       setActiveDayKey({ week: targetWeek, dayIndex: targetDayIndex });
 
-      // Load suplemen for target day
+      // Load suplemen for target day — fallback: pertahankan nilai Beranda bila hari tsb belum ada data (anti-flicker ke 0)
       try {
         const savedSupp = localStorage.getItem(`bunda_${targetWeek}_${targetDayIndex}_suplemen`);
         if (savedSupp) {
@@ -267,44 +267,36 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               const k = keyMap[item.id] || item.id;
               return {
                 ...item,
-                taken: parsed[k] !== undefined ? !!parsed[k] : false,
+                taken: parsed[k] !== undefined ? !!parsed[k] : item.taken,
               };
             })
           );
-        } else {
-          // If no entry yet, uncheck or keep default
-          setSupplements(prev => prev.map(item => ({ ...item, taken: false })));
         }
+        // tanpa data hari itu: jangan reset — biarkan state Beranda stay (anti-flicker 86% -> 0%)
       } catch {}
 
-      // Load hidrasi for target day
+      // Load hidrasi for target day — fallback: pertahankan nilai bila belum ada data
       try {
         const savedWater = localStorage.getItem(`bunda_${targetWeek}_${targetDayIndex}_hidrasi`);
         if (savedWater) {
           const parsed = JSON.parse(savedWater);
           if (parsed?.current !== undefined) setWaterLiters(parsed.current / 1000);
-        } else {
-          setWaterLiters(0);
         }
+        // tanpa data: stay (anti-flicker 1.3/2.0L -> 0.0/2.0L)
       } catch {}
 
-      // Load jasmani for target day
+      // Load jasmani for target day — fallback: pertahankan nilai bila belum ada data
       try {
         const savedJasmani = localStorage.getItem(`bunda_${targetWeek}_${targetDayIndex}_jasmani`);
         if (savedJasmani) {
           const parsed = JSON.parse(savedJasmani);
-          setActivityGoals({
-            walkMinutes: parsed.jalan ?? 0,
-            workoutMinutes: parsed.senam ?? 0,
-            sleepHours: parsed.tidur ?? 0,
-          });
-        } else {
-          setActivityGoals({
-            walkMinutes: 0,
-            workoutMinutes: 0,
-            sleepHours: 0,
-          });
+          setActivityGoals((prev) => ({
+            walkMinutes: parsed.jalan ?? prev.walkMinutes,
+            workoutMinutes: parsed.senam ?? prev.workoutMinutes,
+            sleepHours: parsed.tidur ?? prev.sleepHours,
+          }));
         }
+        // tanpa data: stay (anti-flicker 28mnt -> 0)
       } catch {}
     };
 

@@ -95,17 +95,10 @@ export const FetalGrowthChart: React.FC<FetalGrowthChartProps> = ({
     } catch {
       // Fallback
     }
-    // Default initial sample USG record near current week
-    return [
-      {
-        id: 'init-1',
-        week: Math.max(8, currentWeek),
-        lengthCm: currentWeek === 12 ? 5.5 : undefined,
-        weightGrams: currentWeek === 12 ? 15 : undefined,
-        date: 'Hasil USG Terakhir',
-        note: 'Denyut jantung stabil, ukuran sesuai'
-      }
-    ];
+    // Default kosong: user baru lihat empty state, bukan angka contoh.
+    // ponytail: seed 1 record contoh saat butuh demo onboarding,
+    // tambah saat ada flag demo eksplisit.
+    return [];
   });
 
   // Form states for adding ultrasound record

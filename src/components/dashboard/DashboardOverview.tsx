@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import { Pill, Droplets, Footprints, Moon, Calendar, TrendingUp } from 'lucide-react';
 import { useHealthData } from '../../context/HealthDataContext';
 
 type TimeframeOption = 'harian' | 'mingguan' | 'bulanan';
 
-export const DashboardOverview: React.FC = () => {
+const DashboardOverviewInner: React.FC = () => {
   const [timeframe, setTimeframe] = useState<TimeframeOption>('harian');
   const { waterLiters, waterTarget, supplements, activityGoals, weeklyHistory } = useHealthData();
 
@@ -13,24 +13,22 @@ export const DashboardOverview: React.FC = () => {
   const suppPercentage = Math.round((takenSupplementsCount / Math.max(1, totalSupplementsCount)) * 100);
   const waterPercentage = Math.min(100, Math.round((waterLiters / waterTarget) * 100));
 
-  // Calculations for Weekly Summary
-  const avgWaterWeekly = (
-    weeklyHistory.reduce((acc, d) => acc + d.waterLiters, 0) / weeklyHistory.length
-  ).toFixed(1);
-
-  const avgSuppWeekly = Math.round(
-    (weeklyHistory.reduce((acc, d) => acc + d.supplementsTaken, 0) /
-      weeklyHistory.reduce((acc, d) => acc + d.totalSupplements, 0)) *
-      100
-  );
-
-  const avgWalkWeekly = Math.round(
-    weeklyHistory.reduce((acc, d) => acc + d.walkMinutes, 0) / weeklyHistory.length
-  );
-
-  const avgSleepWeekly = (
-    weeklyHistory.reduce((acc, d) => acc + d.sleepHours, 0) / weeklyHistory.length
-  ).toFixed(1);
+  // Rerata mingguan di-memo: angka stay antar render, anti-flicker 48L/92%/14.2jam/236jam <-> 0
+  const weeklyAvgs = useMemo(() => {
+    const n = Math.max(1, weeklyHistory.length);
+    const sum = (f: (d: (typeof weeklyHistory)[number]) => number) =>
+      weeklyHistory.reduce((acc, d) => acc + f(d), 0);
+    return {
+      water: (sum(d => d.waterLiters) / n).toFixed(1),
+      supp: Math.round((sum(d => d.supplementsTaken) / Math.max(1, sum(d => d.totalSupplements))) * 100),
+      walk: Math.round(sum(d => d.walkMinutes) / n),
+      sleep: (sum(d => d.sleepHours) / n).toFixed(1),
+    };
+  }, [weeklyHistory]);
+  const avgWaterWeekly = weeklyAvgs.water;
+  const avgSuppWeekly = weeklyAvgs.supp;
+  const avgWalkWeekly = weeklyAvgs.walk;
+  const avgSleepWeekly = weeklyAvgs.sleep;
 
   // Sparkline calculation for Water (7 days)
   const maxWaterVal = Math.max(...weeklyHistory.map(d => d.waterLiters), 2.5);
@@ -363,11 +361,11 @@ export const DashboardOverview: React.FC = () => {
             </span>
           </div>
 
-          {/* Grand Clean Typography Section */}
+          {/* Grand Clean Typography Section — angka dinamis dari data bunda, bukan hardcode */}
           <div className="space-y-4">
             <div>
               <div className="font-serif text-3xl sm:text-4xl font-bold text-stone-850 tracking-tight">
-                Total 48 L Air
+                Total {(Number(avgWaterWeekly) * 30).toFixed(0)} L Air
               </div>
               <p className="text-xs text-stone-500 mt-1 font-light leading-relaxed">
                 Asupan cairan optimal untuk menjaga volume air ketuban dan sirkulasi plasenta sang buah hati.
@@ -378,7 +376,7 @@ export const DashboardOverview: React.FC = () => {
 
             <div>
               <div className="font-serif text-3xl sm:text-4xl font-bold text-[#556B2F] tracking-tight">
-                92% Kepatuhan Suplemen
+                {avgSuppWeekly}% Kepatuhan Suplemen
               </div>
               <p className="text-xs text-stone-500 mt-1 font-light leading-relaxed">
                 Asam folat, vitamin D3, dan kalsium teratur mendukung perkembangan tabung saraf dan tulang janin.
@@ -389,7 +387,7 @@ export const DashboardOverview: React.FC = () => {
 
             <div>
               <div className="font-serif text-3xl sm:text-4xl font-bold text-[#C87A64] tracking-tight">
-                14.2 Jam Bergerak Aktif
+                {(Number(avgWalkWeekly) * 30 / 60).toFixed(1)} Jam Bergerak Aktif
               </div>
               <p className="text-xs text-stone-500 mt-1 font-light leading-relaxed">
                 Kombinasi jalan santai pagi dan peregangan prenatal yoga melatih elastisitas panggul bunda.
@@ -400,10 +398,10 @@ export const DashboardOverview: React.FC = () => {
 
             <div>
               <div className="font-serif text-3xl sm:text-4xl font-bold text-[#4A6B82] tracking-tight">
-                236 Jam Istirahat Penuh
+                {(Number(avgSleepWeekly) * 30).toFixed(0)} Jam Istirahat Penuh
               </div>
               <p className="text-xs text-stone-500 mt-1 font-light leading-relaxed">
-                Rata-rata 7.8 jam istirahat berkualitas per malam menjaga kestabilan tekanan darah dan suasana hati.
+                Rata-rata {avgSleepWeekly} jam istirahat berkualitas per malam menjaga kestabilan tekanan darah dan suasana hati.
               </p>
             </div>
           </div>
@@ -412,3 +410,6 @@ export const DashboardOverview: React.FC = () => {
     </div>
   );
 };
+
+// Render 1x per perubahan data — cegah flicker antar tab Beranda/Jurnal/Studio
+export const DashboardOverview = memo(DashboardOverviewInner);
