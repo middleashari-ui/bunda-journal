@@ -648,7 +648,7 @@ export default function App() {
             {/* App Sticky Header */}
             <header className="px-5 pt-3 pb-2.5 flex items-center justify-between border-b border-stone-200/50 bg-[#F5F2EB]/95 backdrop-blur-md sticky top-0 z-30">
               <div className="flex items-center gap-2">
-                <img src="/bunda_journal_FINAL_BIG.png" className="h-10 md:h-12 w-auto min-w-[160px]" />
+                <img src="/bunda_journal_FINAL_BIG.png" className="h-20 w-40 object-contain" />
               </div>
               <div className="text-[11px] font-sans font-medium text-stone-600 bg-stone-200/50 px-2.5 py-0.5 rounded-full">
                 W{week} • Trimester {week <= 13 ? 1 : week <= 27 ? 2 : 3}
