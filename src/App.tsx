@@ -26,19 +26,12 @@ import {
   sendMagicLink
 } from './lib/supabase';
 import { idbSet, idbGet, getPendingSyncCount, markQueueSynced, getPendingQueueItems } from './lib/idb';
-import { 
-  Home, 
-  BookMarked, 
-  ShoppingBag, 
-  User, 
-  CheckCircle, 
-  Smartphone, 
-  Monitor, 
-  Sparkles,
-  BookOpen,
-  Wifi,
-  Battery,
-  Signal
+import {
+  Home,
+  BookMarked,
+  User,
+  CheckCircle,
+  BookOpen
 } from 'lucide-react';
 
 const INITIAL_PHOTOS: PhotoMemory[] = [];
@@ -54,7 +47,6 @@ export default function App() {
     return paid && onboarded && logged;
   });
   const [activeTab, setActiveTab] = useState<TabType>('home');
-  const [isPhoneFrame, setIsPhoneFrame] = useState<boolean>(true);
 
   // TC03 / TC08: Paid status
   const [isPaid, setIsPaid] = useState<boolean>(() => {
@@ -506,87 +498,14 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#ECE8E1] flex flex-col items-center justify-start sm:p-4 md:p-6 text-[#292524]">
-      {/* Top Device Bar & Quick Switcher: Compact & Slim */}
-      <aside aria-label="Pratinjau Navigasi" className="w-full max-w-4xl mb-2 flex items-center justify-between gap-1.5 px-3 py-1 bg-white/80 backdrop-blur-md rounded-xl border border-stone-200/80 text-[11px] shadow-2xs">
-        <div className="flex items-center gap-1.5">
-          <span className="font-serif font-bold text-stone-900 text-xs">bunda.</span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => {
-              setIsLoggedIn(false);
-              localStorage.setItem('bunda_isLoggedIn', 'false');
-            }}
-            className={`px-2 py-0.5 rounded-lg font-medium transition-colors cursor-pointer text-[10px] ${
-              !isLoggedIn ? 'bg-[#556B2F] text-white shadow-2xs' : 'text-stone-600 hover:bg-stone-100'
-            }`}
-          >
-            Landing
-          </button>
-          <button
-            onClick={() => {
-              if (!isPaid) {
-                setIsCheckoutOpen(true);
-                showToast('Selesaikan pembelian Rp 49rb untuk mengakses aplikasi.');
-                return;
-              }
-              if (!isOnboarded) {
-                showToast('Lengkapi formulir informasi Bunda.');
-                return;
-              }
-              setIsLoggedIn(true);
-              setActiveTab('home');
-              localStorage.setItem('bunda_isLoggedIn', 'true');
-            }}
-            className={`px-2 py-0.5 rounded-lg font-medium transition-colors cursor-pointer text-[10px] ${
-              isLoggedIn ? 'bg-[#556B2F] text-white shadow-2xs' : 'text-stone-600 hover:bg-stone-100'
-            }`}
-          >
-            App
-          </button>
-
-          <button
-            id="btn-studio-header"
-            onClick={() => setIsBookPreviewOpen(true)}
-            className="p-1 rounded-md text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-colors cursor-pointer text-[10px] flex items-center gap-1 border border-transparent hover:border-stone-200"
-            title="Studio Buku Kenangan"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-[#556B2F]" />
-            <span className="hidden sm:inline font-medium">Studio</span>
-          </button>
-
-          <div className="h-3 w-px bg-stone-200 mx-0.5 hidden sm:block" />
-          <button
-            onClick={() => setIsPhoneFrame(prev => !prev)}
-            title={isPhoneFrame ? "Ganti ke Tampilan Lebar" : "Ganti ke Mockup Smartphone"}
-            className="p-1 text-stone-500 hover:text-stone-800 rounded-lg hover:bg-stone-100 cursor-pointer hidden sm:flex items-center"
-          >
-            {isPhoneFrame ? <Monitor className="w-3 h-3" /> : <Smartphone className="w-3 h-3" />}
-          </button>
-        </div>
-      </aside>
-
       {/* Main Screen Container (Smartphone Frame or Responsive Card) */}
       <div 
         className={`w-full bg-[#F5F2EB] shadow-2xl relative flex flex-col overflow-hidden transition-all duration-300 ${
           !isLoggedIn
             ? 'max-w-6xl min-h-screen rounded-2xl border border-stone-200'
-            : isPhoneFrame 
-            ? 'max-w-[430px] min-h-screen md:min-h-[880px] md:rounded-[40px] md:border-[8px] md:border-[#2C2927]' 
-            : 'max-w-2xl min-h-[90vh] rounded-3xl border border-stone-200'
+            : 'max-w-[430px] min-h-screen md:min-h-[880px] md:rounded-[40px] md:border-[8px] md:border-[#2C2927]'
         }`}
       >
-        {/* Top Notch Simulator for Smartphone view */}
-        <div className="hidden md:flex justify-between items-center px-7 pt-3 pb-1 text-[12px] font-medium text-stone-500 select-none">
-          <span>9:41</span>
-          <div className="w-24 h-4 bg-stone-850 rounded-full mx-auto shadow-inner" />
-          <div className="flex items-center gap-1.5">
-            <Signal className="w-3.5 h-3.5" />
-            <Wifi className={`w-3.5 h-3.5 ${isOffline ? 'text-amber-500' : 'text-stone-500'}`} />
-            <Battery className="w-4 h-4" />
-          </div>
-        </div>
 
         {/* Floating Toast Notification for Sync & Mode */}
         {syncToast && (
