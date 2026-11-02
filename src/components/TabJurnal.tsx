@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { HabitState, PhotoMemory, JournalEntry, UserProfile } from '../types';
 import { getWeekData } from '../data/pregnancyWeeks';
 import { idbSet, addToSyncQueue } from '../lib/idb';
+import { syncBabyDobToSupabase } from '../lib/supabase';
 import { SupplementWaterCard } from './dashboard/SupplementWaterCard';
 import { ActivityRingsCard } from './dashboard/ActivityRingsCard';
 import { 
@@ -419,6 +420,13 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   useEffect(() => {
     localStorage.setItem('bunda_bab4', JSON.stringify(bab4Data));
     window.dispatchEvent(new Event('bunda_journal_updated'));
+    // MVP email-only: sync baby_dob (tanggal lahir) untuk segmentasi promo 0-1th. Fire-and-forget.
+    if (bab4Data.birthDate) {
+      try {
+        const email = localStorage.getItem('bunda_user_email') || '';
+        if (email) syncBabyDobToSupabase(email, bab4Data.birthDate);
+      } catch {}
+    }
   }, [bab4Data]);
 
   useEffect(() => {
@@ -1393,8 +1401,8 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label className="text-[10px] text-stone-500 font-medium block mb-1">Hari & Tanggal:</label>
-                <input 
-                  type="text" 
+                <input
+                  type="date"
                   value={bab1Data.testPackDate}
                   onChange={(e) => setBab1Data({ ...bab1Data, testPackDate: e.target.value })}
                   className="w-full bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-stone-850 outline-none focus:border-[#556B2F]"
@@ -1403,23 +1411,25 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
 
               <div>
                 <label className="text-[10px] text-stone-500 font-medium block mb-1">Waktu & Tempat:</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={bab1Data.testPackTimePlace}
+                  placeholder="Contoh: 06:15 Pagi • Kamar"
                   onChange={(e) => setBab1Data({ ...bab1Data, testPackTimePlace: e.target.value })}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-stone-850 outline-none focus:border-[#556B2F]"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-stone-850 outline-none focus:border-[#556B2F] placeholder:text-stone-300 placeholder:font-normal"
                 />
               </div>
             </div>
 
             <div>
               <label className="text-[10px] text-stone-500 font-medium block mb-1">
-                Yang Pertama Terlintas di Hati Bunda:
+                Yang Pertama Terlintas di Hati Bunda: <span className="text-stone-400 font-normal">{(bab1Data.motherFeelings || '').length}/500</span>
               </label>
-              <textarea 
+              <textarea
                 value={bab1Data.motherFeelings}
-                onChange={(e) => setBab1Data({ ...bab1Data, motherFeelings: e.target.value })}
+                onChange={(e) => setBab1Data({ ...bab1Data, motherFeelings: e.target.value.slice(0, 500) })}
                 rows={3}
+                placeholder=""
                 className="w-full bg-stone-50 border border-stone-200 rounded-lg p-2.5 text-xs text-stone-850 outline-none focus:border-[#556B2F] font-serif italic leading-relaxed"
               />
             </div>

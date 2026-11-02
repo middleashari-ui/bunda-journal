@@ -123,3 +123,46 @@ export async function fetchUserTierFromSupabase(email: string): Promise<'essenti
     return 'none';
   }
 }
+
+// Register email-only MVP: magic link Supabase Auth, langsung masuk Beranda tanpa OTP.
+// Verified auto via email link; consent + tier disimpan di public.users (lihat supabase_tier_migration.sql).
+// ponytail: pindah ke signInWithOtp resmi saat domain email pengirim stabil,
+// tambah saat butuh verifikasi anti-spam server-side.
+export async function sendMagicLink(email: string) {
+  if (!supabase || !email) return { error: 'Supabase not configured' };
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    if (error) console.warn('Magic link error (fallback lokal tetap login):', error.message);
+    return { error };
+  } catch (err) {
+    console.warn('Gagal kirim magic link (fallback lokal tetap login):', err);
+    return { error: err };
+  }
+}
+
+// Simpan/refresh baby_dob dari Bab 4 Kelahiran untuk segmentasi promo 0-1th.
+// Query CSV nanti: WHERE baby_dob <= NOW() - interval '2 months' AND consent = true.
+export async function syncBabyDobToSupabase(email: string, babyDob: string) {
+  if (!supabase || !email || !babyDob) return { error: 'missing params' };
+  try {
+    const consent = (() => {
+      try { return localStorage.getItem('bunda_promo_consent') !== 'false'; } catch { return true; }
+    })();
+    const { error } = await supabase
+      .from('bunda_profiles')
+      .upsert({
+        mom_name: email,
+        baby_dob: babyDob,
+        promo_consent: consent,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'mom_name' });
+    if (error) console.warn('Supabase baby_dob sync error:', error);
+    return { error };
+  } catch (err) {
+    console.warn('Gagal sync baby_dob:', err);
+    return { error: err };
+  }
+}

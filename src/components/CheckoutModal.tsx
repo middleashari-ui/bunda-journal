@@ -5,7 +5,7 @@ import { PRICING_CONFIG, PlanConfig } from '../config/pricing';
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (email: string, tier: 'essential' | 'vip', amount: number) => void;
+  onSuccess: (email: string, tier: 'essential' | 'vip', amount: number, consent?: boolean) => void;
   defaultPlan?: 'essential' | 'vip' | 'hardcover' | 'upgrade_vip';
   currentTier?: 'none' | 'essential' | 'vip';
 }
@@ -22,6 +22,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'qris' | 'midtrans'>('qris');
   const [isProcessing, setIsProcessing] = useState(false);
   const [gmailInput, setGmailInput] = useState('');
+  // Consent promo MPASI 0-1th: default centang, user bisa cabut.
+  const [promoConsent, setPromoConsent] = useState(true);
   const [realSnapLoading, setRealSnapLoading] = useState(false);
   const [snapError, setSnapError] = useState<string | null>(null);
 
@@ -40,13 +42,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setRealSnapLoading(true);
     setSnapError(null);
     try {
-      const res = await fetch('/api/midtrans/charge', {
+      // Upgrade starter->lengkap charge selisih 80rb via endpoint khusus.
+      const isUpgrade = currentTier === 'essential' && selectedPlan === 'upgrade_vip';
+      const res = await fetch(isUpgrade ? '/api/upgrade' : '/api/midtrans/charge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: currentPlanConfig.price,
           customer_name: 'Bunda',
-          customer_email: localStorage.getItem('bunda_user_email') || 'bunda@bundajournal.my.id'
+          customer_email: localStorage.getItem('bunda_user_email') || 'bunda@bundajournal.my.id',
+          user_id: localStorage.getItem('bunda_user_email') || ''
         })
       });
 
@@ -117,14 +122,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       return;
     }
     const resolvedTier = (selectedPlan === 'vip' || selectedPlan === 'upgrade_vip' || selectedPlan === 'hardcover') ? 'vip' : 'essential';
-    onSuccess(gmailInput.trim().toLowerCase(), resolvedTier, currentPlanConfig.price);
+    onSuccess(gmailInput.trim().toLowerCase(), resolvedTier, currentPlanConfig.price, promoConsent);
   };
 
   const handleSimulateGoogleAuth = () => {
     // Simulasi respons OAuth Google dengan scope: email only
     const demoEmail = gmailInput.trim() || 'bunda.ashari@gmail.com';
     const resolvedTier = (selectedPlan === 'vip' || selectedPlan === 'upgrade_vip' || selectedPlan === 'hardcover') ? 'vip' : 'essential';
-    onSuccess(demoEmail.toLowerCase(), resolvedTier, currentPlanConfig.price);
+    onSuccess(demoEmail.toLowerCase(), resolvedTier, currentPlanConfig.price, promoConsent);
   };
 
   return (
@@ -364,6 +369,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   />
                 </div>
               </div>
+
+              <label className="flex items-start gap-2 text-[11px] text-stone-600 leading-relaxed cursor-pointer bg-white p-3 rounded-xl border border-stone-200">
+                <input
+                  type="checkbox"
+                  id="input-promo-consent"
+                  checked={promoConsent}
+                  onChange={(e) => setPromoConsent(e.target.checked)}
+                  className="mt-0.5 w-3.5 h-3.5 accent-[#556B2F] shrink-0"
+                />
+                <span>Mau dapet info promo buku anak 0-1 tahun &amp; tips MPASI</span>
+              </label>
 
               <button
                 type="submit"

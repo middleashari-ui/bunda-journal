@@ -20,9 +20,10 @@ import { PrintBookStudio } from './components/bookPrint/PrintBookStudio';
 import { OnboardingModal } from './components/OnboardingModal';
 import { PicModal } from './components/PicModal';
 import { CheckoutModal } from './components/CheckoutModal';
-import { 
-  syncSubscriptionToSupabase, 
-  fetchUserTierFromSupabase 
+import {
+  syncSubscriptionToSupabase,
+  fetchUserTierFromSupabase,
+  sendMagicLink
 } from './lib/supabase';
 import { idbSet, idbGet, getPendingSyncCount, markQueueSynced, getPendingQueueItems } from './lib/idb';
 import { 
@@ -899,7 +900,7 @@ export default function App() {
           onClose={() => setIsCheckoutOpen(false)}
           defaultPlan={checkoutDefaultPlan}
           currentTier={isPaid ? userTier : 'none'}
-          onSuccess={(email, tier, amount) => {
+          onSuccess={(email, tier, amount, consent) => {
             setIsCheckoutOpen(false);
             setIsPaid(true);
             setUserEmail(email);
@@ -907,9 +908,14 @@ export default function App() {
             localStorage.setItem('bunda_is_paid', 'true');
             localStorage.setItem('bunda_user_email', email);
             localStorage.setItem('bunda_user_tier', tier);
+            if (typeof consent === 'boolean') {
+              localStorage.setItem('bunda_promo_consent', consent ? 'true' : 'false');
+            }
 
             // Sinkronisasi background ke Supabase
             syncSubscriptionToSupabase(email, tier, amount);
+            // Magic link email-only (langsung masuk Beranda, tanpa OTP)
+            sendMagicLink(email);
 
             if (tier === 'vip') {
               showToast('Selamat! Paket VIP aktif seumur hidup.');
