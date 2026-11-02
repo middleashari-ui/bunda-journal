@@ -611,8 +611,8 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
         // SPREAD 1: HALAMAN 3 & 4 (Bab 1: Test Pack & Reaksi Ayah)
         // --------------------------------------------------------------------
         if (sIdx === 1) {
-          const testPackDate = bab1Data?.testPackDate || 'Sabtu, 14 September 2024';
-          const testPackPlace = bab1Data?.testPackTimePlace || '06:15 Pagi • Kamar Mandi Rumah';
+          const testPackDate = bab1Data?.testPackDate || '';
+          const testPackPlace = bab1Data?.testPackTimePlace || '';
           const motherFeelings = bab1Data?.motherFeelings || bab1Data?.motherFirstThought || '';
           const fatherReaction = bab1Data?.fatherReaction || '';
           const familyReaction = bab1Data?.familyReaction || '';
@@ -754,13 +754,13 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
         // SPREAD 2: HALAMAN 5 & 6 (Bab 1: USG Pertama & Ngidam)
         // --------------------------------------------------------------------
         if (sIdx === 2) {
-          const doctorName = bab1Data?.doctor || userProfile?.doctorName || 'dr. Sarah Sp.OG';
+          const doctorName = bab1Data?.doctor || userProfile?.doctorName || '';
           const hospitalName = bab1Data?.hospital || userProfile?.hospitalName || '';
           const heartRate = bab1Data?.heartRate || '';
           const heartbeatImpression = bab1Data?.heartbeatImpression || '';
           const cravings = bab1Data?.cravings || '';
-          const avoidedFoods = bab1Data?.avoidedFoods || '• Bau tumisan bawang putih dan minyak panas\n• Kopi hitam pekat\n• Parfum beraroma manis menyengat';
-          const partnerSupport = bab1Data?.partnerSupport || 'Ayah yang rela membelikan biskuit jahe jam 11 malam dan memijat punggung bunda setiap subuh saat mual datang melanda.';
+          const avoidedFoods = bab1Data?.avoidedFoods || '';
+          const partnerSupport = bab1Data?.partnerSupport || '';
 
           return (
             <React.Fragment key={`spread-${sIdx}`}>
@@ -1171,10 +1171,10 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
           const savedDaily = getSavedStorage(`bunda_daily_w${weekNum}`);
           const savedMomStats = getSavedStorage(`bunda_momstats_w${weekNum}`);
 
-          const weightVal = savedMomStats?.weight || (50 + weekNum * 0.35).toFixed(1);
-          const waistVal = savedMomStats?.waist || (75 + weekNum * 0.6).toFixed(0);
-          const bpVal = savedMomStats?.bloodPressure || '118/76';
-          const doctorNotes = savedMomStats?.doctorNote || `• Janin bertumbuh sehat, panjang ~${weekData.lengthCm}, berat ~${weekData.weightGrams}.\n• Detak jantung terpantau baik ${weekData.heartbeatBpm}.\n• Teruskan vitamin dan minum air 2 liter/hari.`;
+          const weightVal = savedMomStats?.weight || '';
+          const waistVal = savedMomStats?.waist || '';
+          const bpVal = savedMomStats?.bloodPressure || '';
+          const doctorNotes = savedMomStats?.doctorNote || '';
 
           const daysLabel = [
             { key: 'Sen', label: 'Sen' },
@@ -1388,7 +1388,13 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
         // --------------------------------------------------------------------
         if (sIdx === 42) {
           const chosenName = bab3Data?.chosenName || '';
-          const chosenMeaning = bab3Data?.chosenMeaning || '"Penerang yang riang gembira dan senantiasa dilimpahi rezeki bersih."';
+          const chosenMeaning = bab3Data?.chosenMeaning || '';
+          const candidates = [
+            bab3Data?.candidate1 || '',
+            bab3Data?.candidate2 || '',
+            bab3Data?.candidate3 || '',
+            bab3Data?.candidate4 || '',
+          ];
 
           return (
             <React.Fragment key={`spread-${sIdx}`}>
@@ -1429,22 +1435,12 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                         <Text style={styles.cardHeaderSubtext}>4 Pilihan Istimewa</Text>
                       </View>
                       <View style={[styles.cardBody, { paddingVertical: 4 }]}>
-                        <View style={styles.tableRow}>
-                          <Text style={styles.tableRowLabel}>1. Rayyan Al-Fatih</Text>
-                          <Text style={styles.tableRowValue}>Pintu surga & penakluk berbudi luhur</Text>
-                        </View>
-                        <View style={styles.tableRow}>
-                          <Text style={styles.tableRowLabel}>2. Kinanti Ayudia</Text>
-                          <Text style={styles.tableRowValue}>Tembang harapan yang anggun & lembut</Text>
-                        </View>
-                        <View style={styles.tableRow}>
-                          <Text style={styles.tableRowLabel}>3. Malik Ibrahim</Text>
-                          <Text style={styles.tableRowValue}>Pemimpin bijaksana yang berjiwa teguh</Text>
-                        </View>
-                        <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
-                          <Text style={styles.tableRowLabel}>4. Nayla Salsabila</Text>
-                          <Text style={styles.tableRowValue}>Anugerah kesuksesan mata air surga</Text>
-                        </View>
+                        {candidates.map((c, i) => (
+                          <View key={i} style={[styles.tableRow, i === 3 ? { borderBottomWidth: 0 } : null]}>
+                            <Text style={styles.tableRowLabel}>{i + 1}. {c}</Text>
+                            <Text style={styles.tableRowValue}> </Text>
+                          </View>
+                        ))}
                       </View>
                     </View>
                   </View>
@@ -1644,8 +1640,8 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
         // SPREAD 45: HALAMAN 91 & 92 (Bab 4: Kisah Persalinan & IMD)
         // --------------------------------------------------------------------
         if (sIdx === 45) {
-          const laborStory = bab4Data?.laborStory || 'Setiap gelombang cinta kontraksi bunda hadapi dengan napas panjang. Ayah membisikkan doa dan memegang tangan bunda tanpa sedetik pun melepaskannya. Seluruh rasa sakit sirna seketika saat terdengar tangisan pertamamu yang merdu di ruang bersalin.';
-          const holdingFeeling = bab4Data?.holdingBabyFeeling || 'Kulit hangatmu diletakkan di dada bunda. Mata manismu berkedip perlahan mencari aroma pelukan ini. Selamat datang di dunia, buah hatiku tersayang...';
+          const laborStory = bab4Data?.laborStory || '';
+          const holdingFeeling = bab4Data?.holdingBabyFeeling || '';
 
           return (
             <React.Fragment key={`spread-${sIdx}`}>
@@ -1671,11 +1667,11 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                       <View style={[styles.cardBody, { paddingVertical: 4 }]}>
                         <View style={styles.tableRow}>
                           <Text style={styles.tableRowLabel}>Kontraksi Pertama Dirasakan:</Text>
-                          <Text style={styles.tableRowValue}>{bab4Data?.contractionTime || 'Pukul 02:30 Dini Hari'}</Text>
+                          <Text style={styles.tableRowValue}>{bab4Data?.contractionTime || ''}</Text>
                         </View>
                         <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
                           <Text style={styles.tableRowLabel}>Tiba di Rumah Sakit Bersalin:</Text>
-                          <Text style={styles.tableRowValue}>{bab4Data?.arrivalTime || 'Pukul 05:45 Subuh'}</Text>
+                          <Text style={styles.tableRowValue}>{bab4Data?.arrivalTime || ''}</Text>
                         </View>
                       </View>
                     </View>
@@ -1759,11 +1755,11 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
         if (sIdx === 46) {
           const babyName = bab4Data?.babyName || babyNickname;
           const birthDate = bab4Data?.birthDate || hplDate;
-          const birthTime = bab4Data?.birthTime || '09:18 WIB';
-          const birthWeight = bab4Data?.birthWeight || '3.350 gram';
-          const birthLength = bab4Data?.birthLength || '50 cm';
-          const headCircumference = bab4Data?.headCircumference || '34 cm';
-          const bloodType = bab4Data?.bloodType || 'O (Rhesus Positif)';
+          const birthTime = bab4Data?.birthTime || '';
+          const birthWeight = bab4Data?.birthWeight || '';
+          const birthLength = bab4Data?.birthLength || '';
+          const headCircumference = bab4Data?.headCircumference || '';
+          const bloodType = bab4Data?.bloodType || '';
 
           return (
             <React.Fragment key={`spread-${sIdx}`}>
@@ -1997,8 +1993,8 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
         // SPREAD 48: HALAMAN 97 & 98 (Bab 5: Surat Bunda)
         // --------------------------------------------------------------------
         if (sIdx === 48) {
-          const bundaP1 = bab5Data?.bundaLetterPart1 || 'Anakku sayang,\nSaat kamu membaca surat ini kelak, jemarimu sudah jauh lebih besar dari jemari mungil yang dulu bunda genggam erat di ruang bersalin. Waktu berlalu begitu cepat, nak.\n\nBunda menulis lembaran ini saat kamu baru beberapa hari terlelap damai di dada bunda. Ketahuilah, sejak hari pertama tahu kehadiranmu, doa bunda tidak pernah berhenti mengalir untuk setiap helaan napasmu.';
-          const bundaP2 = bab5Data?.bundaLetterPart2 || 'Jadilah pribadi yang berhati lembut, teguh membela kebenaran, dan selalu bersyukur atas hal-hal sederhana. Di saat dunia luar terasa begitu bising dan melelahkan, ingatlah bahwa pelukan bunda dan rumah ini akan selalu menjadi dermaga teraman tempatmu berlabuh pulang.\n\nTerima kasih telah memilih bunda menjadi ibumu di dunia ini. Kamu adalah anugerah dan kebanggaan terbesar dalam hidup bunda.';
+          const bundaP1 = bab5Data?.bundaLetterPart1 || '';
+          const bundaP2 = bab5Data?.bundaLetterPart2 || '';
           const bundaSign = bab5Data?.bundaSignName || ownerName;
 
           return (
@@ -2086,9 +2082,9 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
         // SPREAD 49: HALAMAN 99 & 100 (Bab 5: Surat Ayah)
         // --------------------------------------------------------------------
         if (sIdx === 49) {
-          const ayahP1 = bab5Data?.ayahLetterPart1 || 'Wahai buah hatiku,\nAyah mungkin tidak selalu pandai merangkai kata seindah bundamu. Namun ketahuilah, di setiap tetes peluh kerja keras ayah, namamu selalu hadir dalam sujud doa.\n\nAyah ingin kamu tumbuh menjadi insan yang jujur, berani bermimpi besar, dan selalu rendah hati dalam melangkah.';
-          const ayahP2 = bab5Data?.ayahLetterPart2 || 'Jangan pernah takut gagal, nak. Gagal adalah tanda bahwa kamu sedang berjuang menggapai cita-cita mulia. Ayah akan selalu ada di belakangmu, menjadi dinding kokoh yang menopang langkahmu.\n\nHormatilah bundamu yang telah mengandungmu selama 9 bulan penuh perjuangan suci. Bahagiakan dia di setiap hembusan usiamu.\n\nDengan rasa bangga yang tak terhingga,\nAyahmu.';
-          const ayahSign = bab5Data?.ayahSignName || 'Ayah Tercinta';
+          const ayahP1 = bab5Data?.ayahLetterPart1 || '';
+          const ayahP2 = bab5Data?.ayahLetterPart2 || '';
+          const ayahSign = bab5Data?.ayahSignName || '';
 
           return (
             <React.Fragment key={`spread-${sIdx}`}>
