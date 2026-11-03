@@ -7,7 +7,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 // Auto-purge known dummy/test data from older builds (one-time, safe)
 try {
   const DUMMY_PATTERNS = [
-    'Sabtu, 14 Septembe', '06:15 Pagi', 'Tangan bunda gemetar',
     'Jessica Anindya', 'Kulit hangatmu',
     'Semangka Mini', 'Rayyan Al-Fatih', 'Kinanti Ayudia',
     'Malik Ibrahim', 'Nayla Salsabila',

@@ -19,7 +19,7 @@ const DashboardOverviewInner: React.FC = () => {
   const suppPercentage = Math.round((takenSupplementsCount / Math.max(1, totalSupplementsCount)) * 100);
   const waterPercentage = Math.min(100, Math.round((waterLiters / waterTarget) * 100));
 
-  // Rerata mingguan di-memo: angka stay antar render, anti-flicker 48L/92%/14.2jam/236jam <-> 0
+  // Rerata mingguan di-memo: angka stay antar render, anti-flicker 
   const weeklyAvgs = useMemo(() => {
     const n = Math.max(1, weeklyHistory.length);
     const sum = (f: (d: (typeof weeklyHistory)[number]) => number) =>
