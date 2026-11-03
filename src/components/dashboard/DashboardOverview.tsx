@@ -1,4 +1,4 @@
-import React, { useState, memo, useMemo } from 'react';
+import React, { useState, memo, useMemo, useEffect } from 'react';
 import { Pill, Droplets, Footprints, Moon, Calendar, TrendingUp } from 'lucide-react';
 import { useHealthData } from '../../context/HealthDataContext';
 
@@ -7,6 +7,12 @@ type TimeframeOption = 'harian' | 'mingguan' | 'bulanan';
 const DashboardOverviewInner: React.FC = () => {
   const [timeframe, setTimeframe] = useState<TimeframeOption>('harian');
   const { waterLiters, waterTarget, supplements, activityGoals, weeklyHistory } = useHealthData();
+  // Skeleton 1 frame: cegah flicker nilai<->0 saat mount/hydration
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), 0);
+    return () => clearTimeout(t);
+  }, []);
 
   const takenSupplementsCount = supplements.filter(s => s.taken).length;
   const totalSupplementsCount = supplements.length;
@@ -29,6 +35,16 @@ const DashboardOverviewInner: React.FC = () => {
   const avgSuppWeekly = weeklyAvgs.supp;
   const avgWalkWeekly = weeklyAvgs.walk;
   const avgSleepWeekly = weeklyAvgs.sleep;
+
+  // Ada data? false saat starter fresh (semua 0) -> empty state, bukan dummy
+  const daysWithData = useMemo(
+    () => weeklyHistory.filter(d =>
+      d.waterLiters > 0 || d.supplementsTaken > 0 || d.walkMinutes > 0 || d.sleepHours > 0
+    ).length,
+    [weeklyHistory]
+  );
+  const hasAnyData = daysWithData > 0;
+  const regularityPct = Math.round((daysWithData / Math.max(1, weeklyHistory.length)) * 100);
 
   // Sparkline calculation for Water (7 days)
   const maxWaterVal = Math.max(...weeklyHistory.map(d => d.waterLiters), 2.5);
@@ -66,8 +82,27 @@ const DashboardOverviewInner: React.FC = () => {
         </div>
       </div>
 
+      {/* Skeleton 1 frame saat mount: nilai belum hydrate, jangan tampilkan 0 dulu */}
+      {!ready && (
+        <div className="grid grid-cols-2 gap-2.5" aria-hidden="true">
+          {[0, 1, 2, 3].map(i => (
+            <div key={i} className="p-3.5 rounded-2xl border border-stone-200/70 bg-stone-100/60 animate-pulse min-h-[118px]" />
+          ))}
+        </div>
+      )}
+
+      {/* Empty state: starter fresh, belum ada catatan harian sama sekali */}
+      {ready && !hasAnyData && (
+        <div className="rounded-2xl border border-dashed border-[#556B2F]/40 bg-[#556B2F]/[0.04] p-5 text-center">
+          <p className="font-serif text-sm font-bold text-stone-800">Belum ada catatan harian</p>
+          <p className="text-xs text-stone-500 mt-1 font-light leading-relaxed">
+            Catat suplemen, hidrasi, dan aktivitas hari ini — ringkasan Harian / Mingguan / Bulanan akan terisi otomatis.
+          </p>
+        </div>
+      )}
+
       {/* VIEW 1: HARIAN (Bento Grid 2x2 with Faded Sage Background, Flat, Thin Border) */}
-      {timeframe === 'harian' && (
+      {ready && hasAnyData && timeframe === 'harian' && (
         <div className="grid grid-cols-2 gap-2.5 transition-all duration-300">
           {/* Card 1: Suplemen */}
           <div className="bg-[#556B2F]/[0.05] p-3.5 rounded-2xl border border-[#556B2F]/20 flex flex-col justify-between">
@@ -179,7 +214,7 @@ const DashboardOverviewInner: React.FC = () => {
       )}
 
       {/* VIEW 2: MINGGUAN (Tren: Rata-rata Suplemen + 7 Kapsul, Rata-rata Air + Sparkline, Rata-rata Langkah + Grafik, Tidur + Rings Statis) */}
-      {timeframe === 'mingguan' && (
+      {ready && hasAnyData && timeframe === 'mingguan' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 transition-all duration-300">
           {/* Card 1: Rata-rata Suplemen + 7 Mini Capsules */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
@@ -340,9 +375,9 @@ const DashboardOverviewInner: React.FC = () => {
               </div>
 
               <div className="text-[10px] text-stone-500 space-y-0.5 pl-2 text-right">
-                <p className="text-stone-800 font-medium">94% Keteraturan</p>
-                <p className="text-stone-400">Ritme sirkadian sehat</p>
-                <p className="text-[#556B2F] font-semibold">Konsisten minggu ini</p>
+                <p className="text-stone-800 font-medium">{regularityPct}% Keteraturan</p>
+                <p className="text-stone-400">{daysWithData}/7 hari tercatat</p>
+                <p className="text-[#556B2F] font-semibold">{daysWithData > 0 ? 'Ada progres minggu ini' : 'Mulai catat hari ini'}</p>
               </div>
             </div>
           </div>
@@ -350,7 +385,7 @@ const DashboardOverviewInner: React.FC = () => {
       )}
 
       {/* VIEW 3: BULANAN (Teks Tipografi Besar yang Bersih) */}
-      {timeframe === 'bulanan' && (
+      {ready && hasAnyData && timeframe === 'bulanan' && (
         <div className="bg-white p-5 rounded-3xl border border-stone-200/70 shadow-xs space-y-5 transition-all duration-300">
           <div className="border-b border-stone-100 pb-3 flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-widest font-semibold text-stone-400 font-sans">

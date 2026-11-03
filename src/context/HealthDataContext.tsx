@@ -47,17 +47,17 @@ interface HealthDataContextType {
 }
 
 const DEFAULT_SUPPLEMENTS: SupplementItem[] = [
-  { id: 'folat', name: 'Asam Folat', taken: true },
-  { id: 'vitd', name: 'Vitamin D', taken: true },
+  { id: 'folat', name: 'Asam Folat', taken: false },
+  { id: 'vitd', name: 'Vitamin D', taken: false },
   { id: 'dha', name: 'DHA Omega-3', taken: false },
   { id: 'kalsium', name: 'Kalsium', taken: false },
   { id: 'besi', name: 'Zat Besi', taken: false },
 ];
 
 const DEFAULT_ACTIVITY: ActivityGoals = {
-  walkMinutes: 20,
-  workoutMinutes: 15,
-  sleepHours: 7.5,
+  walkMinutes: 0,
+  workoutMinutes: 0,
+  sleepHours: 0,
 };
 
 const HealthDataContext = createContext<HealthDataContextType | undefined>(undefined);
@@ -85,7 +85,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const saved = localStorage.getItem('bunda_water_liters');
       if (saved !== null) return Number(saved);
     } catch {}
-    return 1.5;
+    return 0;
   });
 
   const waterTarget = 2.0;
@@ -206,9 +206,9 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (savedPerDay) {
         const parsed = JSON.parse(savedPerDay);
         return {
-          walkMinutes: parsed.jalan ?? 20,
-          workoutMinutes: parsed.senam ?? 15,
-          sleepHours: parsed.tidur ?? 7.5,
+          walkMinutes: parsed.jalan ?? 0,
+          workoutMinutes: parsed.senam ?? 0,
+          sleepHours: parsed.tidur ?? 0,
         };
       }
       const saved = localStorage.getItem('bunda_activity_goals');
@@ -304,28 +304,64 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return () => window.removeEventListener('bunda_day_selected', handleDayChange);
   }, []);
 
-  // Weekly History: 7 Days (6 past days + today reflecting live state)
+  // Weekly History: 7 hari dari data per-hari bunda (bunda_{w}_{d}_*).
+  // Tanpa data hari itu: 0 — bukan dummy. Hari ini (Min) pantul state live.
   const daysName = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
   const todayTaken = supplements.filter(s => s.taken).length;
 
-  const weeklyHistory: DayLog[] = [
-    { dayName: 'Sen', dateStr: '19 Okt', waterLiters: 1.75, supplementsTaken: 4, totalSupplements: 5, walkMinutes: 30, workoutMinutes: 20, sleepHours: 8.0 },
-    { dayName: 'Sel', dateStr: '20 Okt', waterLiters: 2.0, supplementsTaken: 5, totalSupplements: 5, walkMinutes: 25, workoutMinutes: 15, sleepHours: 7.5 },
-    { dayName: 'Rab', dateStr: '21 Okt', waterLiters: 1.5, supplementsTaken: 4, totalSupplements: 5, walkMinutes: 35, workoutMinutes: 20, sleepHours: 8.5 },
-    { dayName: 'Kam', dateStr: '22 Okt', waterLiters: 2.25, supplementsTaken: 5, totalSupplements: 5, walkMinutes: 20, workoutMinutes: 10, sleepHours: 7.0 },
-    { dayName: 'Jum', dateStr: '23 Okt', waterLiters: 1.75, supplementsTaken: 3, totalSupplements: 5, walkMinutes: 30, workoutMinutes: 25, sleepHours: 8.0 },
-    { dayName: 'Sab', dateStr: '24 Okt', waterLiters: 2.0, supplementsTaken: 5, totalSupplements: 5, walkMinutes: 40, workoutMinutes: 20, sleepHours: 9.0 },
-    { 
-      dayName: 'Min', 
-      dateStr: '25 Okt', 
-      waterLiters: waterLiters, 
-      supplementsTaken: todayTaken, 
-      totalSupplements: supplements.length, 
-      walkMinutes: activityGoals.walkMinutes, 
-      workoutMinutes: activityGoals.workoutMinutes, 
-      sleepHours: activityGoals.sleepHours 
-    },
-  ];
+  const readDay = (dIdx: number): Omit<DayLog, 'dayName' | 'dateStr'> | null => {
+    try {
+      const w = activeDayKey.week;
+      const hRaw = localStorage.getItem(`bunda_${w}_${dIdx}_hidrasi`);
+      const sRaw = localStorage.getItem(`bunda_${w}_${dIdx}_suplemen`);
+      const jRaw = localStorage.getItem(`bunda_${w}_${dIdx}_jasmani`);
+      if (!hRaw && !sRaw && !jRaw) return null;
+      const h = hRaw ? JSON.parse(hRaw) : {};
+      const s = sRaw ? JSON.parse(sRaw) : {};
+      const j = jRaw ? JSON.parse(jRaw) : {};
+      const suppCount = typeof s.count === 'number'
+        ? s.count
+        : Object.values(s).filter(v => v === true).length;
+      return {
+        waterLiters: (h.current ?? 0) / 1000,
+        supplementsTaken: suppCount,
+        totalSupplements: supplements.length,
+        walkMinutes: j.jalan ?? 0,
+        workoutMinutes: j.senam ?? 0,
+        sleepHours: j.tidur ?? 0,
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const zeroDay = (): Omit<DayLog, 'dayName' | 'dateStr'> => ({
+    waterLiters: 0,
+    supplementsTaken: 0,
+    totalSupplements: supplements.length,
+    walkMinutes: 0,
+    workoutMinutes: 0,
+    sleepHours: 0,
+  });
+
+  const dateLabels = ['19 Okt', '20 Okt', '21 Okt', '22 Okt', '23 Okt', '24 Okt', '25 Okt'];
+  const weeklyHistory: DayLog[] = daysName.map((dayName, i) => {
+    if (i === 6) {
+      // Hari ini: pantul state live Beranda
+      return {
+        dayName,
+        dateStr: dateLabels[i],
+        waterLiters,
+        supplementsTaken: todayTaken,
+        totalSupplements: supplements.length,
+        walkMinutes: activityGoals.walkMinutes,
+        workoutMinutes: activityGoals.workoutMinutes,
+        sleepHours: activityGoals.sleepHours,
+      };
+    }
+    const stored = readDay(i);
+    return { dayName, dateStr: dateLabels[i], ...(stored ?? zeroDay()) };
+  });
 
   return (
     <HealthDataContext.Provider
