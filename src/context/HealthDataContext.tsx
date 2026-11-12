@@ -1,4 +1,13 @@
+import { getTodayPosition, getWeekDatesMonday, fmtDayMonth, isSameDay } from '../lib/pregnancyDate';
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  readDayHabits,
+  writeWater,
+  writeSupplements,
+  writeActivity,
+  subscribeHabits,
+  getWeekHabits,
+} from '../lib/habitStore';
 
 export interface SupplementItem {
   id: string;
@@ -65,11 +74,12 @@ const HealthDataContext = createContext<HealthDataContextType | undefined>(undef
 export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Active Day Tracking for per-day sync: bunda_{week}_{dayIndex}_...
   const [activeDayKey, setActiveDayKey] = useState<{ week: number; dayIndex: number }>(() => {
+    const pos = getTodayPosition();
     try {
-      const w = Number(localStorage.getItem('bunda_week')) || 32;
-      return { week: w, dayIndex: 3 };
+      const w = Number(localStorage.getItem('bunda_week')) || pos.week;
+      return { week: w, dayIndex: pos.dayIndex };
     } catch {
-      return { week: 32, dayIndex: 3 };
+      return pos;
     }
   });
 
@@ -91,10 +101,8 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const waterTarget = 2.0;
 
   const savePerDayHidrasi = (liters: number, w: number, dIdx: number) => {
-    try {
-      const currentMl = Math.round(liters * 1000);
-      localStorage.setItem(`bunda_${w}_${dIdx}_hidrasi`, JSON.stringify({ current: currentMl, target: 2000 }));
-    } catch {}
+    // Satu pintu: Habit Store (otomatis mengirim event ke Beranda & Jurnal)
+    writeWater(w, dIdx, Math.round(liters * 1000));
   };
 
   const changeWater = (delta: number) => {
@@ -153,7 +161,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (item.taken) count++;
       });
       res.count = count;
-      localStorage.setItem(`bunda_${w}_${dIdx}_suplemen`, JSON.stringify(res));
+      writeSupplements(w, dIdx, res);
     } catch {}
   };
 
@@ -220,12 +228,12 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const savePerDayJasmani = (goals: ActivityGoals, w: number, dIdx: number) => {
     try {
       const percent = Math.min(100, Math.round(((goals.walkMinutes / 30 + goals.workoutMinutes / 20 + goals.sleepHours / 8) / 3) * 100));
-      localStorage.setItem(`bunda_${w}_${dIdx}_jasmani`, JSON.stringify({
+      writeActivity(w, dIdx, {
         jalan: goals.walkMinutes,
         senam: goals.workoutMinutes,
         tidur: goals.sleepHours,
         percent,
-      }));
+      });
     } catch {}
   };
 
@@ -304,63 +312,56 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return () => window.removeEventListener('bunda_day_selected', handleDayChange);
   }, []);
 
-  // Weekly History: 7 hari dari data per-hari bunda (bunda_{w}_{d}_*).
-  // Tanpa data hari itu: 0 — bukan dummy. Hari ini (Min) pantul state live.
+  // Ikut perubahan dari halaman lain (Jurnal / fitur baru yang memakai Habit Store).
+  useEffect(() => {
+    const sync = () => {
+      const h = readDayHabits(activeDayKey.week, activeDayKey.dayIndex);
+      setWaterLiters(h.water.current / 1000);
+      setActivityGoals({
+        walkMinutes: h.activity.jalan,
+        workoutMinutes: h.activity.senam,
+        sleepHours: h.activity.tidur,
+      });
+      const keyMap: Record<string, string> = {
+        folat: 'asamFolat',
+        vitd: 'vitaminD',
+        dha: 'dha',
+        kalsium: 'kalsium',
+        besi: 'zatBesi',
+      };
+      setSupplements((prev) =>
+        prev.map((item) => {
+          const k = keyMap[item.id] || item.id;
+          const value = h.supplements[k];
+          return typeof value === 'boolean' ? { ...item, taken: value } : item;
+        })
+      );
+    };
+    return subscribeHabits(sync);
+  }, [activeDayKey.week, activeDayKey.dayIndex]);
+
+  // Weekly History: 7 hari, dari Habit Store (bunda_{w}_{d}_*).
+  // Tanggal diambil dari minggu kehamilan yang sedang dibuka — bukan hardcode.
   const daysName = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-  const todayTaken = supplements.filter(s => s.taken).length;
+  const todayTaken = supplements.filter((s) => s.taken).length;
 
-  const readDay = (dIdx: number): Omit<DayLog, 'dayName' | 'dateStr'> | null => {
-    try {
-      const w = activeDayKey.week;
-      const hRaw = localStorage.getItem(`bunda_${w}_${dIdx}_hidrasi`);
-      const sRaw = localStorage.getItem(`bunda_${w}_${dIdx}_suplemen`);
-      const jRaw = localStorage.getItem(`bunda_${w}_${dIdx}_jasmani`);
-      if (!hRaw && !sRaw && !jRaw) return null;
-      const h = hRaw ? JSON.parse(hRaw) : {};
-      const s = sRaw ? JSON.parse(sRaw) : {};
-      const j = jRaw ? JSON.parse(jRaw) : {};
-      const suppCount = typeof s.count === 'number'
-        ? s.count
-        : Object.values(s).filter(v => v === true).length;
-      return {
-        waterLiters: (h.current ?? 0) / 1000,
-        supplementsTaken: suppCount,
-        totalSupplements: supplements.length,
-        walkMinutes: j.jalan ?? 0,
-        workoutMinutes: j.senam ?? 0,
-        sleepHours: j.tidur ?? 0,
-      };
-    } catch {
-      return null;
-    }
-  };
+  const weekDates = getWeekDatesMonday(activeDayKey.week);
+  const todayIdx = weekDates.findIndex((d) => isSameDay(d, new Date()));
+  const weekStore = getWeekHabits(activeDayKey.week);
 
-  const zeroDay = (): Omit<DayLog, 'dayName' | 'dateStr'> => ({
-    waterLiters: 0,
-    supplementsTaken: 0,
-    totalSupplements: supplements.length,
-    walkMinutes: 0,
-    workoutMinutes: 0,
-    sleepHours: 0,
-  });
-
-  const dateLabels = ['19 Okt', '20 Okt', '21 Okt', '22 Okt', '23 Okt', '24 Okt', '25 Okt'];
   const weeklyHistory: DayLog[] = daysName.map((dayName, i) => {
-    if (i === 6) {
-      // Hari ini: pantul state live Beranda
-      return {
-        dayName,
-        dateStr: dateLabels[i],
-        waterLiters,
-        supplementsTaken: todayTaken,
-        totalSupplements: supplements.length,
-        walkMinutes: activityGoals.walkMinutes,
-        workoutMinutes: activityGoals.workoutMinutes,
-        sleepHours: activityGoals.sleepHours,
-      };
-    }
-    const stored = readDay(i);
-    return { dayName, dateStr: dateLabels[i], ...(stored ?? zeroDay()) };
+    const base = weekStore[i];
+    const isToday = i === todayIdx;
+    return {
+      dayName,
+      dateStr: weekDates[i] ? fmtDayMonth(weekDates[i]) : '',
+      waterLiters: isToday ? waterLiters : base.waterMl / 1000,
+      supplementsTaken: isToday ? Math.max(todayTaken, base.supplementsTaken) : base.supplementsTaken,
+      totalSupplements: supplements.length,
+      walkMinutes: isToday ? activityGoals.walkMinutes : base.walkMinutes,
+      workoutMinutes: isToday ? activityGoals.workoutMinutes : base.workoutMinutes,
+      sleepHours: isToday ? activityGoals.sleepHours : base.sleepHours,
+    };
   });
 
   return (
