@@ -50,8 +50,7 @@ export async function idbSet(key: string, value: any): Promise<void> {
   }
 }
 
-export async function idbGet<T = any>(key: string): Promise<T | null> {
-  try {
+export async function idbGet<T = any>(key: string): Promise<T | null> {  try {
     const db = await openDB();
     const tx = db.transaction(STORE_DATA, 'readonly');
     const store = tx.objectStore(STORE_DATA);
@@ -63,6 +62,18 @@ export async function idbGet<T = any>(key: string): Promise<T | null> {
   } catch {
     return null;
   }
+}
+
+export async function idbDelete(key: string): Promise<void> {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_DATA, 'readwrite');
+    tx.objectStore(STORE_DATA).delete(key);
+    return new Promise((resolve) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    });
+  } catch {}
 }
 
 export async function addToSyncQueue(item: Omit<OutboxItem, 'id' | 'timestamp' | 'synced'>): Promise<number | null> {
