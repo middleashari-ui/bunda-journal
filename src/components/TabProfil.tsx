@@ -1,6 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { UserProfile, JournalEntry, PhotoMemory, HabitState, ReminderSettings } from '../types';
 import { PRICING_CONFIG } from '../config/pricing';
+import { getRestoreSnapshotInfo, undoLastRestore } from '../lib/authClient';
+import {
+  backupJournalToDrive,
+  getBackupMeta,
+  isAutoBackupEnabled,
+  setAutoBackupEnabled,
+  listDriveBackups,
+  downloadBackup,
+  DriveBackupMeta,
+} from '../lib/driveBackup';
 import { playGentleChime, requestNotificationPermission, sendSystemNotification } from '../utils/notifications';
 import { 
   ColorThemeId, 
@@ -35,7 +45,8 @@ import {
   RotateCcw,
   ShieldCheck,
   HelpCircle,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 
 interface TabProfilProps {
@@ -83,6 +94,112 @@ export const TabProfil: React.FC<TabProfilProps> = ({
   const [editHpl, setEditHpl] = useState(userProfile.hplDate);
   const [editHospital, setEditHospital] = useState(userProfile.hospitalName);
 
+  // Pemulihan data (snapshot sebelum restore) — dipakai untuk tombol "Batalkan".
+  const [restoreInfo, setRestoreInfo] = useState<{ at: string; count: number } | null>(null);
+  const [isUndoing, setIsUndoing] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getRestoreSnapshotInfo()
+      .then((info) => { if (!cancelled) setRestoreInfo(info); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleUndoRestore = async () => {
+    if (isUndoing) return;
+    setIsUndoing(true);
+    const res = await undoLastRestore();
+    setIsUndoing(false);
+    if (res.ok) {
+      if (onShowToast) onShowToast('Data dikembalikan ke kondisi sebelum pemulihan');
+      window.location.reload();
+    } else if (onShowToast) {
+      onShowToast('Cadangan pemulihan tidak ditemukan');
+    }
+  };
+
+  // ---- Backup ke Google Drive milik user ----
+  const [driveMeta, setDriveMeta] = useState<DriveBackupMeta | null>(() => getBackupMeta());
+  const [autoBackup, setAutoBackupState] = useState<boolean>(() => isAutoBackupEnabled());
+  const [isDriveBusy, setIsDriveBusy] = useState(false);
+
+  const driveErrorMessage = (reason?: string): string => {
+    switch (reason) {
+      case 'google-not-configured':
+        return 'Google Drive belum dikonfigurasi. Hubungi admin.';
+      case 'auth-required':
+      case 'auth-failed':
+      case 'token-failed':
+      case 'token-error':
+        return 'Izin Google Drive dibutuhkan. Coba lagi lalu setujui akses.';
+      case 'offline':
+        return 'Tidak ada koneksi internet.';
+      case 'empty':
+        return 'Belum ada data untuk dibackup.';
+      case 'gsi-load-failed':
+        return 'Gagal memuat Google. Periksa koneksi lalu coba lagi.';
+      default:
+        return reason ? `Backup gagal: ${reason}` : 'Backup gagal. Coba lagi.';
+    }
+  };
+
+  const handleDriveBackup = async () => {
+    if (isDriveBusy) return;
+    setIsDriveBusy(true);
+    try {
+      const res = await backupJournalToDrive({ interactive: true, force: true });
+      if (res.ok) {
+        setDriveMeta(res.meta || getBackupMeta());
+        if (onShowToast) onShowToast(res.skipped ? 'Backup sudah paling baru' : 'Backup ke Google Drive berhasil');
+      } else if (onShowToast) {
+        onShowToast(driveErrorMessage(res.reason));
+      }
+    } catch (err: any) {
+      if (onShowToast) onShowToast(driveErrorMessage(err?.message));
+    } finally {
+      setIsDriveBusy(false);
+    }
+  };
+
+  const handleDriveRestore = async () => {
+    if (isDriveBusy) return;
+    setIsDriveBusy(true);
+    try {
+      const files = await listDriveBackups();
+      if (!files.length) {
+        if (onShowToast) onShowToast('Belum ada file backup di Google Drive');
+        return;
+      }
+      const latest = files[0];
+      const when = latest.modifiedTime ? new Date(latest.modifiedTime).toLocaleString('id-ID') : '-';
+      const confirmed = window.confirm(
+        `Pulihkan data dari "${latest.name}" (${when})?\n\nData saat ini disalin dulu, jadi masih bisa dibatalkan lewat "Batalkan".`
+      );
+      if (!confirmed) return;
+      const res = await downloadBackup(latest.id);
+      if (res.ok) {
+        if (onShowToast) onShowToast('Data berhasil dipulihkan dari Drive');
+        setTimeout(() => window.location.reload(), 900);
+      } else if (onShowToast) {
+        onShowToast(driveErrorMessage(res.reason));
+      }
+    } catch (err: any) {
+      if (onShowToast) onShowToast(driveErrorMessage(err?.message));
+    } finally {
+      setIsDriveBusy(false);
+    }
+  };
+
+  const handleToggleAutoBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = e.target.checked;
+    setAutoBackupState(next);
+    setAutoBackupEnabled(next);
+    if (onShowToast) {
+      onShowToast(next ? 'Backup otomatis aktif (maks. 1× sehari)' : 'Backup otomatis dimatikan');
+    }
+  };
+
   // Profile Photo Upload Ref & Handler
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [selectedColorTheme, setSelectedColorTheme] = useState<ColorThemeId>(getSavedAppColorTheme);
@@ -120,6 +237,16 @@ export const TabProfil: React.FC<TabProfilProps> = ({
   const [showContractionTimer, setShowContractionTimer] = useState(false);
   const [isContractionRunning, setIsContractionRunning] = useState(false);
   const [contractionSeconds, setContractionSeconds] = useState(0);
+  const contractionTimerRef = useRef<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (contractionTimerRef.current) {
+        clearInterval(contractionTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,18 +279,39 @@ export const TabProfil: React.FC<TabProfilProps> = ({
       reminderSettings,
       fetalUsgRecords: usgRecords,
       exportedAt: new Date().toISOString(),
-      appName: 'Bunda Journal - UnaChaaan',
+      appName: 'Bunda Journal',
     };
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `bunda-journal-unachaaan-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `bunda-journal-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
     if (onShowToast) {
       onShowToast('Cadangan data berhasil diekspor dan diunduh');
     }
+  };
+
+  // Import JSON backup data
+  const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = JSON.parse(evt.target?.result as string);
+        if (data.profile) localStorage.setItem('bunda_user_profile', JSON.stringify(data.profile));
+        if (data.currentWeek) localStorage.setItem('bunda_week', String(data.currentWeek));
+        if (data.journalEntries) localStorage.setItem('bunda_journal_entries', JSON.stringify(data.journalEntries));
+        if (data.photos) localStorage.setItem('bunda_user_photos', JSON.stringify(data.photos));
+        if (onShowToast) onShowToast('Data JSON berhasil diimpor & dipulihkan!');
+        setTimeout(() => window.location.reload(), 800);
+      } catch {
+        if (onShowToast) onShowToast('Gagal membaca file JSON backup!');
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -201,12 +349,12 @@ export const TabProfil: React.FC<TabProfilProps> = ({
             className="group relative w-20 h-20 rounded-full bg-stone-200 border-4 border-[#C87A64]/30 overflow-hidden shadow-xs cursor-pointer block focus:outline-hidden hover:ring-2 hover:ring-[#556B2F] transition-all"
             title="Klik untuk mengunggah atau mengganti foto profil"
           >
-            <img 
-              src={userProfile.avatar || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80"} 
-              alt={userProfile.name} 
+            <img
+              src={userProfile.avatar || ""}
+              alt={userProfile.name}
               className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200"
               onError={(e) => {
-                (e.target as HTMLElement).src = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80";
+                (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
             {/* Subtle hover overlay */}
@@ -286,56 +434,43 @@ export const TabProfil: React.FC<TabProfilProps> = ({
       <div className="bg-white p-4 rounded-3xl border border-stone-200/60 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="font-serif text-xs font-bold text-stone-800 uppercase tracking-wider">
-            Kapasitas Penyimpanan Lokal
+            Kapasitas Penyimpanan
           </h4>
-          <span className="text-[10px] font-mono text-[#556B2F] font-semibold">18.4 MB / 50 MB</span>
+          <span className="text-[10px] font-mono text-[#556B2F] font-semibold">Tersimpan Aman</span>
         </div>
         
-        {/* Progress Bar <50MB */}
+        {/* Progress Bar */}
         <div className="w-full bg-stone-100 rounded-full h-2.5 overflow-hidden">
-          <div className="bg-[#556B2F] h-2.5 rounded-full transition-all duration-300" style={{ width: '36.8%' }}></div>
+          <div className="bg-[#556B2F] h-2.5 rounded-full transition-all duration-300" style={{ width: '100%' }}></div>
         </div>
-        <p className="text-[10px] text-stone-400">Penyimpanan IndexedDB lokal browser • Maksimum batas aman 50 MB</p>
+        <p className="text-[10px] text-stone-500 font-medium">Penyimpanan Aman di Perangkat Anda</p>
 
         {/* Toggles Mode Ayah & Mode Newborn */}
         <div className="pt-2 border-t border-stone-100 space-y-2">
-          <div className="flex items-center justify-between p-2.5 bg-stone-50 rounded-2xl">
+          <div className="flex items-center justify-between p-2.5 bg-stone-50 rounded-2xl opacity-70">
             <div>
               <p className="text-xs font-bold text-stone-800">Mode Ayah (Read Only)</p>
               <p className="text-[10px] text-stone-400">Akses pantau kehamilan tanpa izin edit data</p>
             </div>
             <button 
-              onClick={() => onShowToast && onShowToast('Mode Ayah (Read-Only) diaktifkan')}
-              className="px-3 py-1 bg-stone-200 hover:bg-stone-300 text-stone-700 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer"
+              disabled
+              className="px-2.5 py-1 bg-stone-200 text-stone-500 text-[10px] font-semibold rounded-lg cursor-not-allowed"
             >
-              Aktifkan
+              Segera Hadir
             </button>
           </div>
 
-          <div className="flex items-center justify-between p-2.5 bg-stone-50 rounded-2xl">
+          <div className="flex items-center justify-between p-2.5 bg-stone-50 rounded-2xl opacity-70">
             <div>
               <p className="text-xs font-bold text-stone-800">Mode Newborn (0 - 30 Hari)</p>
               <p className="text-[10px] text-stone-400">Beralih ke pemantauan bayi baru lahir & ASI</p>
             </div>
             <button 
-              onClick={() => onShowToast && onShowToast('Mode Newborn (0-30 Hari) diaktifkan')}
-              className="px-3 py-1 bg-[#556B2F] text-white text-[11px] font-semibold rounded-lg hover:bg-[#465926] transition-colors cursor-pointer"
+              disabled
+              className="px-2.5 py-1 bg-stone-200 text-stone-500 text-[10px] font-semibold rounded-lg cursor-not-allowed"
             >
-              Beralih
+              Segera Hadir
             </button>
-          </div>
-
-          <div className="flex items-center justify-between p-2.5 bg-amber-50/70 border border-amber-200/60 rounded-2xl">
-            <div>
-              <p className="text-xs font-bold text-stone-800">PIC Internal Portal (/pic)</p>
-              <p className="text-[10px] text-stone-500">Khusus otoritas m.yamin.ashri</p>
-            </div>
-            <a 
-              href="#/pic"
-              className="px-3 py-1 bg-amber-700 text-white text-[11px] font-semibold rounded-lg hover:bg-amber-800 transition-colors cursor-pointer"
-            >
-              Buka /pic
-            </a>
           </div>
         </div>
       </div>
@@ -351,44 +486,106 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           </div>
         </div>
 
-        <button 
-          onClick={onSync}
-          disabled={isSyncing}
-          className={`w-full mt-3 py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            syncSuccess 
-              ? 'bg-emerald-600 text-white' 
-              : 'bg-white text-stone-900 hover:bg-stone-100 active:scale-98'
-          }`}
-        >
-          {isSyncing ? (
-            <>
-              <RefreshCw className="w-4 h-4 animate-spin text-stone-600" />
-              <span>Sedang Menyinkronkan...</span>
-            </>
-          ) : syncSuccess ? (
-            <>
-              <Check className="w-4 h-4 text-white" />
-              <span>Tersinkron ke Google Drive!</span>
-            </>
-          ) : (
-            <>
-              <RefreshCw className="w-3.5 h-3.5 text-[#556B2F]" />
-              <span>Sinkronkan ke Google Drive Sekarang</span>
-            </>
-          )}
-        </button>
+        <div className="w-full mt-3 py-2 px-4 rounded-xl text-xs font-semibold bg-stone-800 text-stone-300 border border-stone-700 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <Cloud className="w-3.5 h-3.5 text-amber-400" />
+            {driveMeta
+              ? `Terakhir backup: ${new Date(driveMeta.at).toLocaleString('id-ID')}`
+              : 'Belum pernah backup ke Drive'}
+          </span>
+          <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] rounded-full font-medium">
+            Opsional
+          </span>
+        </div>
+
+        <p className="text-[10px] text-stone-400 font-light mt-2 leading-relaxed">
+          Data Bunda tetap tersimpan di HP ini. File backup hanya dikirim ke{' '}
+          <span className="text-stone-200">Google Drive milik Bunda sendiri</span>, bukan server kami.
+        </p>
+
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            onClick={handleDriveBackup}
+            disabled={isDriveBusy}
+            className="flex-1 py-2 px-3 rounded-xl text-[11px] font-semibold bg-[#556B2F] hover:bg-[#465926] text-white disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            {isDriveBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Cloud className="w-3.5 h-3.5" />}
+            {isDriveBusy ? 'Menyiapkan…' : 'Backup sekarang'}
+          </button>
+          <button
+            onClick={handleDriveRestore}
+            disabled={isDriveBusy}
+            className="flex-1 py-2 px-3 rounded-xl text-[11px] font-semibold bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Pulihkan dari Drive
+          </button>
+        </div>
+
+        <label className="mt-2.5 flex items-center gap-2 text-[11px] text-stone-300 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={autoBackup}
+            onChange={handleToggleAutoBackup}
+            className="w-3.5 h-3.5 accent-[#556B2F]"
+          />
+          Backup otomatis sekali sehari
+        </label>
 
         <div className="mt-3 pt-2.5 border-t border-stone-700/60 flex items-center justify-between text-[11px] text-stone-400">
           <span>Penyimpanan Lokal: {journalEntries.length} catatan, {photos.length} foto</span>
-          <button 
-            onClick={handleExportData}
-            className="text-stone-300 hover:text-white underline underline-offset-2 flex items-center gap-1 cursor-pointer"
-          >
-            <Download className="w-3 h-3" />
-            <span>Ekspor JSON</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleExportData}
+              className="text-stone-300 hover:text-white underline underline-offset-2 flex items-center gap-1 cursor-pointer"
+            >
+              <Download className="w-3 h-3" />
+              <span>Ekspor JSON</span>
+            </button>
+            <label className="text-stone-300 hover:text-white underline underline-offset-2 flex items-center gap-1 cursor-pointer">
+              <Upload className="w-3 h-3" />
+              <span>Impor JSON</span>
+              <input 
+                ref={fileInputRef} 
+                type="file" 
+                accept=".json" 
+                onChange={handleImportJSON} 
+                className="hidden" 
+              />
+            </label>
+          </div>
         </div>
       </div>
+
+      {/* Pemulihan data: salinan otomatis sebelum data ditimpa dari cloud */}
+      {restoreInfo && (
+        <div className="bg-white border border-stone-200/60 rounded-3xl p-4 shadow-xs">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 shrink-0">
+              <RotateCcw className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-serif text-xs font-bold text-stone-800 uppercase tracking-wider">
+                Pemulihan Data Terakhir
+              </h4>
+              <p className="text-[10px] text-stone-500 font-light mt-0.5 leading-relaxed">
+                {restoreInfo.count} data disalin otomatis sebelum pemulihan ·{' '}
+                {new Date(restoreInfo.at).toLocaleString('id-ID')}
+              </p>
+              <p className="text-[10px] text-stone-400 font-light mt-0.5">
+                Tersedia 7 hari. Gunakan bila isi jurnal terasa berubah setelah login.
+              </p>
+            </div>
+            <button
+              onClick={handleUndoRestore}
+              disabled={isUndoing}
+              className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 underline underline-offset-2 disabled:opacity-50 cursor-pointer shrink-0"
+            >
+              {isUndoing ? 'Memulihkan…' : 'Batalkan'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Helpful Pregnancy Tools */}
       <div className="bg-white p-4 rounded-3xl border border-stone-200/60 shadow-xs space-y-2.5">
@@ -657,7 +854,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
         <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500 px-1">
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-stone-400" />
-            <span>Privasi Bunda 100% Terlindungi</span>
+            <span>Data Bunda tersimpan di HP ini</span>
           </div>
           <span className="text-[10px] text-stone-400">Enkripsi Perangkat</span>
         </div>
@@ -724,7 +921,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                 <label className="block text-stone-600 font-medium mb-1">Hari Perkiraan Lahir (HPL)</label>
                 <input 
                   type="text"
-                  placeholder="Contoh: 18 Mei 2025"
+                  placeholder="Contoh: 18 Desember 2025"
                   value={editHpl}
                   onChange={(e) => setEditHpl(e.target.value)}
                   className="w-full px-3 py-2 border border-stone-200 rounded-xl focus:ring-1 focus:ring-[#556B2F] focus:outline-hidden"
@@ -793,7 +990,15 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                 Reset
               </button>
               <button
-                onClick={() => setShowKickCounter(false)}
+                onClick={() => {
+                  if (kicksCount > 0) {
+                    const existing = JSON.parse(localStorage.getItem('bunda_kick_history') || '[]');
+                    existing.push({ date: new Date().toISOString(), count: kicksCount });
+                    localStorage.setItem('bunda_kick_history', JSON.stringify(existing));
+                    if (onShowToast) onShowToast(`${kicksCount} gerakan janin tersimpan di riwayat!`);
+                  }
+                  setShowKickCounter(false);
+                }}
                 className="flex-1 py-2 text-xs bg-[#556B2F] text-white rounded-xl font-medium cursor-pointer"
               >
                 Selesai
@@ -809,7 +1014,14 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           <div className="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl border border-stone-200 text-center">
             <div className="flex justify-between items-center mb-3">
               <span className="font-serif font-bold text-stone-800 text-sm">Timer Kontraksi</span>
-              <button onClick={() => setShowContractionTimer(false)} className="text-stone-400 p-1">
+              <button 
+                onClick={() => {
+                  if (contractionTimerRef.current) clearInterval(contractionTimerRef.current);
+                  setIsContractionRunning(false);
+                  setShowContractionTimer(false);
+                }} 
+                className="text-stone-400 p-1"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -825,14 +1037,22 @@ export const TabProfil: React.FC<TabProfilProps> = ({
             <button
               onClick={() => {
                 if (isContractionRunning) {
+                  if (contractionTimerRef.current) clearInterval(contractionTimerRef.current);
                   setIsContractionRunning(false);
+                  if (contractionSeconds > 0) {
+                    const existing = JSON.parse(localStorage.getItem('bunda_contraction_history') || '[]');
+                    existing.push({ date: new Date().toISOString(), durationSeconds: contractionSeconds });
+                    localStorage.setItem('bunda_contraction_history', JSON.stringify(existing));
+                    if (onShowToast) onShowToast(`Kontraksi ${contractionSeconds} detik tercatat!`);
+                  }
                 } else {
                   setIsContractionRunning(true);
                   setContractionSeconds(1);
-                  const timer = setInterval(() => {
+                  if (contractionTimerRef.current) clearInterval(contractionTimerRef.current);
+                  contractionTimerRef.current = setInterval(() => {
                     setContractionSeconds(prev => {
                       if (prev >= 60) {
-                        clearInterval(timer);
+                        if (contractionTimerRef.current) clearInterval(contractionTimerRef.current);
                         setIsContractionRunning(false);
                         return 0;
                       }
@@ -850,6 +1070,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
 
             <button
               onClick={() => {
+                if (contractionTimerRef.current) clearInterval(contractionTimerRef.current);
                 setIsContractionRunning(false);
                 setContractionSeconds(0);
                 setShowContractionTimer(false);

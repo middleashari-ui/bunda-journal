@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, lazy, Suspense } from 'react';
-import { HabitState, UserProfile, JournalEntry, ReminderSettings } from '../types';
+import { HabitState, UserProfile, JournalEntry, ReminderSettings, PhotoMemory } from '../types';
 import { getWeekData, AVAILABLE_WEEKS } from '../data/pregnancyWeeks';
 import { DashboardOverview } from './dashboard/DashboardOverview';
 import { Check, BookOpen, ChevronLeft, ChevronRight, ArrowRight, PenLine, Sparkles, Scale, Heart } from 'lucide-react';
@@ -21,6 +21,8 @@ interface TabHomeProps {
   onGoToJournal: () => void;
   onGoToKatalog?: () => void;
   onGoToStudio?: () => void;
+  photos: PhotoMemory[];
+  onUpdatePhoto: (week: number, photo: PhotoMemory) => void;
 }
 
 export const TabHome: React.FC<TabHomeProps> = ({
@@ -37,6 +39,8 @@ export const TabHome: React.FC<TabHomeProps> = ({
   onGoToJournal,
   onGoToKatalog,
   onGoToStudio,
+  photos,
+  onUpdatePhoto,
 }) => {
   const weekData = getWeekData(week);
   const completedHabitsCount = Object.values(habits).filter(Boolean).length;
@@ -158,10 +162,11 @@ export const TabHome: React.FC<TabHomeProps> = ({
           </span>
         </div>
         <h2 className="font-serif text-xl font-bold text-stone-850 mt-1.5 leading-snug">
-          Halo {userProfile.name ? userProfile.name.split(' ')[0] : 'Bunda'}, selamat datang di Minggu ke-{week}!
+          Minggu ke-{week}, {userProfile.name ? userProfile.name.split(' ')[0] : 'Bunda'}.
         </h2>
         <p className="text-xs text-stone-500 mt-1 font-light leading-relaxed">
-          Tubuh Bunda sedang bekerja luar biasa merajut organ-organ kecil buah hati tersayang.
+          {weekData.fruitName ? `Si kecil sekarang sebesar ${weekData.fruitName.toLowerCase()}. ` : ''}
+          Pelan-pelan saja — catatan hari ini akan jadi halaman yang Bunda baca lagi nanti.
         </p>
 
         {/* Quick Week Switcher with Drag Slider & Draggable Carousel */}
@@ -305,73 +310,7 @@ export const TabHome: React.FC<TabHomeProps> = ({
       </div>
 
       {/* RINGKASAN DASHBOARD READ-ONLY (Toggle Harian / Mingguan / Bulanan) */}
-      <DashboardOverview />
-
-      {/* KARTU KESIMPULAN JURNAL MINGGU INI (Tersambung Langsung ke Jurnal & Studio Buku) */}
-      <div className="bg-white p-4 rounded-3xl border border-stone-200/70 shadow-xs space-y-3">
-        <div className="flex items-center justify-between border-b border-stone-100 pb-2.5">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#556B2F]/10 flex items-center justify-center text-[#556B2F]">
-              <PenLine className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="font-serif text-sm font-bold text-stone-850">
-                Kesimpulan Jurnal Minggu ke-{week}
-              </h3>
-              <p className="text-[10px] text-stone-400">
-                Terintegrasi otomatis ke Halaman Buku Cetak
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={onGoToJournal}
-            className="text-[10.5px] font-semibold text-[#556B2F] hover:text-[#465926] bg-[#556B2F]/10 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
-          >
-            <span>Tulis / Edit</span>
-            <ChevronRight className="w-3 h-3" />
-          </button>
-        </div>
-
-        {/* 3 Metrik Utama Mingguan */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-stone-50/80 p-2.5 rounded-2xl border border-stone-100 text-center">
-            <span className="text-[9.5px] text-stone-400 font-medium block">Catatan Terisi</span>
-            <span className="font-serif font-bold text-stone-800 text-xs sm:text-sm">
-              {journalSummary.daysCount}/7 Hari
-            </span>
-          </div>
-
-          <div className="bg-stone-50/80 p-2.5 rounded-2xl border border-stone-100 text-center">
-            <span className="text-[9.5px] text-stone-400 font-medium block">Berat Badan</span>
-            <span className="font-serif font-bold text-stone-800 text-xs sm:text-sm">
-              {journalSummary.weight ? `${journalSummary.weight} kg` : '-'}
-            </span>
-          </div>
-
-          <div className="bg-stone-50/80 p-2.5 rounded-2xl border border-stone-100 text-center">
-            <span className="text-[9.5px] text-stone-400 font-medium block">Tekanan Darah</span>
-            <span className="font-serif font-bold text-[#556B2F] text-xs sm:text-sm">
-              {journalSummary.bloodPressure || '-'}
-            </span>
-          </div>
-        </div>
-
-        {/* Cuplikan Catatan Terbaru Bunda */}
-        <div className="bg-[#FDFBF7] p-3 rounded-2xl border border-amber-900/10 text-xs">
-          <div className="flex items-center gap-1.5 text-stone-500 mb-1">
-            <Sparkles className="w-3.5 h-3.5 text-[#C87A64]" />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-600">
-              Kutipan Catatan Minggu Ini
-            </span>
-          </div>
-          <p className="font-serif italic text-stone-700 leading-relaxed text-[11.5px] line-clamp-2">
-            {journalSummary.latestNotePreview 
-              ? `"${journalSummary.latestNotePreview}"`
-              : 'Belum ada catatan harian yang ditulis untuk minggu ini. Ketuk tombol untuk mulai menulis kenangan.'}
-          </p>
-        </div>
-      </div>
+      <DashboardOverview week={week} onOpenJournal={onGoToJournal} photos={photos} onUpdatePhoto={onUpdatePhoto} />
 
       {/* KURVA PERTUMBUHAN JANIN (WHO & Hadlock Standards) - Lazy Loaded */}
       <Suspense fallback={
@@ -399,21 +338,6 @@ export const TabHome: React.FC<TabHomeProps> = ({
         />
       </Suspense>
 
-
-      {/* Quick Access Card */}
-      <div className="bg-[#FAF7F2] p-4 rounded-2xl border border-stone-200 flex items-center justify-between">
-        <div>
-          <p className="font-serif text-sm font-bold text-stone-850">Ingin menulis catatan?</p>
-          <p className="text-xs text-stone-600 font-light">Abadikan momen dan perkembangan minggu ini.</p>
-        </div>
-        <button 
-          onClick={onGoToJournal}
-          className="px-3.5 py-2 bg-[#C87A64] text-white rounded-xl text-xs font-medium hover:bg-[#b56b56] transition-colors shadow-xs shrink-0 cursor-pointer flex items-center gap-1"
-        >
-          <span>Buka Jurnal</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
 
       {/* Upsell Banner to Studio */}
       <div 
