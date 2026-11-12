@@ -32,8 +32,25 @@ import {
   ChevronDown,
   ChevronUp,
   MessageCircle,
-  Archive
+  Archive,
+  HelpCircle,
+  Pencil,
+  X
 } from 'lucide-react';
+import { OnboardingJurnalTutorial } from './OnboardingJurnalTutorial';
+import { getTodayPosition, getWeekStrip, isSameDay } from '../lib/pregnancyDate';
+import {
+  AppointmentData,
+  EMPTY_APPOINTMENT,
+  getActiveEmail,
+  loadAppointment,
+  saveAppointment,
+  loadCatatanAyah,
+  saveCatatanAyah,
+  loadStatus as readAppointmentStatus,
+  saveStatus as persistAppointmentStatus,
+  isAppointmentEmpty,
+} from '../lib/appointmentStore';
 
 interface TabJurnalProps {
   week: number;
@@ -53,6 +70,7 @@ interface TabJurnalProps {
   onOpenBookPreview?: () => void;
   onSaveCurrentEntry: () => void;
   onDeleteEntry?: (id: string) => void;
+  onShowToast?: (message: string) => void;
 }
 
 type ChapterTab = 'bab2' | 'bab1' | 'bab3' | 'bab4' | 'bab5';
@@ -75,6 +93,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   onOpenBookPreview,
   onSaveCurrentEntry,
   onDeleteEntry,
+  onShowToast,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeChapter, setActiveChapter] = useState<ChapterTab>('bab2');
@@ -262,23 +281,337 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   });
   const [openAccordionDayIndex, setOpenAccordionDayIndex] = useState<number | null>(null);
 
-  // POIN 2 State: Jadwal Pertemuan Dokter Selanjutnya (Booking / Booked)
-  const [jadwalUsg, setJadwalUsg] = useState<{
-    status: 'PERLU BOOK' | 'BOOKED';
-    dokter: string;
-    rs: string;
-    tanggal: string;
-  }>(() => {
-    try {
-      const saved = localStorage.getItem('bunda_jadwal_usg');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return {
-      status: 'BOOKED',
-      dokter: 'Dr sabh spog',
-      rs: userProfile?.hospitalName || 'RSIA Bunda Menteng',
-      tanggal: 'Kamis 5 Nov 2026 09:00 WIB',
+  // POIN 2 State: Jadwal Pertemuan Dokter V10 CLEAN NO DUMMY
+  // PER-USER: jadwal disimpan per email user (lihat lib/appointmentStore.ts),
+  // jadi login dengan email yang sama akan memuat balik jadwalnya.
+  const [activeEmail, setActiveEmail] = useState<string>(() => getActiveEmail());
+  const [appointment, setAppointment] = useState<AppointmentData>(() => {
+    return loadAppointment(getActiveEmail());
+  });
+  const [catatanAyah, setCatatanAyah] = useState<string>(() => {
+    return loadCatatanAyah(getActiveEmail());
+  }); // hapus "Bawa hasil lab..."
+  const [doctorNote, setDoctorNote] = useState<string>("");
+  const [status, setStatus] = useState<string>(() => {
+    return readAppointmentStatus(getActiveEmail());
+  }); // ini aja default
+
+  // Re-load jadwal bila identitas user berubah (login/logout) tanpa perlu reload page.
+  useEffect(() => {
+    const reload = () => {
+      const email = getActiveEmail();
+      setActiveEmail(email);
+      setAppointment(loadAppointment(email));
+      setCatatanAyah(loadCatatanAyah(email));
+      setStatus(readAppointmentStatus(email));
     };
+    const onUserChanged = () => reload();
+    const onStorage = (ev: StorageEvent) => {
+      if (!ev.key || ev.key === 'bunda_user_email') reload();
+    };
+    window.addEventListener('bunda_user_changed', onUserChanged as EventListener);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('bunda_user_changed', onUserChanged as EventListener);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+
+
+  const [isEditAppointmentModalOpen, setIsEditAppointmentModalOpen] = useState<boolean>(false);
+  const [f, setF] = useState({
+    date: appointment.date || '',
+    jam: appointment.jam || '',
+    jenis: appointment.jenis || '',
+    minggu: appointment.minggu !== '' ? String(appointment.minggu) : '',
+    dokter: appointment.dokter || '',
+    lokasi: appointment.lokasi || '',
+    klinik: appointment.klinik || '',
+    pesanAyah: appointment.pesanAyah || '',
+  });
+  const [modalCatatanAyah, setModalCatatanAyah] = useState<string>(catatanAyah);
+
+  const openEditModal = () => {
+    setF({
+      date: appointment.date || '',
+      jam: appointment.jam || '',
+      jenis: appointment.jenis || '',
+      minggu: appointment.minggu !== '' ? String(appointment.minggu) : '',
+      dokter: appointment.dokter || '',
+      lokasi: appointment.lokasi || '',
+      klinik: appointment.klinik || '',
+      pesanAyah: appointment.pesanAyah || '',
+    });
+    setModalCatatanAyah(catatanAyah);
+    setIsEditAppointmentModalOpen(true);
+  };
+
+  const handleSaveAppointment = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const updated = {
+      date: f.date ? f.date : null,
+      jam: f.jam,
+      jenis: f.jenis,
+      minggu: f.minggu,
+      dokter: f.dokter,
+      lokasi: f.lokasi,
+      klinik: f.klinik,
+      pesanAyah: f.pesanAyah,
+    };
+    setAppointment(updated);
+    setCatatanAyah(modalCatatanAyah);
+    // Simpan PER-USER (by email aktif) supaya tidak ketimpa user lain & tidak di-purge boot.
+    const email = activeEmail || getActiveEmail();
+    saveAppointment(updated, email);
+    saveCatatanAyah(modalCatatanAyah, email);
+    persistAppointmentStatus(status, email);
+    setIsEditAppointmentModalOpen(false);
+  };
+
+  const wt = (dateVal: string | null) => {
+    if (!dateVal) return "-";
+    try {
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return dateVal;
+      return d.toLocaleDateString('id-ID', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+    } catch {
+      return dateVal || "-";
+    }
+  };
+
+  const appointmentCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const R = () => {
+    const canvas = appointmentCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let tanggalText = "-";
+    if (!appointment.date) tanggalText = "-";
+    else tanggalText = wt(appointment.date);
+
+    // Portrait Canvas 1080x1280
+    canvas.width = 1080;
+    canvas.height = 1280;
+    const W = 1080, H = 1280;
+
+    // Background gradient (linen / SAGE)
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, '#FAF8F5');
+    grad.addColorStop(0.5, '#F4EFE6');
+    grad.addColorStop(1, '#ECE5D8');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Outer border
+    ctx.strokeStyle = '#DDD5C7';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(14, 14, W - 28, H - 28);
+
+    // Helper: wrap text by max width
+    const wrap = (text, x, y, maxW, lh, font, color) => {
+      ctx.font = font;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      const words = (text || '').split(/\s+/);
+      let line = '';
+      let cy = y;
+      for (const w of words) {
+        const test = line ? line + ' ' + w : w;
+        if (ctx.measureText(test).width > maxW && line) {
+          ctx.fillText(line, x, cy);
+          cy += lh;
+          line = w;
+        } else {
+          line = test;
+        }
+      }
+      if (line) ctx.fillText(line, x, cy);
+    };
+
+    // Avatar square
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(60, 60, 180, 180);
+    ctx.strokeStyle = '#DDD5C7';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(60, 60, 180, 180);
+    ctx.font = '104px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('👩‍⚕️', 150, 152);
+
+    // Doctor name
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#1C1917';
+    ctx.font = 'bold 52px serif';
+    const dokterText = appointment.dokter || "-";
+    ctx.fillText(dokterText, 270, 130);
+
+    // Jenis / Spesialis
+    ctx.fillStyle = '#57534E';
+    ctx.font = '30px sans-serif';
+    const jenisText = appointment.jenis || "-";
+    ctx.fillText(jenisText, 270, 178);
+
+    // Lokasi
+    ctx.fillStyle = '#556B2F';
+    ctx.font = 'bold 30px sans-serif';
+    const lokasiText = appointment.lokasi || "-";
+    ctx.fillText(lokasiText, 270, 222);
+
+    // Status Badge top right (3-state color)
+    const badgeText = status || "PERLU BOOK";
+    ctx.font = 'bold 30px sans-serif';
+    const badgeWidth = ctx.measureText(badgeText).width + 48;
+    ctx.fillStyle = status === 'BOOKED' ? '#556B2F' : status === 'PENDING' ? '#0EA5E9' : '#D97706';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(W - 60 - badgeWidth, 60, badgeWidth, 56, 12);
+    else ctx.fillRect(W - 60 - badgeWidth, 60, badgeWidth, 56);
+    ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.fillText(badgeText, W - 60 - badgeWidth / 2, 98);
+
+    // Middle Box (Jadwal Pertemuan + Book H-7)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(60, 300, W - 120, 240, 24);
+    else ctx.fillRect(60, 300, W - 120, 240);
+    ctx.fill();
+    ctx.strokeStyle = '#EDE8DF';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#78716C';
+    ctx.font = '26px sans-serif';
+    ctx.fillText('JADWAL PERTEMUAN', 96, 350);
+
+    ctx.fillStyle = '#1C1917';
+    ctx.font = 'bold 46px serif';
+    const jamStr = appointment.jam ? ` • ${appointment.jam}` : '';
+    ctx.fillText(`${tanggalText}${jamStr}`, 96, 410);
+
+    // Book H-7 pill (auto = appointment date - 7 days, format "29 Okt")
+    if (appointment.date) {
+      try {
+        const d7 = new Date(appointment.date);
+        if (!isNaN(d7.getTime())) {
+          d7.setDate(d7.getDate() - 7);
+          const h7Text = `Book H-7: ${d7.getDate()} ${MONTH_NAMES[d7.getMonth()]}`;
+          ctx.font = 'bold 28px sans-serif';
+          const h7w = ctx.measureText(h7Text).width + 40;
+          ctx.fillStyle = 'rgba(217, 119, 6, 0.12)';
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(96, 445, h7w, 48, 10);
+          else ctx.fillRect(96, 445, h7w, 48);
+          ctx.fill();
+          ctx.fillStyle = '#D97706';
+          ctx.textAlign = 'left';
+          ctx.fillText(h7Text, 116, 478);
+        }
+      } catch {}
+    }
+
+    // Klinik or Minggu Badge (right side of middle box)
+    const mingguStr = appointment.minggu !== "" ? `Minggu ${appointment.minggu}` : "Minggu -";
+    const subBadge = appointment.klinik || mingguStr;
+    ctx.font = 'bold 28px sans-serif';
+    const subBadgeWidth = ctx.measureText(subBadge).width + 44;
+    ctx.fillStyle = 'rgba(85, 107, 47, 0.12)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(W - 96 - subBadgeWidth, 350, subBadgeWidth, 52, 12);
+    else ctx.fillRect(W - 96 - subBadgeWidth, 350, subBadgeWidth, 52);
+    ctx.fill();
+    ctx.fillStyle = '#556B2F';
+    ctx.textAlign = 'center';
+    ctx.fillText(subBadge, W - 96 - subBadgeWidth / 2, 384);
+
+    // Divider
+    ctx.strokeStyle = '#D6D3D1';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(60, 580);
+    ctx.lineTo(W - 60, 580);
+    ctx.stroke();
+
+    // Pesan Ayah (Catatan Ayah)
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#78716C';
+    ctx.font = '24px sans-serif';
+    ctx.fillText('PESAN AYAH', 60, 630);
+    const pesanStr = appointment.pesanAyah ? `"${appointment.pesanAyah}"` : "-";
+    wrap(pesanStr, 60, 680, W - 120, 44, 'italic 34px serif', '#44403C');
+
+    // Catatan Bunda (daily note - ikut ke PNG)
+    ctx.fillStyle = '#78716C';
+    ctx.font = '24px sans-serif';
+    ctx.fillText('CATATAN BUNDA', 60, 820);
+    const catatanStr = activeNote ? activeNote : "(belum ada catatan)";
+    wrap(catatanStr, 60, 870, W - 120, 44, 'italic 34px serif', '#44403C');
+
+    // Footer Watermark + support email
+    ctx.fillStyle = '#A8A29E';
+    ctx.font = '24px sans-serif';
+    ctx.fillText('bunda. JOURNAL • www.bundajournal.my.id', 60, 1190);
+    ctx.fillStyle = '#556B2F';
+    ctx.font = '24px sans-serif';
+    ctx.fillText('support@bundajournal.my.id', 60, 1230);
+  };
+
+  useEffect(() => {
+    R();
+  }, [appointment, status, catatanAyah]);
+
+  const De = () => {
+    const canvas = appointmentCanvasRef.current;
+    if (!canvas) return;
+    R();
+    const dataUrl = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    let fname = 'jadwal-bunda.png';
+    if (appointment.date) {
+      try {
+        const d = new Date(appointment.date);
+        if (!isNaN(d.getTime())) fname = `jadwal-bunda-${d.getDate()}${MONTH_NAMES[d.getMonth()]}${d.getFullYear()}.png`;
+      } catch {}
+    }
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const Gl = () => {
+    let tanggalText = "-";
+    if (!appointment.date) tanggalText = "-";
+    else tanggalText = wt(appointment.date);
+
+    const jamText = appointment.jam ? ` (${appointment.jam})` : '';
+    const dokterText = appointment.dokter || '-';
+    const lokasiText = appointment.lokasi || '-';
+    const pesanText = appointment.pesanAyah || 'Ayah, kosongin jadwal ya';
+    const catatanText = activeNote ? `\nCatatan Bunda: ${activeNote.slice(0, 200)}` : '';
+    const text = `${pesanText}\nJadwal USG / Dokter: ${dokterText} di ${lokasiText} (${tanggalText}${jamText})\nStatus: ${status}${catatanText}\n\n* lampirkan foto jadwal ya`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  // Onboarding 8-Step Interactive Tutorial State (bunda_onboarding_done)
+  const [showOnboardingTutorial, setShowOnboardingTutorial] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('bunda_onboarding_done') !== 'true';
+    } catch {
+      return false;
+    }
   });
 
   // State Arsip Catatan Dokter Collapsed (44px)
@@ -306,20 +639,14 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
               waist: parsed.waist || '-',
               bp: parsed.bloodPressure || '-',
               note: parsed.doctorNote || 'Pemeriksaan rutin berjalan lancar.',
-              doctor: userProfile?.doctorName || 'Dr sabh spog',
+              doctor: userProfile?.doctorName || '',
             });
           }
         }
       }
     } catch {}
     if (list.length === 0) {
-      return [
-        { week: 16, date: 'Minggu ke-16', weight: '54.5 kg', waist: '82 cm', bp: '118/76', note: 'Detak jantung janin 148 bpm normal, ketuban cukup, lanjutkan konsumsi kalsium & asam folat.', doctor: 'Dr sabh spog' },
-        { week: 12, date: 'Minggu ke-12', weight: '52.0 kg', waist: '76 cm', bp: '115/75', note: 'Hasil skrining trimester 1 baik, janin aktif berkembang.', doctor: 'Dr sabh spog' },
-        { week: 8, date: 'Minggu ke-8', weight: '50.5 kg', waist: '72 cm', bp: '110/70', note: 'Kantung kehamilan intrakranial terkonfirmasi baik, CRL sesuai usia gestasi.', doctor: 'Dr sabh spog' },
-        { week: 6, date: 'Minggu ke-6', weight: '50.0 kg', waist: '70 cm', bp: '112/72', note: 'Denyut jantung janin perdana terdeteksi jelas.', doctor: 'Dr sabh spog' },
-        { week: 4, date: 'Minggu ke-4', weight: '49.8 kg', waist: '69 cm', bp: '110/70', note: 'Konfirmasi hasil tespack positif, edukasi nutrisi awal kehamilan.', doctor: 'Dr sabh spog' },
-      ];
+      return [];
     }
     return list;
   });
@@ -342,7 +669,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
 
   // Dedicated handlers with 500ms debounce save & IndexedDB write queue
   const handleUpdateDailyNote = (dayKey: string, val: string) => {
-    const trimmed = val.slice(0, 100);
+    const trimmed = val.slice(0, 15000);
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     const status: 'Selesai' | 'Belum' = trimmed.trim() ? 'Selesai' : 'Belum';
@@ -353,25 +680,25 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       status,
     };
 
-    setDayNotesMap(prev => ({
-      ...prev,
-      [selectedDayIndex]: updatedEntry,
-    }));
-
+    // Simpan cepat ke localStorage agar data tidak hilang
     try {
       localStorage.setItem(`bunda_${week}_${selectedDayIndex}_catatan`, JSON.stringify(updatedEntry));
     } catch {}
 
-    setDailyNotes(prev => {
-      const updated = { ...prev, [dayKey]: trimmed };
-      setSaveStatus('Menyimpan...');
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-      saveTimeoutRef.current = setTimeout(async () => {
+    setSaveStatus('Menyimpan...');
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(async () => {
+      setDayNotesMap((prev: Record<number, DailyNoteEntry>) => ({
+        ...prev,
+        [selectedDayIndex]: updatedEntry,
+      }));
+
+      setDailyNotes((prev: Record<string, string>) => {
+        const updated = { ...prev, [dayKey]: trimmed };
         try {
-          const str = JSON.stringify(updated);
-          localStorage.setItem(`bunda_daily_w${week}`, str);
-          await idbSet(`bunda_daily_w${week}`, updated);
-          await addToSyncQueue({
+          localStorage.setItem(`bunda_daily_w${week}`, JSON.stringify(updated));
+          idbSet(`bunda_daily_w${week}`, updated);
+          addToSyncQueue({
             table: 'bunda_daily_notes',
             data: { week, notes: updated },
             action: 'upsert'
@@ -379,12 +706,13 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           window.dispatchEvent(new Event('bunda_journal_updated'));
           setSaveStatus(`Tersimpan ${timeStr}`);
         } catch {}
-      }, 500);
-      return updated;
-    });
-    if (dayKey === 'Sen') {
-      setJournalText(trimmed);
-    }
+        return updated;
+      });
+
+      if (dayKey === 'Sen') {
+        setJournalText(trimmed);
+      }
+    }, 300);
   };
 
   const handleUpdateMomStats = (key: string, val: any) => {
@@ -521,12 +849,18 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     }
   };
 
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(3); // 3 is Sab (Hari ini pada default week 32)
+  // Index hari aktif: dihitung dari TANGGAL HARI INI (bukan hardcode 3 = Sab 31 Okt)
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(() => getTodayPosition().dayIndex);
 
   useEffect(() => {
     const handleReturnToday = (e: any) => {
-      setSelectedDayIndex(3);
-      if (e?.detail?.week) {
+      const pos = getTodayPosition();
+      setSelectedDayIndex(
+        typeof e?.detail?.dayIndex === 'number' ? e.detail.dayIndex : pos.dayIndex
+      );
+      // Ganti minggu HANYA kalau diminta. Kalau tidak, hormati minggu yang
+      // sedang dibuka user (mis. Minggu 36 dari HPHT) - jangan dipaksa 33.
+      if (typeof e?.detail?.week === 'number') {
         setWeek(e.detail.week);
       }
     };
@@ -539,24 +873,19 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   const DAY_NAMES_FULL = ['Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu', 'Senin', 'Selasa'];
   const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
+  // Tanggal asli dari HPL user (HPL - 280 = HPHT, minggu 1 = Senin minggu HPHT).
+  // Kalau HPL belum ada / tidak valid -> tanggal tampil '-', bukan tanggal dummy.
   const getWeekDays = (activeWeek: number) => {
-    const baseToday = new Date(2026, 9, 31); // 31 Okt 2026 (Sabtu)
+    const strip = getWeekStrip(activeWeek);
     return DAY_KEYS.map((key, i) => {
-      const d = new Date(baseToday);
-      const dayOffset = (i - 3) + (activeWeek - 32) * 7;
-      d.setDate(baseToday.getDate() + dayOffset);
-      const isToday = (
-        d.getFullYear() === baseToday.getFullYear() &&
-        d.getMonth() === baseToday.getMonth() &&
-        d.getDate() === baseToday.getDate()
-      );
+      const { date: d, isToday } = strip[i];
       return {
         key,
         label: DAY_LABELS[i],
         dayNameFull: DAY_NAMES_FULL[i],
-        dateNum: d.getDate(),
-        monthLabel: MONTH_NAMES[d.getMonth()],
-        year: d.getFullYear(),
+        dateNum: d ? String(d.getDate()) : '-',
+        monthLabel: d ? MONTH_NAMES[d.getMonth()] : '',
+        year: d ? d.getFullYear() : '',
         isToday,
       };
     });
@@ -588,65 +917,123 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
 
   const dynamicWeekDays = getWeekDays(week);
   const activeDay = dynamicWeekDays[selectedDayIndex] || dynamicWeekDays[3];
+
+  /** Geser satu hari; otomatis pindah minggu kalau lewat Senin/Minggu. */
+  const moveDayBy = (delta: number) => {
+    let idx = selectedDayIndex + delta;
+    let w = week;
+    while (idx > 6) { idx -= 7; w += 1; }
+    while (idx < 0) { idx += 7; w -= 1; }
+    if (w < 1 || w > 40) return;
+    setWeek(w);
+    setSelectedDayIndex(idx);
+  };
+
+  // Swipe kiri/kanan pada strip tanggal -> ganti hari (bisa nyebrang minggu)
+  const swipeRef = useRef<{ x: number; y: number } | null>(null);
+  const onStripTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    swipeRef.current = { x: t.clientX, y: t.clientY };
+  };
+  const onStripTouchEnd = (e: React.TouchEvent) => {
+    const start = swipeRef.current;
+    swipeRef.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+    moveDayBy(dx < 0 ? 1 : -1);
+  };
   const activeNote = dayNotesMap[selectedDayIndex]?.text !== undefined ? dayNotesMap[selectedDayIndex].text : (dailyNotes[activeDay.key] || '');
 
+  const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const [currentNoteLength, setCurrentNoteLength] = useState<number>(() => activeNote.length);
+
+  // Auto-balik 5 menit ditangani SATU tempat di App.tsx (event `bunda_return_today`),
+  // supaya tidak ada 2 timer yang saling menimpa. Handler di atas yang menerapkan
+  // hari + minggu hari ini ke TabJurnal.
+
+  useEffect(() => {
+    const text = dayNotesMap[selectedDayIndex]?.text !== undefined 
+      ? dayNotesMap[selectedDayIndex].text 
+      : (dailyNotes[activeDay.key] || '');
+    if (noteTextareaRef.current && noteTextareaRef.current.value !== text) {
+      noteTextareaRef.current.value = text;
+    }
+    setCurrentNoteLength(text.length);
+  }, [selectedDayIndex, week, activeDay.key]);
+
   return (
-    <div className="px-4 pt-3 pb-28 space-y-3.5 max-w-xl mx-auto">
-      {/* Chapter Navigation Selector (Mirrors Catalog Structure) */}
-      <div className="flex overflow-x-auto no-scrollbar gap-1.5 p-1 bg-stone-200/70 rounded-xl border border-stone-300/60">
-        <button
-          onClick={() => setActiveChapter('bab2')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
-            activeChapter === 'bab2'
-              ? 'bg-[#556B2F] text-white font-bold shadow-2xs'
-              : 'text-stone-700 hover:text-stone-900'
-          }`}
-        >
-          Bab 2: Mingguan (W5-40)
-        </button>
+    <div className="px-4 pt-3 pb-28 space-y-3.5 max-w-xl mx-auto relative">
+      {/* Chapter Navigation Selector + Help Button */}
+      <div className="flex items-center gap-1.5">
+        <div className="flex-1 flex overflow-x-auto no-scrollbar gap-1.5 p-1 bg-stone-200/70 rounded-xl border border-stone-300/60">
+          <button
+            onClick={() => setActiveChapter('bab2')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+              activeChapter === 'bab2'
+                ? 'bg-[#556B2F] text-white font-bold shadow-2xs'
+                : 'text-stone-700 hover:text-stone-900'
+            }`}
+          >
+            Bab 2: Mingguan (W5-40)
+          </button>
 
-        <button
-          onClick={() => setActiveChapter('bab1')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
-            activeChapter === 'bab1'
-              ? 'bg-[#556B2F] text-white font-bold shadow-2xs'
-              : 'text-stone-700 hover:text-stone-900'
-          }`}
-        >
-          Bab 1: Awal Mula
-        </button>
+          <button
+            onClick={() => setActiveChapter('bab1')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+              activeChapter === 'bab1'
+                ? 'bg-[#556B2F] text-white font-bold shadow-2xs'
+                : 'text-stone-700 hover:text-stone-900'
+            }`}
+          >
+            Bab 1: Awal Mula
+          </button>
 
-        <button
-          onClick={() => setActiveChapter('bab3')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
-            activeChapter === 'bab3'
-              ? 'bg-[#556B2F] text-white font-bold shadow-2xs'
-              : 'text-stone-700 hover:text-stone-900'
-          }`}
-        >
-          Bab 3: Persiapan
-        </button>
+          <button
+            onClick={() => setActiveChapter('bab3')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+              activeChapter === 'bab3'
+                ? 'bg-[#556B2F] text-white font-bold shadow-2xs'
+                : 'text-stone-700 hover:text-stone-900'
+            }`}
+          >
+            Bab 3: Persiapan
+          </button>
 
-        <button
-          onClick={() => setActiveChapter('bab4')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
-            activeChapter === 'bab4'
-              ? 'bg-[#556B2F] text-white font-bold shadow-2xs'
-              : 'text-stone-700 hover:text-stone-900'
-          }`}
-        >
-          Bab 4: Kelahiran
-        </button>
+          <button
+            onClick={() => setActiveChapter('bab4')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+              activeChapter === 'bab4'
+                ? 'bg-[#556B2F] text-white font-bold shadow-2xs'
+                : 'text-stone-700 hover:text-stone-900'
+            }`}
+          >
+            Bab 4: Kelahiran
+          </button>
 
+          <button
+            onClick={() => setActiveChapter('bab5')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+              activeChapter === 'bab5'
+                ? 'bg-[#556B2F] text-white font-bold shadow-2xs'
+                : 'text-stone-700 hover:text-stone-900'
+            }`}
+          >
+            Bab 5: Kapsul Waktu
+          </button>
+        </div>
+
+        {/* ? Help Button to Replay Tour */}
         <button
-          onClick={() => setActiveChapter('bab5')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
-            activeChapter === 'bab5'
-              ? 'bg-[#556B2F] text-white font-bold shadow-2xs'
-              : 'text-stone-700 hover:text-stone-900'
-          }`}
+          type="button"
+          onClick={() => setShowOnboardingTutorial(true)}
+          className="w-9 h-9 rounded-xl bg-white border border-stone-300 text-stone-700 hover:text-[#556B2F] flex items-center justify-center cursor-pointer shadow-2xs shrink-0 transition-colors"
+          title="Panduan Mengisi Jurnal (8 Langkah)"
+          aria-label="Panduan Mengisi Jurnal"
         >
-          Bab 5: Kapsul Waktu
+          <HelpCircle className="w-4 h-4 text-[#556B2F]" />
         </button>
       </div>
 
@@ -657,7 +1044,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
         <div className="space-y-3.5 animate-in fade-in duration-150">
           {/* Week Selector Slider */}
           {(!pastEntries || pastEntries.length === 0) && Object.values(dailyNotes).every(v => !v || v.trim() === '') && (
-            <div id="journal-empty-state" className="bg-[#FAF8F5] p-5 rounded-2xl border-2 border-dashed border-[#556B2F]/30 text-center space-y-2.5">
+            <div id="journal-empty-state" className="bg-[#F9F6F0] p-5 rounded-[20px] border border-[#EDE8DF] text-center space-y-2.5">
               <div className="w-10 h-10 mx-auto rounded-full bg-[#556B2F]/10 flex items-center justify-center text-[#556B2F]">
                 <BookOpen className="w-5 h-5" />
               </div>
@@ -687,7 +1074,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           )}
 
           {/* Week Navigation Header: 44px push buttons + Lora Bold + Day count */}
-          <div className="bg-white p-3.5 rounded-2xl border border-stone-200/70 shadow-xs flex items-center justify-between">
+          <div id="tour-step-week-nav" className="bg-white p-3.5 rounded-2xl border border-stone-200/70 shadow-xs flex items-center justify-between">
             <button
               type="button"
               id="btn-prev-week"
@@ -725,8 +1112,33 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           </div>
 
           {/* Day Strip Navigation (7 Hari) */}
-          <div className="space-y-2">
-            <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+          <div id="tour-step-day-strip" className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                id="btn-hari-sebelum"
+                onClick={() => moveDayBy(-1)}
+                className="w-8 h-8 rounded-full flex items-center justify-center border border-stone-200 bg-stone-50 hover:bg-stone-100 text-stone-600 transition-colors cursor-pointer"
+                title="Hari Sebelumnya"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-[10px] text-stone-400 tracking-wide uppercase">geser hari</span>
+              <button
+                type="button"
+                id="btn-hari-berikut"
+                onClick={() => moveDayBy(1)}
+                className="w-8 h-8 rounded-full flex items-center justify-center border border-stone-200 bg-stone-50 hover:bg-stone-100 text-stone-600 transition-colors cursor-pointer"
+                title="Hari Berikutnya"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            <div
+              className="grid grid-cols-7 gap-1.5 sm:gap-2 touch-pan-y select-none"
+              onTouchStart={onStripTouchStart}
+              onTouchEnd={onStripTouchEnd}
+            >
               {dynamicWeekDays.map((day, idx) => {
                 const isSelected = selectedDayIndex === idx;
                 const noteItem = dayNotesMap[idx];
@@ -793,7 +1205,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           </div>
 
           {/* Single Box: Catatan Harian Interaktif Terpilih */}
-          <div className="bg-white rounded-[20px] p-4 sm:p-5 border border-[#EDE8DF] shadow-[0_4px_24px_rgba(0,0,0,0.06)] space-y-3">
+          <div id="tour-step-catatan-bunda" className="bg-white rounded-[20px] p-4 sm:p-5 border border-[#EDE8DF] shadow-[0_4px_24px_rgba(0,0,0,0.06)] space-y-3">
             {/* Box Header: Date info left, Fruit Badge right */}
             <div className="flex items-start justify-between gap-3 border-b border-stone-100 pb-3">
               <div>
@@ -829,35 +1241,49 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
               </div>
             </div>
 
-            {/* Single Fast Native Textarea */}
+            {/* Single Fast Native Textarea (Uncontrolled + debounced for smooth Android input) */}
             <div>
               <textarea
+                ref={noteTextareaRef}
                 id="textarea-catatan-harian"
                 rows={4}
-                maxLength={100}
-                value={activeNote}
+                maxLength={15000}
+                defaultValue={activeNote}
                 inputMode="text"
                 enterKeyHint="done"
                 placeholder={`Tulis perasaan atau momen Bunda pada hari ${activeDay.dayNameFull}...`}
-                onChange={(e) => handleUpdateDailyNote(activeDay.key, e.target.value)}
-                className="w-full text-xs sm:text-sm text-stone-850 bg-stone-50/60 hover:bg-stone-50 focus:bg-white border border-stone-200 focus:border-[#556B2F] rounded-xl p-3 outline-none transition-colors font-serif italic leading-relaxed min-h-[110px]"
+                onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
+                  const val = (e.currentTarget as HTMLTextAreaElement).value.slice(0, 15000);
+                  setCurrentNoteLength(val.length);
+                  handleUpdateDailyNote(activeDay.key, val);
+                }}
+                onTouchEnd={(e: React.TouchEvent<HTMLTextAreaElement>) => {
+                  e.stopPropagation();
+                  setTimeout(() => noteTextareaRef.current?.focus(), 50);
+                }}
+                onFocus={() => {
+                  setTimeout(() => {
+                    noteTextareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }, 300);
+                }}
+                className="w-full text-xs sm:text-sm text-stone-850 bg-stone-50/60 hover:bg-stone-50 focus:bg-white border border-stone-200 focus:border-[#556B2F] rounded-xl p-3 outline-none transition-colors font-serif italic leading-relaxed min-h-[110px] max-h-[360px] resize-y relative z-10 pointer-events-auto"
                 style={{ touchAction: 'manipulation' }}
               />
 
-              {/* Footer: Autosave Status & Character Counter 0/100 */}
+              {/* Footer: Autosave Status & Character Counter */}
               <div className="flex items-center justify-between text-[11px] mt-1.5 px-0.5">
                 <span className="text-[#556B2F] font-medium font-sans flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#556B2F] animate-pulse" />
                   {saveStatus}
                 </span>
                 <span className={`font-sans font-medium ${
-                  activeNote.length >= 100
+                  currentNoteLength >= 15000
                     ? 'text-rose-500 font-bold'
-                    : activeNote.length >= 85
+                    : currentNoteLength >= 12000
                     ? 'text-amber-600'
                     : 'text-stone-400'
                 }`}>
-                  {activeNote.length}/100
+                  {currentNoteLength} / 15.000 karakter
                 </span>
               </div>
             </div>
@@ -989,7 +1415,9 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           <SupplementWaterCard />
 
           {/* Pusat Input: Kebutuhan Jasmani (Activity Rings + Form Progres Target) */}
-          <ActivityRingsCard />
+          <div id="tour-step-jasmani">
+            <ActivityRingsCard />
+          </div>
 
           {/* [HALAMAN KANAN BUKU Statistik Fisik Bunda & Catatan Dokter] */}
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/70 shadow-xs space-y-3.5">
@@ -1003,7 +1431,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
             </div>
 
             {/* [Berat: 54.5 kg] [Lingkar: 82 cm] [Tekanan: 118/76] */}
-            <div className="grid grid-cols-3 gap-2 text-xs">
+            <div id="tour-step-statistik" className="grid grid-cols-3 gap-2 text-xs">
               <div>
                 <label className="text-[9.5px] text-stone-500 font-medium block mb-1">Berat Badan:</label>
                 <input 
@@ -1039,7 +1467,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
             </div>
 
             {/* Catatan Dokter Obgyn / Bidan: 0/500 */}
-            <div>
+            <div id="tour-step-dokter" className="space-y-1">
               <div className="flex items-center justify-between mb-1">
                 <label className="text-[9.5px] text-stone-500 font-medium block">
                   Catatan Dokter Obgyn / Bidan:
@@ -1059,7 +1487,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
             </div>
 
             {/* Foto USG / Perut Minggu ke-X [Pilih Foto] + 4/5 polaroid (di DALAM card) */}
-            <div className="pt-2 border-t border-stone-100 space-y-2">
+            <div id="tour-step-foto-usg" className="pt-2 border-t border-stone-100 space-y-2">
               <div className="flex items-center justify-between">
                 <div>
                   <h5 className="font-serif text-xs font-bold text-stone-850">
@@ -1186,10 +1614,9 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                   localStorage.setItem(`bunda_momstats_w${week}`, JSON.stringify(momStats));
                   idbSet(`bunda_momstats_w${week}`, momStats);
                   addToSyncQueue({
-                    type: 'UPDATE',
+                    action: 'update',
                     table: 'bunda_momstats',
                     data: { week, ...momStats, savedAt: timeStr },
-                    timestamp: Date.now()
                   });
 
                   // Update riwayat arsip dokter
@@ -1203,7 +1630,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                         waist: momStats.waist || '-',
                         bp: momStats.bloodPressure || '-',
                         note: momStats.doctorNote || 'Pemeriksaan rutin berjalan lancar.',
-                        doctor: userProfile?.doctorName || 'Dr sabh spog',
+                        doctor: userProfile?.doctorName || '',
                       },
                       ...filtered,
                     ];
@@ -1282,104 +1709,189 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
             )}
           </div>
 
-          {/* [JADWAL PERTEMUAN DOKTER USG Trimester 2 Minggu 16 • Dr sabh spog BOOKED] */}
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
+          {/* [JADWAL PERTEMUAN DOKTER V10 CLEAN NO DUMMY] */}
+          <div id="tour-step-jadwal" className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
             <div className="flex items-center justify-between border-b border-stone-100 pb-2.5">
               <div>
                 <span className="text-[9px] uppercase font-sans text-stone-400 block tracking-wider font-semibold">
                   JADWAL PERTEMUAN DOKTER
                 </span>
                 <h4 className="font-serif text-xs sm:text-sm font-bold text-stone-900">
-                  USG Trimester 2 Minggu {week} • {jadwalUsg.dokter}
+                  {appointment.jenis ? appointment.jenis : 'USG / Konsultasi Dokter'}{' '}
+                  {appointment.minggu === '' ? 'Minggu -' : `Minggu ${appointment.minggu}`} •{' '}
+                  {appointment.dokter === '' ? (
+                    <span className="italic text-[#B8B2A5]">Belum diisi</span>
+                  ) : (
+                    appointment.dokter
+                  )}
                 </h4>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const nextStatus = jadwalUsg.status === 'BOOKED' ? 'PERLU BOOK' : 'BOOKED';
-                  const updated = { ...jadwalUsg, status: nextStatus };
-                  setJadwalUsg(updated);
-                  try {
-                    localStorage.setItem('bunda_jadwal_usg', JSON.stringify(updated));
-                  } catch {}
-                }}
-                className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer ${
-                  jadwalUsg.status === 'BOOKED'
-                    ? 'bg-[#556B2F] text-white shadow-2xs'
-                    : 'bg-amber-100 text-amber-800 border border-amber-300'
-                }`}
-              >
-                {jadwalUsg.status}
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={openEditModal}
+                  className="p-1.5 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-600 transition-colors text-xs flex items-center gap-1 cursor-pointer"
+                  title="Ubah Jadwal"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-medium hidden sm:inline">Ubah</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const order = ['PERLU BOOK', 'BOOKED', 'PENDING'];
+                    const nextStatus = order[(order.indexOf(status) + 1) % order.length];
+                    setStatus(nextStatus);
+                    persistAppointmentStatus(nextStatus, activeEmail || getActiveEmail());
+                  }}
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer ${
+                    status === 'BOOKED'
+                      ? 'bg-[#556B2F] text-white shadow-2xs'
+                      : status === 'PENDING'
+                      ? 'bg-sky-100 text-sky-800 border border-sky-300'
+                      : 'bg-amber-100 text-amber-800 border border-amber-300'
+                  }`}
+                >
+                  {status}
+                </button>
+              </div>
             </div>
 
-            {/* Black Pill Reminder */}
-            <div className="bg-stone-900 text-stone-200 text-[10px] sm:text-[10.5px] py-1.5 px-3 rounded-full flex items-center justify-center text-center font-sans tracking-tight">
-              <span>Book H-7 (29 Okt) • Notif H-1 • H-2 jam • Kosongkan jadwal suami</span>
+            {/* Box hitam: appointment.pesanAyah || "Belum ada pesan untuk Ayah - tap ✎ untuk isi" */}
+            <div
+              onClick={openEditModal}
+              className="bg-stone-900 text-stone-200 text-[10px] sm:text-[10.5px] py-2 px-3 rounded-full flex items-center justify-center text-center font-sans tracking-tight cursor-pointer hover:bg-stone-800 transition-colors select-none shadow-xs"
+            >
+              <span>{appointment.pesanAyah || 'Belum ada pesan untuk Ayah - tap ✎ untuk isi'}</span>
             </div>
+
+            {/* Catatan preview: {catatanAyah.trim() && <div>Preview: "{catatanAyah}"</div>} */}
+            {catatanAyah.trim() && (
+              <div className="text-[10px] sm:text-xs text-stone-600 bg-[#FAF8F5] px-3 py-1.5 rounded-xl border border-[#EDE8DF] font-sans">
+                Preview: "{catatanAyah}"
+              </div>
+            )}
 
             {/* Kartu Nama Dokter 360x210 Aspect */}
-            <div className="w-full max-w-[360px] mx-auto min-h-[210px] rounded-2xl p-4 border border-[#DDD5C7] bg-gradient-to-br from-[#FAF8F5] via-[#F4EFE6] to-[#ECE5D8] shadow-sm relative flex flex-col justify-between space-y-3">
-              {/* Top Row: Photo left, Doctor info, BOOKED badge top right */}
+            <div className="w-full max-w-[360px] mx-auto min-h-[210px] rounded-2xl p-4 border border-[#2E362E] bg-gradient-to-br from-[#1E251E] to-[#242B23] shadow-sm relative flex flex-col justify-between space-y-3">
+              {/* Top Row: Photo left, Doctor info, BOOKED/PERLU BOOK badge top right */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-13 h-13 rounded-2xl bg-white border border-[#DDD5C7] p-1 flex items-center justify-center text-2xl shadow-2xs">
+                  <div className="w-13 h-13 rounded-2xl bg-white border border-[#2E362E] p-1 flex items-center justify-center text-2xl shadow-2xs">
                     👩‍⚕️
                   </div>
                   <div>
-                    <h5 className="font-serif text-sm font-bold text-stone-900 leading-tight">
-                      {jadwalUsg.dokter}
+                    <h5 className="font-serif text-sm font-bold text-stone-100 leading-tight">
+                      {appointment.dokter === '' ? (
+                        <span className="italic text-[#B8B2A5]">Belum diisi</span>
+                      ) : (
+                        appointment.dokter
+                      )}
                     </h5>
-                    <p className="text-[10px] text-stone-600 font-sans">
-                      Spesialis Obstetri & Ginekologi
+                    <p className="text-[10px] text-stone-400 font-sans">
+                      {appointment.jenis || 'Spesialis Obstetri & Ginekologi'}
                     </p>
-                    <p className="text-[10px] text-[#556B2F] font-semibold font-sans mt-0.5">
-                      {jadwalUsg.rs}
+                    <p className="text-[10px] text-[#9CB89A] font-semibold font-sans mt-0.5">
+                      {appointment.lokasi || (
+                        <span className="italic text-[#B8B2A5]">Lokasi belum diisi</span>
+                      )}
                     </p>
                   </div>
                 </div>
 
-                <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wider uppercase ${
-                  jadwalUsg.status === 'BOOKED'
-                    ? 'bg-[#556B2F] text-white shadow-2xs'
-                    : 'bg-amber-500 text-white'
-                }`}>
-                  {jadwalUsg.status}
+                <span
+                  className={`px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wider uppercase ${
+                    status === 'BOOKED'
+                      ? 'bg-[#556B2F] text-white shadow-2xs'
+                      : status === 'PENDING'
+                      ? 'bg-sky-500 text-white'
+                      : 'bg-amber-500 text-white'
+                  }`}
+                >
+                  {status}
                 </span>
               </div>
 
-              {/* Middle Row: Schedule Info */}
+              {/* Middle Row: Schedule Info — empty state bila belum ada jadwal */}
+              {isAppointmentEmpty(appointment) ? (
+                <div
+                  id="jadwal-empty-state"
+                  className="bg-white/80 backdrop-blur-xs rounded-xl p-2.5 border border-[#EDE8DF] flex items-center justify-between gap-2 text-xs"
+                >
+                  <div>
+                    <span className="text-[9px] uppercase tracking-wider text-stone-400 block font-sans">
+                      Jadwal Pertemuan
+                    </span>
+                    <span className="font-serif italic text-xs text-stone-500">
+                      Belum ada jadwal
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    id="btn-atur-jadwal"
+                    onClick={openEditModal}
+                    className="shrink-0 px-2.5 py-1.5 rounded-lg bg-[#556B2F] hover:bg-[#46591f] text-white text-[10px] font-bold flex items-center gap-1 shadow-2xs cursor-pointer transition-colors"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    <span>Atur Jadwal</span>
+                  </button>
+                </div>
+              ) : (
               <div className="bg-white/80 backdrop-blur-xs rounded-xl p-2.5 border border-[#EDE8DF] flex items-center justify-between text-xs">
                 <div>
                   <span className="text-[9px] uppercase tracking-wider text-stone-400 block font-sans">
                     Jadwal Pertemuan
                   </span>
                   <span className="font-serif font-bold text-stone-850">
-                    {jadwalUsg.tanggal}
+                    {appointment.date ? wt(appointment.date) : '-'}
+                    {appointment.jam ? ` • ${appointment.jam}` : ''}
                   </span>
+                  {appointment.date && (() => {
+                    try {
+                      const d = new Date(appointment.date);
+                      if (isNaN(d.getTime())) return null;
+                      d.setDate(d.getDate() - 7);
+                      return <span className="text-[9px] text-amber-700 font-semibold bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200 mt-1 inline-block">Book H-7: {d.getDate()} {MONTH_NAMES[d.getMonth()]}</span>;
+                    } catch { return null; }
+                  })()}
                 </div>
-                <span className="text-[10px] text-[#556B2F] font-semibold bg-[#556B2F]/10 px-2 py-1 rounded-lg">
-                  Klinik Kebidanan
+                <span className="text-[10px] text-[#9CB89A] font-semibold bg-[#556B2F]/20 px-2 py-1 rounded-lg">
+                  {appointment.klinik || (appointment.minggu === '' ? 'Minggu -' : `Minggu ${appointment.minggu}`)}
                 </span>
               </div>
+              )}
 
-              {/* Bottom Row: Sweet message + Direct WA */}
-              <div className="pt-1.5 border-t border-stone-200/60 flex items-center justify-between gap-2">
-                <p className="font-serif italic text-xs text-stone-700">
-                  "Ayah, kosongin jadwal ya - Dedek {weekData.fruitEmoji}"
+              {/* Bottom Row: Sweet message + Direct WA & Download De */}
+              <div className="pt-1.5 border-t border-white/10 flex items-center justify-between gap-2">
+                <p className="font-serif italic text-xs text-stone-300 truncate max-w-[160px]" title={appointment.pesanAyah || 'Belum ada pesan'}>
+                  {appointment.pesanAyah ? `"${appointment.pesanAyah}"` : <span className="italic text-[#B8B2A5]">Belum ada pesan</span>}
                 </p>
 
-                <a
-                  href={`https://wa.me/?text=${encodeURIComponent(`Ayah, kosongin jadwal ya - Dedek ${weekData.fruitEmoji}\nJadwal USG dokter: ${jadwalUsg.dokter} di ${jadwalUsg.rs} (${jadwalUsg.tanggal})`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shrink-0 shadow-2xs cursor-pointer transition-colors"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  <span>WA Suami</span>
-                </a>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={De}
+                    title="Unduh Kartu PNG"
+                    className="p-1.5 bg-stone-700 hover:bg-stone-600 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shrink-0 shadow-2xs cursor-pointer transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={Gl}
+                    title="Kirim ke WhatsApp Ayah"
+                    className="px-2.5 py-1.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shrink-0 shadow-2xs cursor-pointer transition-colors"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>WA Suami</span>
+                  </button>
+                </div>
               </div>
             </div>
+
+            {/* Hidden Canvas for Canvas R() */}
+            <canvas ref={appointmentCanvasRef} width={1080} height={1280} className="hidden" />
           </div>
         </div>
       )}
@@ -1414,7 +1926,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                 <input
                   type="text"
                   value={bab1Data.testPackTimePlace}
-                  placeholder="Contoh: 06:15 Pagi • Kamar"
+                  placeholder="Contoh: Pagi hari di rumah"
                   onChange={(e) => setBab1Data({ ...bab1Data, testPackTimePlace: e.target.value })}
                   className="w-full bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-stone-850 outline-none focus:border-[#556B2F] placeholder:text-stone-300 placeholder:font-normal"
                 />
@@ -2084,6 +2596,185 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           <span>Buka Studio & Tinjau Seluruh Halaman Buku</span>
         </button>
       </div>
+
+      {/* Footer 5 legal links & Midtrans badge (SAGE Locked) */}
+      <footer className="pt-6 pb-6 border-t border-[#EDE8DF] text-center space-y-3 font-sans">
+        <div className="flex flex-wrap gap-2.5 sm:gap-3 justify-center text-[11.5px] text-[#5A6E4A]">
+          <a href="/about.html" className="hover:underline">Tentang Kami</a>
+          <span className="text-stone-300">•</span>
+          <a href="/contact.html" className="hover:underline">Kontak</a>
+          <span className="text-stone-300">•</span>
+          <a href="/terms.html" className="hover:underline">Syarat &amp; Ketentuan</a>
+          <span className="text-stone-300">•</span>
+          <a href="/privacy.html" className="hover:underline">Kebijakan Privasi</a>
+          <span className="text-stone-300">•</span>
+          <a href="/refund.html" className="hover:underline">Kebijakan Refund</a>
+        </div>
+        <div className="text-[10px] text-stone-500 leading-relaxed">
+          © 2026 BUN - Bunda Journal • <a href="mailto:support@bundajournal.my.id" className="underline hover:text-stone-800">support@bundajournal.my.id</a><br />
+          Midtrans: GoPay, QRIS, Bank Transfer VA, BSI VA, ShopeePay, OVO, DANA — HTTPS Secured
+        </div>
+      </footer>
+
+      {/* Modal Edit Appointment */}
+      {isEditAppointmentModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-5 border border-stone-200 shadow-xl space-y-4 font-sans max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+              <h3 className="font-serif font-bold text-base text-stone-900">Ubah Jadwal Pertemuan</h3>
+              <button
+                type="button"
+                onClick={() => setIsEditAppointmentModalOpen(false)}
+                className="text-stone-400 hover:text-stone-600 p-1 rounded-full cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAppointment} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[10.5px] font-medium text-stone-600 mb-1">Nama Dokter</label>
+                <input
+                  type="text"
+                  value={f.dokter}
+                  onChange={(e) => setF({ ...f, dokter: e.target.value })}
+                  placeholder="Nama dokter, contoh: Dr. SpOG"
+                  className="w-full px-3 py-2 border border-stone-200 rounded-xl focus:outline-none focus:border-[#556B2F]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10.5px] font-medium text-stone-600 mb-1">Lokasi RS / Klinik</label>
+                <input
+                  type="text"
+                  value={f.lokasi}
+                  onChange={(e) => setF({ ...f, lokasi: e.target.value })}
+                  placeholder="Nama RS/Klinik"
+                  className="w-full px-3 py-2 border border-stone-200 rounded-xl focus:outline-none focus:border-[#556B2F]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10.5px] font-medium text-stone-600 mb-1">Jenis Pemeriksaan</label>
+                <select
+                  value={f.jenis}
+                  onChange={(e) => setF({ ...f, jenis: e.target.value })}
+                  className="w-full px-3 py-2 border border-stone-200 rounded-xl focus:outline-none focus:border-[#556B2F] bg-white"
+                >
+                  <option value="">Pilih jenis</option>
+                  <option value="USG Trimester 1">USG Trimester 1</option>
+                  <option value="USG Trimester 2">USG Trimester 2</option>
+                  <option value="USG Trimester 3">USG Trimester 3</option>
+                  <option value="USG Fetomaternal">USG Fetomaternal</option>
+                  <option value="Konsultasi Rutin Obgyn">Konsultasi Rutin Obgyn</option>
+                  <option value="Pemeriksaan Bidan">Pemeriksaan Bidan</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10.5px] font-medium text-stone-600 mb-1">Tanggal</label>
+                  <input
+                    type="date"
+                    value={f.date || ''}
+                    onChange={(e) => setF({ ...f, date: e.target.value })}
+                    className="w-full px-2.5 py-1.5 border border-stone-200 rounded-xl focus:outline-none focus:border-[#556B2F]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10.5px] font-medium text-stone-600 mb-1">Jam</label>
+                  <input
+                    type="time"
+                    value={f.jam}
+                    onChange={(e) => setF({ ...f, jam: e.target.value })}
+                    className="w-full px-2.5 py-1.5 border border-stone-200 rounded-xl focus:outline-none focus:border-[#556B2F]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10.5px] font-medium text-stone-600 mb-1">Minggu Ke-</label>
+                  <input
+                    type="text"
+                    value={f.minggu}
+                    onChange={(e) => setF({ ...f, minggu: e.target.value })}
+                    placeholder="Contoh: 32"
+                    className="w-full px-2.5 py-1.5 border border-stone-200 rounded-xl focus:outline-none focus:border-[#556B2F]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10.5px] font-medium text-stone-600 mb-1">Klinik / Poli</label>
+                  <input
+                    type="text"
+                    value={f.klinik}
+                    onChange={(e) => setF({ ...f, klinik: e.target.value })}
+                    placeholder="Contoh: Poli Kebidanan"
+                    className="w-full px-2.5 py-1.5 border border-stone-200 rounded-xl focus:outline-none focus:border-[#556B2F]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10.5px] font-medium text-stone-600 mb-1">Pesan untuk Ayah</label>
+                <input
+                  type="text"
+                  value={f.pesanAyah}
+                  onChange={(e) => setF({ ...f, pesanAyah: e.target.value })}
+                  placeholder="Pesan singkat untuk Ayah..."
+                  className="w-full px-3 py-2 border border-stone-200 rounded-xl focus:outline-none focus:border-[#556B2F]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10.5px] font-medium text-stone-600 mb-1">Catatan Persiapan Ayah</label>
+                <textarea
+                  rows={2}
+                  value={modalCatatanAyah}
+                  onChange={(e) => setModalCatatanAyah(e.target.value)}
+                  placeholder="Catatan persiapan, contoh: Bawa buku KIA..."
+                  className="w-full px-3 py-2 border border-stone-200 rounded-xl focus:outline-none focus:border-[#556B2F]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditAppointmentModalOpen(false)}
+                  className="px-3 py-1.5 text-stone-500 hover:text-stone-800 text-xs font-medium cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 bg-[#556B2F] hover:bg-[#475a27] text-white rounded-xl text-xs font-bold cursor-pointer transition-colors shadow-2xs"
+                >
+                  Simpan Jadwal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Jurnal Interactive Tutorial (8 Steps Spotlight) */}
+      <OnboardingJurnalTutorial
+        isOpen={showOnboardingTutorial}
+        onClose={() => setShowOnboardingTutorial(false)}
+        onFinish={() => {
+          setShowOnboardingTutorial(false);
+          try {
+            localStorage.setItem('bunda_onboarding_done', 'true');
+          } catch {}
+          setTimeout(() => {
+            const textarea = document.getElementById('textarea-catatan-harian');
+            if (textarea) {
+              textarea.focus();
+              textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 300);
+        }}
+      />
     </div>
   );
 };

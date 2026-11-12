@@ -13,6 +13,31 @@ import { applyAppColorTheme, getSavedAppColorTheme } from './utils/themeManager'
 import { LandingPage } from './components/LandingPage';
 import { TabHome } from './components/TabHome';
 import { TabJurnal } from './components/TabJurnal';
+import { notifyUserChanged } from './lib/appointmentStore';
+import { LoginModal } from './components/LoginModal';
+import {
+  AuthUser,
+  apiLogout,
+  apiMe,
+  clearAuthUser,
+  collectUserPayload,
+  applyUserPayload,
+  getToken,
+  pullUserData,
+  pushUserData,
+  pushUserDataNow,
+  saveAuthUser,
+  scheduleUserDataPush,
+  wipeLocalJournalData,
+  getSyncMarker,
+  setSyncMarker,
+  setToken,
+  setSyncReady,
+  markOfflineSnapshot,
+  hasOfflineEdits,
+  flushOfflineEdits,
+} from './lib/authClient';
+import { getTodayPosition } from './lib/pregnancyDate';
 import { TabKatalog } from './components/TabKatalog';
 import { TabProfil } from './components/TabProfil';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -20,8 +45,11 @@ import { PrintBookStudio } from './components/bookPrint/PrintBookStudio';
 import { OnboardingModal } from './components/OnboardingModal';
 import { PicModal } from './components/PicModal';
 import { CheckoutModal } from './components/CheckoutModal';
+import { PAYMENT_PAUSED } from './config/payments';
+import { SuccessPage } from './components/SuccessPage';
 import {
   syncSubscriptionToSupabase,
+  syncProfileToSupabase,
   fetchUserTierFromSupabase,
   sendMagicLink
 } from './lib/supabase';
@@ -44,6 +72,10 @@ export default function App() {
     const paid = localStorage.getItem('bunda_is_paid') === 'true';
     const onboarded = localStorage.getItem('bunda_is_onboarded') === 'true';
     const logged = localStorage.getItem('bunda_isLoggedIn') !== 'false';
+    // Sudah login dengan email+password (sesi D1) => boleh masuk.
+    // Pembayaran hanya mengunci fitur OUTPUT (export PDF/hardcover), bukan pintu masuk.
+    const hasSession = !!localStorage.getItem('bunda_session_token');
+    if (logged && hasSession) return true;
     return paid && onboarded && logged;
   });
   const [activeTab, setActiveTab] = useState<TabType>('home');
@@ -73,10 +105,156 @@ export default function App() {
     return localStorage.getItem('bunda_user_email') || '';
   });
 
+  // Modal login (email + password) — auth beneran, bukan flag localStorage
+  const [isLoginOpen, setIsLoginOpen] = useState<boolean>(false);
+  const [loginMode, setLoginMode] = useState<'login' | 'register'>('login');
+
+  // Validasi sesi saat boot + hidrasi data per-user dari D1 (lintas device)
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      setSyncReady(true);
+      return;
+    }
+    // OFFLINE: tetap bisa buka & edit dari cache. Jangan tarik/push apa pun.
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      markOfflineSnapshot();
+      setSyncReady(true);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      const me = await apiMe(token);
+      if (cancelled) return;
+      if (!me) {
+        clearAuthUser();
+        setSyncReady(true);
+        return;
+      }
+      localStorage.setItem('bunda_user_email', me.email);
+      localStorage.setItem('bunda_user_tier', me.tier === 'vip' ? 'vip' : 'essential');
+
+      // SELALU tarik dari API tiap boot (bukan sekali per sesi).
+      const { ok, exists, payload, updatedAt } = await pullUserData(token);
+      if (cancelled) return;
+
+      // Ada editan offline yang belum terkirim -> gabung dulu, jangan ditimpa.
+      if (ok && hasOfflineEdits()) {
+        await flushOfflineEdits(token);
+        setSyncReady(true);
+        return;
+      }
+
+      // Server punya versi lebih baru -> pakai data server, reload sekali.
+      if (ok && exists && payload && updatedAt && updatedAt !== getSyncMarker()) {
+        setSyncMarker(updatedAt);
+        applyUserPayload(payload, me.email);
+        window.location.reload();
+        return;
+      }
+      // Server masih kosong tapi device ini punya data -> dorong ke D1 (jangan hilang)
+      if (ok && !exists && localStorage.getItem('bunda_profile')) {
+        await pushUserData(token, collectUserPayload());
+      }
+      // Kalau profil sudah ada (dari cache / dari D1), jangan minta isi ulang.
+      try {
+        const prof = JSON.parse(localStorage.getItem('bunda_profile') || '{}');
+        if (prof && prof.name) {
+          localStorage.setItem('bunda_is_onboarded', 'true');
+          setIsOnboarded(true);
+        }
+      } catch {}
+
+      // Baru setelah tarik selesai, push diizinkan (biar tidak menimpa D1)
+      setSyncReady(true);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Internet hilang -> catat snapshot (dasar hitung editan offline).
+  // Internet balik -> tarik, gabung, baru push.
+  useEffect(() => {
+    let flushing = false;
+
+    const onOffline = () => markOfflineSnapshot();
+
+    const tryFlush = async () => {
+      if (flushing) return;
+      const tk = getToken();
+      if (!tk) return;
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+      // antrean offline = snapshot ada
+      if (!localStorage.getItem('bunda_offline_snapshot')) return;
+      flushing = true;
+      try {
+        const ok = await flushOfflineEdits(tk);
+        setSyncReady(true);
+        if (ok) showToast('Tersambung lagi — data sudah disinkronkan');
+      } finally {
+        flushing = false;
+      }
+    };
+
+    const onOnline = () => { tryFlush(); };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') tryFlush();
+    };
+
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('online', onOnline);
+    document.addEventListener('visibilitychange', onVisible);
+    // Fallback: sebagian tablet/Android tidak melempar event 'online' dengan andal,
+    // jadi cek berkala selama masih ada editan offline yang belum terkirim.
+    const timer = setInterval(() => { tryFlush(); }, 10000);
+
+    return () => {
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online', onOnline);
+      document.removeEventListener('visibilitychange', onVisible);
+      clearInterval(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Dorong data ke D1 tiap ada perubahan jurnal (debounce) + saat app disembunyikan
+  useEffect(() => {
+    const onUpdated = () => scheduleUserDataPush();
+    const onHide = () => { if (document.visibilityState === 'hidden') pushUserDataNow(); };
+    window.addEventListener('bunda_journal_updated', onUpdated);
+    document.addEventListener('visibilitychange', onHide);
+    return () => {
+      window.removeEventListener('bunda_journal_updated', onUpdated);
+      document.removeEventListener('visibilitychange', onHide);
+    };
+  }, []);
+
+  // Login sukses -> simpan sesi + ambil data milik email itu (bukan data device)
+  const handleLoginSuccess = async (user: AuthUser) => {
+    const prevEmail = (localStorage.getItem('bunda_user_email') || '').trim().toLowerCase();
+    saveAuthUser(user);
+    try {
+      const { exists, payload } = await pullUserData(user.token);
+      if (exists && payload) {
+        applyUserPayload(payload, user.email);
+      } else if (prevEmail && prevEmail === user.email) {
+        // device ini memang milik email yang sama -> adopsi datanya ke server
+        await pushUserData(user.token, collectUserPayload());
+      } else {
+        // akun lain di device bekas -> mulai bersih, JANGAN warisin data orang lain
+        wipeLocalJournalData();
+        localStorage.removeItem('bunda_is_onboarded');
+      }
+    } catch {}
+    setIsLoginOpen(false);
+    window.location.reload();
+  };
+
   // Core Pregnancy Data State
   const [week, setWeek] = useState<number>(() => {
     const saved = localStorage.getItem('bunda_week');
-    return saved ? parseInt(saved, 10) : 32;
+    // Default = minggu kehamilan HARI INI (dinamis), bukan 32 hardcode
+    return saved ? parseInt(saved, 10) : getTodayPosition().week;
   });
 
   const [journalText, setJournalText] = useState<string>(() => {
@@ -154,6 +332,20 @@ export default function App() {
       };
     }
   });
+
+  // Minggu kehamilan diturunkan dari HPL. Kalau HPL baru muncul (habis pull D1)
+  // atau user mengganti HPL, hitung ulang — jangan biarkan minggu lama nyangkut.
+  useEffect(() => {
+    const hpl = userProfile.hplDate;
+    if (!hpl) return;
+    const d = new Date(hpl);
+    if (Number.isNaN(d.getTime())) return;
+    if (localStorage.getItem('bunda_week_hpl') === hpl) return;
+    const pos = getTodayPosition(new Date(), d);
+    localStorage.setItem('bunda_week_hpl', hpl);
+    localStorage.setItem('bunda_week', String(pos.week));
+    setWeek(pos.week);
+  }, [userProfile.hplDate]);
 
   // Offline banner & sync queue state
   const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
@@ -235,6 +427,15 @@ export default function App() {
   const [isPicOpen, setIsPicOpen] = useState<boolean>(() => {
     return window.location.pathname === '/pic' || window.location.hash === '#/pic';
   });
+  const [isSuccessPage, setIsSuccessPage] = useState<boolean>(() => {
+    try {
+      const p = window.location.pathname;
+      const h = window.location.hash;
+      return p === '/success' || h === '#/success';
+    } catch {
+      return false;
+    }
+  });
 
   // Listen for hash / popstate / keyboard shortcut for /pic and /app
   useEffect(() => {
@@ -246,17 +447,27 @@ export default function App() {
         setIsPicOpen(true);
       }
 
+      if (path === '/success' || hash === '#/success') {
+        setIsSuccessPage(true);
+      }
+
+      if (path === '/jurnal' || hash === '#/jurnal') {
+        setIsSuccessPage(false);
+        setIsLoggedIn(true);
+        setActiveTab('jurnal');
+      }
+
       // Intercept direct access to /app or #/app
       if (path === '/app' || hash === '#/app') {
         const paid = localStorage.getItem('bunda_is_paid') === 'true';
         const onboarded = localStorage.getItem('bunda_is_onboarded') === 'true';
 
-        if (!paid) {
+        if (!paid && !PAYMENT_PAUSED) {
           // Cecegat akses /app ke checkout modal
           setIsLoggedIn(false);
           setIsCheckoutOpen(true);
           showToast('Selesaikan pembelian untuk mengakses aplikasi.');
-        } else if (!onboarded) {
+        } else if (!onboarded && paid) {
           // Sudah bayar tapi belum isi form Bunda
           setIsLoggedIn(false);
           showToast('Lengkapi formulir informasi Bunda terlebih dahulu.');
@@ -273,66 +484,6 @@ export default function App() {
     return () => {
       window.removeEventListener('popstate', handleLocation);
       window.removeEventListener('hashchange', handleLocation);
-    };
-  }, []);
-
-  // Auto return to today's week & date after 5 minutes of inactivity (Bukan Reset Data)
-  const lastActivityTimeRef = useRef<number>(Date.now());
-  useEffect(() => {
-    const updateActivity = () => {
-      lastActivityTimeRef.current = Date.now();
-    };
-
-    const checkIdleAndReturn = () => {
-      const now = Date.now();
-      const idleTime = now - lastActivityTimeRef.current;
-      // 5 minutes = 300,000 ms
-      if (idleTime >= 5 * 60 * 1000) {
-        try {
-          const profileStr = localStorage.getItem('bunda_profile');
-          let targetWeek = 32;
-          if (profileStr) {
-            const p = JSON.parse(profileStr);
-            if (p.hplDate) {
-              const hpl = new Date(p.hplDate);
-              const diffDays = Math.round((hpl.getTime() - now) / (1000 * 60 * 60 * 24));
-              const remWeeks = diffDays / 7;
-              const w = Math.round(40 - remWeeks);
-              if (w >= 5 && w <= 40) targetWeek = w;
-            } else if (p.week) {
-              targetWeek = p.week;
-            }
-          }
-          setWeek(targetWeek);
-          window.dispatchEvent(new CustomEvent('bunda_return_today', { detail: { week: targetWeek } }));
-          if ((window as any).__setSyncToast) {
-            (window as any).__setSyncToast('Kembali ke catatan hari ini');
-          }
-        } catch {}
-        lastActivityTimeRef.current = now;
-      }
-    };
-
-    const interval = setInterval(checkIdleAndReturn, 30000);
-    window.addEventListener('click', updateActivity, { passive: true });
-    window.addEventListener('touchstart', updateActivity, { passive: true });
-    window.addEventListener('keydown', updateActivity, { passive: true });
-    window.addEventListener('scroll', updateActivity, { passive: true });
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        checkIdleAndReturn();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('click', updateActivity);
-      window.removeEventListener('touchstart', updateActivity);
-      window.removeEventListener('keydown', updateActivity);
-      window.removeEventListener('scroll', updateActivity);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
@@ -431,15 +582,124 @@ export default function App() {
     return () => clearInterval(timer);
   }, [reminderSettings, habits.vitamins]);
 
+  // Auto-balik 5 menit (300.000 ms) idle view-only ke tanggal & minggu hari ini.
+  // Ini BUKAN reset data: catatan history tetap tersimpan di localStorage.
+  useEffect(() => {
+    const IDLE_TIMEOUT = 5 * 60 * 1000;
+    let idleTimer: NodeJS.Timeout;
+
+    const resetToToday = () => {
+      const pos = getTodayPosition();
+      // Kembalikan view ke minggu + hari ini (sesuai spec V5), data tidak dihapus.
+      // setWeek juga memperbarui Home; TabJurnal menerima event di bawah.
+      setWeek(pos.week);
+      window.dispatchEvent(new CustomEvent('bunda_return_today', { detail: { dayIndex: pos.dayIndex, week: pos.week } }));
+      showToast(`✓ Balik ke hari ini (Minggu ${pos.week})`);
+    };
+
+    const handleUserInteraction = () => {
+      localStorage.setItem('bunda_lastActive', Date.now().toString());
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(resetToToday, IDLE_TIMEOUT);
+    };
+
+    // Cek durasi saat mount: jika ditinggal >5 menit, langsung arahkan ke hari ini
+    const lastActive = localStorage.getItem('bunda_lastActive');
+    if (lastActive && Date.now() - parseInt(lastActive, 10) > IDLE_TIMEOUT) {
+      resetToToday();
+    }
+    handleUserInteraction();
+
+    const events = ['click', 'touchstart', 'keydown', 'input', 'scroll'];
+    events.forEach((ev) => document.addEventListener(ev, handleUserInteraction, { passive: true }));
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        const last = localStorage.getItem('bunda_lastActive');
+        if (last && Date.now() - parseInt(last, 10) > IDLE_TIMEOUT) {
+          resetToToday();
+        }
+        handleUserInteraction();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearTimeout(idleTimer);
+      events.forEach((ev) => document.removeEventListener(ev, handleUserInteraction));
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
   const toggleHabit = (key: keyof HabitState) => {
     setHabits(prev => ({ ...prev, [key]: !prev[key] }));
   };
+
+  // Hasil OAuth Google (#glt=<token>) + pesan error (?google_error=...)
+  useEffect(() => {
+    const hash = window.location.hash || '';
+    if (hash.startsWith('#glt=')) {
+      const raw = hash.slice('#glt='.length);
+      const [tokenPart, planPart] = raw.split('&');
+      const oauthToken = decodeURIComponent(tokenPart || '');
+      const plan = planPart && planPart.startsWith('plan=')
+        ? decodeURIComponent(planPart.slice('plan='.length))
+        : '';
+      if (oauthToken) {
+        setToken(oauthToken);
+        (async () => {
+          const me = await apiMe(oauthToken);
+          if (me) {
+            saveAuthUser(me);
+            // plan di URL cuma penanda. Saat payment paused, jangan kasih tier/paid.
+            if (plan && !PAYMENT_PAUSED) {
+              const tier = plan === 'essential' ? 'essential' : 'vip';
+              localStorage.setItem('bunda_is_paid', 'true');
+              localStorage.setItem('bunda_user_tier', tier);
+            }
+            localStorage.setItem('bunda_isLoggedIn', 'true');
+          }
+          try { window.history.replaceState({}, '', window.location.pathname); } catch {}
+          window.location.reload();
+        })();
+        return;
+      }
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const gErr = params.get('google_error');
+    if (gErr) {
+      const msg =
+        gErr === 'cancelled'
+          ? 'Login Google dibatalkan'
+          : gErr === 'not_configured'
+          ? 'Login Google belum aktif — pakai email & password dulu ya'
+          : 'Login Google gagal. Coba lagi.';
+      showToast(msg);
+      params.delete('google_error');
+      const qs = params.toString();
+      try {
+        window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
+      } catch {}
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const showToast = (text: string, price?: string) => {
     setToastMessage({ text, price });
     setTimeout(() => {
       setToastMessage(null);
     }, 3500);
+  };
+
+  // Mode perbaikan: checkout tidak dibuka lewat modal sama sekali, cuma toast.
+  const openCheckout = (plan: 'essential' | 'vip' | 'hardcover' | 'upgrade_vip' = 'essential') => {
+    if (PAYMENT_PAUSED) {
+      showToast('Pembayaran sedang diperbaiki. VIP segera hadir.');
+      return;
+    }
+    setCheckoutDefaultPlan(plan);
+    setIsCheckoutOpen(true);
   };
 
   const handleSaveCurrentEntry = () => {
@@ -534,22 +794,30 @@ export default function App() {
           </div>
         )}
 
-        {/* CONDITION 1: Landing Page (Exact Match to screenshot Image_1) */}
-        {!isLoggedIn ? (
+        {/* CONDITION 0: Success Page + PWA Tutorial (Post-Payment) */}
+        {isSuccessPage ? (
+          <SuccessPage
+            userEmail={userEmail}
+            userTier={userTier}
+            onOpenJurnal={() => {
+              setIsSuccessPage(false);
+              setIsPaid(true);
+              setIsLoggedIn(true);
+              setIsOnboarded(true);
+              setActiveTab('jurnal');
+              window.history.pushState({}, '', '#/jurnal');
+            }}
+          />
+        ) : !isLoggedIn ? (
           <LandingPage 
             isPaid={isPaid}
+            onLoginClick={() => { setLoginMode('login'); setIsLoginOpen(true); }}
+            onRegisterClick={() => { setLoginMode('register'); setIsLoginOpen(true); }}
             onStartCheckout={(amount) => {
-              if (amount === 129000) {
-                setCheckoutDefaultPlan('vip');
-              } else if (amount === 249000) {
-                setCheckoutDefaultPlan('hardcover');
-              } else {
-                setCheckoutDefaultPlan('essential');
-              }
-              setIsCheckoutOpen(true);
+              openCheckout(amount === 129000 ? 'vip' : amount === 249000 ? 'hardcover' : 'essential');
             }}
             onEnterApp={() => {
-              if (!isPaid) {
+              if (!isPaid && !PAYMENT_PAUSED) {
                 setIsCheckoutOpen(true);
                 return;
               }
@@ -617,6 +885,7 @@ export default function App() {
                     onOpenBookPreview={() => setIsBookPreviewOpen(true)}
                     onSaveCurrentEntry={handleSaveCurrentEntry}
                     onDeleteEntry={handleDeleteEntry}
+                    onShowToast={showToast}
                   />
                 </ErrorBoundary>
               )}
@@ -631,10 +900,7 @@ export default function App() {
                     userTier={userTier}
                     onOpenBookPreview={() => setIsBookPreviewOpen(true)}
                     onGoToJournal={() => setActiveTab('jurnal')}
-                    onOpenUpgradeModal={() => {
-                      setCheckoutDefaultPlan('upgrade_vip');
-                      setIsCheckoutOpen(true);
-                    }}
+                    onOpenUpgradeModal={() => openCheckout('upgrade_vip')}
                     onPlaceOrder={handlePlaceOrder}
                   />
                 </ErrorBoundary>
@@ -654,21 +920,26 @@ export default function App() {
                     syncSuccess={syncSuccess}
                     onSync={triggerGoogleDriveSync}
                     userTier={userTier}
-                    onOpenUpgradeModal={() => {
-                      setCheckoutDefaultPlan('upgrade_vip');
-                      setIsCheckoutOpen(true);
-                    }}
-                    onLogout={() => {
+                    onOpenUpgradeModal={() => openCheckout('upgrade_vip')}
+                    onLogout={async () => {
+                      try {
+                        await pushUserDataNow();
+                        const tk = getToken();
+                        if (tk) await apiLogout(tk);
+                      } catch {}
+                      // Logout = hapus SESI saja. Data per-email + status onboarding
+                      // TETAP di device supaya login lagi tidak perlu isi ulang.
+                      clearAuthUser();
                       setIsLoggedIn(false);
                       setIsPaid(false);
-                      setIsOnboarded(false);
                       setUserTier('essential');
                       localStorage.removeItem('bunda_is_paid');
-                      localStorage.removeItem('bunda_is_onboarded');
                       localStorage.removeItem('bunda_user_email');
+                      notifyUserChanged('');
                       localStorage.removeItem('bunda_user_tier');
                       localStorage.setItem('bunda_isLoggedIn', 'false');
-                      showToast('Berhasil keluar akun.');
+                      setIsLoginOpen(false);
+                      showToast('Berhasil keluar akun. Data Bunda tetap tersimpan.');
                     }}
                     onResetAll={() => {
                       localStorage.clear();
@@ -807,11 +1078,18 @@ export default function App() {
             }}
             onOpenUpgradeModal={() => {
               setIsBookPreviewOpen(false);
-              setCheckoutDefaultPlan('upgrade_vip');
-              setIsCheckoutOpen(true);
+              openCheckout('upgrade_vip');
             }}
           />
         )}
+
+        {/* Login / Daftar (email + password) */}
+        <LoginModal
+          isOpen={isLoginOpen}
+          defaultMode={loginMode}
+          onClose={() => setIsLoginOpen(false)}
+          onSuccess={handleLoginSuccess}
+        />
 
         {/* Gate Checkout Modal */}
         <CheckoutModal
@@ -826,6 +1104,7 @@ export default function App() {
             setUserTier(tier);
             localStorage.setItem('bunda_is_paid', 'true');
             localStorage.setItem('bunda_user_email', email);
+            notifyUserChanged(email);
             localStorage.setItem('bunda_user_tier', tier);
             if (typeof consent === 'boolean') {
               localStorage.setItem('bunda_promo_consent', consent ? 'true' : 'false');
@@ -836,17 +1115,23 @@ export default function App() {
             // Magic link email-only (langsung masuk Beranda, tanpa OTP)
             sendMagicLink(email);
 
+            // Navigate to /success
+            setIsSuccessPage(true);
+            try {
+              window.history.pushState({}, '', '#/success');
+            } catch {}
+
             if (tier === 'vip') {
               showToast('Selamat! Paket VIP aktif seumur hidup.');
             } else {
-              showToast('Pembayaran berhasil! Silakan lengkapi formulir Bunda.');
+              showToast('Pembayaran berhasil! Bunda Journal Aktif.');
             }
           }}
         />
 
         {/* TC05: Mandatory Onboarding Dialog */}
         <OnboardingModal
-          isOpen={(!isLoggedIn && isPaid && !isOnboarded) || (isLoggedIn && !isOnboarded)}
+          isOpen={!isSuccessPage && ((!isLoggedIn && isPaid && !isOnboarded) || (isLoggedIn && !isOnboarded))}
           onComplete={(data) => {
             const updatedProfile = {
               ...userProfile,
