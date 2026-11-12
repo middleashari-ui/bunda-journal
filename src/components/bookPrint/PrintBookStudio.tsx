@@ -72,9 +72,21 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   onGoToJournal,
   onOpenUpgradeModal,
 }) => {
-  // Theme state
-  const [selectedThemeId, setSelectedThemeId] = useState<BookThemeId>('kinfolk-sage');
+  // Theme state — dipakai juga oleh halaman /print supaya hasil cetak sama.
+  const [selectedThemeId, setSelectedThemeId] = useState<BookThemeId>(() => {
+    try {
+      const saved = localStorage.getItem('bunda_book_theme') as BookThemeId | null;
+      if (saved && BOOK_THEMES[saved]) return saved;
+    } catch {}
+    return 'kinfolk-sage';
+  });
   const activeTheme = BOOK_THEMES[selectedThemeId];
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bunda_book_theme', selectedThemeId);
+    } catch {}
+  }, [selectedThemeId]);
 
   // Navigation / Scroll Tracking state (0 to 49 spreads = 100 pages)
   const [currentSpreadIndex, setCurrentSpreadIndex] = useState<number>(0);
@@ -131,8 +143,8 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   };
 
   // Standard B5 Dimensions at 96 DPI (176mm x 250mm)
-  const B5_WIDTH_PX = 665.2;
-  const B5_HEIGHT_PX = 944.9;
+  const B5_WIDTH_PX = 793.7;   // A4 210mm @96dpi
+  const B5_HEIGHT_PX = 1122.5; // A4 297mm @96dpi
 
   const mainContainerRef = useRef<HTMLElement>(null);
   
@@ -187,106 +199,24 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   const [pdfProgress, setPdfProgress] = useState<number>(0);
 
   const handleOpenPrintWindow = () => {
-    // Solusi Anti-Blank & Anti-Popup Blocker:
-    // Gunakan Hidden Iframe untuk mencetak dokumen B5 mandiri.
-    // Cara ini:
-    // 1. Tidak diblokir browser HP (bukan window.open pop-up).
-    // 2. Terisolasi total dari DOM utama PWA sehingga tidak akan pernah blank putih.
-    // 3. Merender seluruh 100 halaman lengkap dengan CSS Anti-Geser B5.
-    const existingIframe = document.getElementById('bunda-print-iframe');
-    if (existingIframe) {
-      existingIframe.remove();
-    }
+    // WYSIWYG + cepat: buka halaman /print di tab baru.
+    // Browser (engine print native) yang mengubah HTML jadi PDF vector —
+    // tidak ada raster 100 halaman, tidak ada render ulang di device.
+    try {
+      localStorage.setItem('bunda_book_theme', selectedThemeId);
+    } catch {}
 
-    const iframe = document.createElement('iframe');
-    iframe.id = 'bunda-print-iframe';
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    iframe.style.visibility = 'hidden';
-    document.body.appendChild(iframe);
+    const target = new URL(window.location.href);
+    target.hash = '/print';
 
-    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
-      .map((node) => node.outerHTML)
-      .join('\n');
-
-    const pagesHtml: string[] = [];
-    for (let i = 0; i < 50; i++) {
-      const spreadEl = document.getElementById(`spread-row-${i}`);
-      if (spreadEl) {
-        const pages = spreadEl.querySelectorAll('.b5-page-left, .b5-page-right, .b5-page');
-        pages.forEach((p) => {
-          pagesHtml.push(p.outerHTML);
-        });
-      }
-    }
-
-    const docContent = `<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <title>Bunda-Journal-100-Halaman</title>
-  ${styles}
-  <style>
-    @page {
-      size: A4 portrait;
-      margin: 0 !important;
-    }
-    html, body {
-      margin: 0 !important;
-      padding: 0 !important;
-      background: #ffffff !important;
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-      -webkit-text-size-adjust: 100% !important;
-      text-size-adjust: 100% !important;
-    }
-    .b5-page, .halaman-jurnal {
-      position: relative !important;
-      width: 210mm !important;
-      max-width: 210mm !important;
-      min-width: 210mm !important;
-      height: 297mm !important;
-      max-height: 297mm !important;
-      min-height: 297mm !important;
-      padding: 20mm !important;
-      box-sizing: border-box !important;
-      overflow: hidden !important;
-      page-break-after: always !important;
-      break-after: page !important;
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-      margin: 0 !important;
-      border: none !important;
-      box-shadow: none !important;
-    }
-    .bingkai-usg img, .aspect-\\[4\\/3\\] img {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important;
-      display: block !important;
-    }
-  </style>
-</head>
-<body>
-  ${pagesHtml.join('\n')}
-</body>
-</html>`;
-
-    const iframeDoc = iframe.contentWindow?.document;
-    if (iframeDoc) {
-      iframeDoc.open();
-      iframeDoc.write(docContent);
-      iframeDoc.close();
-
-      iframe.contentWindow?.focus();
-      // Tunggu font dan gambar ter-render sempurna
-      setTimeout(() => {
-        iframe.contentWindow?.print();
-      }, 500);
+    const win = window.open(target.toString(), '_blank');
+    if (!win) {
+      setLockToast({
+        message: 'Izinkan pop-up untuk membuka halaman cetak.',
+        isLocked: isDocumentLocked,
+      });
+      if (lockToastTimeoutRef.current) window.clearTimeout(lockToastTimeoutRef.current);
+      lockToastTimeoutRef.current = window.setTimeout(() => setLockToast(null), 3500);
     }
   };
 
@@ -1107,7 +1037,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
                 className="w-full py-2.5 bg-[#556B2F] hover:bg-[#465926] text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
-                <span>Opsi Download PDF Buku</span>
+                <span>Simpan buku</span>
               </button>
             </div>
 
@@ -1197,9 +1127,9 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
               {emptyPagesList.length === 0 ? (
                 <div className="text-center py-8 text-stone-400 space-y-2">
                   <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
-                  <p className="text-sm font-serif font-bold text-stone-200">Buku Kenangan Siap Dicetak!</p>
+                  <p className="text-sm font-serif font-bold text-stone-200">Buku siap dicetak</p>
                   <p className="text-xs text-stone-400 max-w-xs mx-auto font-light">
-                    Semua foto, catatan medis dokter, dan curahan hati bunda telah tersimpan dengan sempurna.
+                    Semua foto dan catatan Bunda sudah siap dicetak.
                   </p>
                 </div>
               ) : (
@@ -1259,7 +1189,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-stone-800 mb-3">
               <div className="flex items-center gap-2">
                 <Download className="w-4 h-4 text-[#556B2F]" />
-                <h3 className="font-serif text-sm font-bold text-white">Download PDF Buku</h3>
+                <h3 className="font-serif text-sm font-bold text-white">Simpan buku</h3>
               </div>
               <button 
                 onClick={() => setIsDownloadModalOpen(false)}
@@ -1283,10 +1213,10 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
               >
                 <div>
                   <span className="font-semibold text-xs block">
-                    Download Buku Jurnal (100 Halaman)
+                    Simpan buku (100 halaman)
                   </span>
                   <span className="text-[10px] text-white/80 block font-light">
-                    Format Presisi Siap Cetak (Anti-Bocor & Anti-Geser)
+                    Ukuran A4, siap cetak
                   </span>
                 </div>
                 <Download className="w-4 h-4 text-white shrink-0 ml-2" />

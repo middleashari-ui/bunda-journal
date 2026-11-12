@@ -42,9 +42,13 @@ import { TabKatalog } from './components/TabKatalog';
 import { TabProfil } from './components/TabProfil';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PrintBookStudio } from './components/bookPrint/PrintBookStudio';
+import PrintBookView from './components/bookPrint/PrintBookView';
+import { isJournalLocalOnly } from './config/storage';
+import { maybeAutoBackup } from './lib/driveBackup';
 import { OnboardingModal } from './components/OnboardingModal';
 import { PicModal } from './components/PicModal';
 import { CheckoutModal } from './components/CheckoutModal';
+import { SimulatorPanel } from './components/SimulatorPanel';
 import { PAYMENT_PAUSED } from './config/payments';
 import { SuccessPage } from './components/SuccessPage';
 import {
@@ -79,6 +83,15 @@ export default function App() {
     return paid && onboarded && logged;
   });
   const [activeTab, setActiveTab] = useState<TabType>('home');
+
+  // Route /print — halaman cetak A4 (dibuka di tab baru dari Studio).
+  const [isPrintRoute] = useState<boolean>(() => {
+    try {
+      return window.location.pathname === '/print' || window.location.hash === '#/print';
+    } catch {
+      return false;
+    }
+  });
 
   // TC03 / TC08: Paid status
   const [isPaid, setIsPaid] = useState<boolean>(() => {
@@ -135,6 +148,13 @@ export default function App() {
       localStorage.setItem('bunda_user_email', me.email);
       localStorage.setItem('bunda_user_tier', me.tier === 'vip' ? 'vip' : 'essential');
 
+      // MODE LOKAL (USP): jurnal tidak pernah ditarik atau didorong ke D1.
+      // Server hanya dipakai untuk validasi sesi + tier akun.
+      if (isJournalLocalOnly()) {
+        setSyncReady(true);
+        return;
+      }
+
       // SELALU tarik dari API tiap boot (bukan sekali per sesi).
       const { ok, exists, payload, updatedAt } = await pullUserData(token);
       if (cancelled) return;
@@ -176,6 +196,9 @@ export default function App() {
   // Internet balik -> tarik, gabung, baru push.
   useEffect(() => {
     let flushing = false;
+
+    // MODE LOKAL: tidak ada antrean sync ke server.
+    if (isJournalLocalOnly()) return;
 
     const onOffline = () => markOfflineSnapshot();
 
@@ -219,6 +242,8 @@ export default function App() {
 
   // Dorong data ke D1 tiap ada perubahan jurnal (debounce) + saat app disembunyikan
   useEffect(() => {
+    // MODE LOKAL: jangan pernah push jurnal ke server.
+    if (isJournalLocalOnly()) return;
     const onUpdated = () => scheduleUserDataPush();
     const onHide = () => { if (document.visibilityState === 'hidden') pushUserDataNow(); };
     window.addEventListener('bunda_journal_updated', onUpdated);
@@ -229,21 +254,46 @@ export default function App() {
     };
   }, []);
 
+  // Auto-backup harian ke Google Drive milik user (mode lokal).
+  // Tidak ada upload ke server Bunda; kalau izin belum ada, diam saja.
+  useEffect(() => {
+    const run = () => { void maybeAutoBackup(); };
+    const onHide = () => { if (document.visibilityState === 'hidden') run(); };
+    const onOnline = () => run();
+    window.addEventListener('online', onOnline);
+    document.addEventListener('visibilitychange', onHide);
+    const first = window.setTimeout(run, 15000);
+    return () => {
+      window.clearTimeout(first);
+      window.removeEventListener('online', onOnline);
+      document.removeEventListener('visibilitychange', onHide);
+    };
+  }, []);
+
   // Login sukses -> simpan sesi + ambil data milik email itu (bukan data device)
   const handleLoginSuccess = async (user: AuthUser) => {
     const prevEmail = (localStorage.getItem('bunda_user_email') || '').trim().toLowerCase();
     saveAuthUser(user);
     try {
-      const { exists, payload } = await pullUserData(user.token);
-      if (exists && payload) {
-        applyUserPayload(payload, user.email);
-      } else if (prevEmail && prevEmail === user.email) {
-        // device ini memang milik email yang sama -> adopsi datanya ke server
-        await pushUserData(user.token, collectUserPayload());
+      if (isJournalLocalOnly()) {
+        // MODE LOKAL: jangan tarik jurnal dari server. Hanya cegah data akun lama
+        // terbawa ke akun baru di device yang sama.
+        if (prevEmail && prevEmail !== (user.email || '').trim().toLowerCase()) {
+          wipeLocalJournalData();
+          localStorage.removeItem('bunda_is_onboarded');
+        }
       } else {
-        // akun lain di device bekas -> mulai bersih, JANGAN warisin data orang lain
-        wipeLocalJournalData();
-        localStorage.removeItem('bunda_is_onboarded');
+        const { exists, payload } = await pullUserData(user.token);
+        if (exists && payload) {
+          applyUserPayload(payload, user.email);
+        } else if (prevEmail && prevEmail === user.email) {
+          // device ini memang milik email yang sama -> adopsi datanya ke server
+          await pushUserData(user.token, collectUserPayload());
+        } else {
+          // akun lain di device bekas -> mulai bersih, JANGAN warisin data orang lain
+          wipeLocalJournalData();
+          localStorage.removeItem('bunda_is_onboarded');
+        }
       }
     } catch {}
     setIsLoginOpen(false);
@@ -453,8 +503,15 @@ export default function App() {
 
       if (path === '/jurnal' || hash === '#/jurnal') {
         setIsSuccessPage(false);
-        setIsLoggedIn(true);
-        setActiveTab('jurnal');
+        // Jangan buka app tanpa dasar: wajib sesi valid, atau sudah bayar + isi form.
+        const hasSession = !!localStorage.getItem('bunda_session_token');
+        const paidNow = localStorage.getItem('bunda_is_paid') === 'true';
+        const onboardedNow = localStorage.getItem('bunda_is_onboarded') === 'true';
+        const loggedNow = localStorage.getItem('bunda_isLoggedIn') !== 'false';
+        if ((loggedNow && hasSession) || (paidNow && onboardedNow && loggedNow)) {
+          setIsLoggedIn(true);
+          setActiveTab('jurnal');
+        }
       }
 
       // Intercept direct access to /app or #/app
@@ -756,6 +813,12 @@ export default function App() {
     showToast('Pesanan Buku Cetak sedang dipersiapkan!', 'Rp 249.000');
   };
 
+  // Halaman /print: render buku saja (tanpa shell aplikasi, tanpa gate login).
+  // Data dibaca langsung dari localStorage/IndexedDB oleh PrintBookView.
+  if (isPrintRoute) {
+    return <PrintBookView />;
+  }
+
   return (
     <div className="min-h-screen bg-[#ECE8E1] flex flex-col items-center justify-start sm:p-4 md:p-6 text-[#292524]">
       {/* Main Screen Container (Smartphone Frame or Responsive Card) */}
@@ -801,9 +864,17 @@ export default function App() {
             userTier={userTier}
             onOpenJurnal={() => {
               setIsSuccessPage(false);
-              setIsPaid(true);
-              setIsLoggedIn(true);
-              setIsOnboarded(true);
+              // Paid hanya kalau SuccessPage sudah membuktikannya ke server.
+              if (localStorage.getItem('bunda_is_paid') === 'true') setIsPaid(true);
+              // Login hanya kalau ada sesi valid ATAU sudah bayar + sudah isi form.
+              const hasSession = !!localStorage.getItem('bunda_session_token');
+              const paidNow = localStorage.getItem('bunda_is_paid') === 'true';
+              const onboardedNow = localStorage.getItem('bunda_is_onboarded') === 'true';
+              const loggedNow = localStorage.getItem('bunda_isLoggedIn') !== 'false';
+              if ((loggedNow && hasSession) || (paidNow && onboardedNow && loggedNow)) {
+                setIsLoggedIn(true);
+              }
+              // isOnboarded TIDAK di-set di sini: wajib lewat form OnboardingModal.
               setActiveTab('jurnal');
               window.history.pushState({}, '', '#/jurnal');
             }}
@@ -861,6 +932,11 @@ export default function App() {
                     onGoToJournal={() => setActiveTab('jurnal')}
                     onGoToKatalog={() => setActiveTab('studio')}
                     onGoToStudio={() => setActiveTab('studio')}
+                    photos={photos}
+                    onUpdatePhoto={(w, newPhoto) => {
+                      setPhotos((prev) => [...prev.filter((p) => p.week !== w), newPhoto]);
+                      window.dispatchEvent(new Event('bunda_journal_updated'));
+                    }}
                   />
                 </ErrorBoundary>
               )}
@@ -923,7 +999,7 @@ export default function App() {
                     onOpenUpgradeModal={() => openCheckout('upgrade_vip')}
                     onLogout={async () => {
                       try {
-                        await pushUserDataNow();
+                        if (!isJournalLocalOnly()) await pushUserDataNow();
                         const tk = getToken();
                         if (tk) await apiLogout(tk);
                       } catch {}
@@ -1171,6 +1247,7 @@ export default function App() {
           }}
           onShowToast={showToast}
         />
+        <SimulatorPanel setWeek={setWeek} />
       </div>
     </div>
   );

@@ -58,8 +58,8 @@ export const PembatasTrimester: React.FC<PembatasTrimesterProps> = ({
         className="b5-page b5-page-left relative overflow-hidden box-border p-[20mm] flex flex-col justify-between border border-stone-200/80 shadow-xs print:shadow-none print:m-0 print:break-after-page rounded-none"
         style={{ backgroundColor: theme.pageBg, color: theme.textColor, borderColor: theme.borderColor }}
       >
-        <div className="flex flex-col h-full justify-between items-center text-center py-6 sm:py-8 border-2 rounded-xs" style={{ borderColor: theme.borderColor }}>
-          <div className="pt-2 sm:pt-4">
+        <div className="flex flex-col h-full justify-between items-center text-center py-6 py-8 border-2 rounded-xs" style={{ borderColor: theme.borderColor }}>
+          <div className="pt-2 pt-4">
             <span className="text-[10px] uppercase tracking-[0.25em] font-sans text-stone-500 block mb-1">
               Pembatas Buku • Bab 2
             </span>
@@ -68,20 +68,20 @@ export const PembatasTrimester: React.FC<PembatasTrimesterProps> = ({
             </span>
           </div>
 
-          <div className="my-auto max-w-xs px-4 sm:px-6">
-            <span className="font-serif italic text-5xl sm:text-6xl block mb-1 opacity-30 select-none" style={{ color: theme.secondaryColor }}>
+          <div className="my-auto max-w-xs px-4 px-6">
+            <span className="font-serif italic text-5xl text-6xl block mb-1 opacity-30 select-none" style={{ color: theme.secondaryColor }}>
               “
             </span>
-            <h2 className="font-serif text-2xl sm:text-4xl font-normal leading-tight mb-3" style={{ color: theme.textColor }}>
+            <h2 className="font-serif text-2xl text-4xl font-normal leading-tight mb-3" style={{ color: theme.textColor }}>
               {trimesterMeta.title}
             </h2>
             <div className="w-12 h-0.5 mx-auto mb-3" style={{ backgroundColor: theme.secondaryColor }} />
-            <p className="font-serif italic text-xs sm:text-sm text-stone-700 leading-relaxed font-light">
+            <p className="font-serif italic text-xs text-sm text-stone-700 leading-relaxed font-light">
               "{trimesterMeta.quote}"
             </p>
           </div>
 
-          <div className="pb-2 sm:pb-4">
+          <div className="pb-2 pb-4">
             <span className="text-[9px] uppercase tracking-widest text-stone-400 font-sans">
               {trimesterMeta.subtitle}
             </span>

@@ -30,12 +30,17 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
   const savedBab4 = getSavedBab4();
 
   // Page 91 & 92 state with localStorage persistence
+  // P0.3: dukung alias lama (hospitalArrivalTime, firstBabyPhoto, footprintPhoto, dst).
   const [contractionTime, setContractionTime] = useState(savedBab4?.contractionTime || '');
-  const [arrivalTime, setArrivalTime] = useState(savedBab4?.arrivalTime || '');
+  const [arrivalTime, setArrivalTime] = useState(
+    savedBab4?.arrivalTime || savedBab4?.hospitalArrivalTime || ''
+  );
   const [laborStory, setLaborStory] = useState(
     savedBab4?.laborStory || ''
   );
-  const [birthPhoto, setBirthPhoto] = useState<string | null>(savedBab4?.birthPhoto || null);
+  const [birthPhoto, setBirthPhoto] = useState<string | null>(
+    savedBab4?.birthPhoto || savedBab4?.firstBabyPhoto || null
+  );
   const [holdingBabyFeeling, setHoldingBabyFeeling] = useState(
     savedBab4?.holdingBabyFeeling || ''
   );
@@ -48,15 +53,25 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
   const [birthLength, setBirthLength] = useState(savedBab4?.birthLength || '');
   const [headCircumference, setHeadCircumference] = useState(savedBab4?.headCircumference || '');
   const [bloodType, setBloodType] = useState(savedBab4?.bloodType || userProfile.bloodType || '');
-  const [leftFootprint, setLeftFootprint] = useState<string | null>(savedBab4?.leftFootprint || null);
-  const [rightFootprint, setRightFootprint] = useState<string | null>(savedBab4?.rightFootprint || null);
+  const [leftFootprint, setLeftFootprint] = useState<string | null>(
+    savedBab4?.leftFootprint || savedBab4?.leftFootprintPhoto || savedBab4?.footprintPhoto || null
+  );
+  const [rightFootprint, setRightFootprint] = useState<string | null>(
+    savedBab4?.rightFootprint || savedBab4?.rightFootprintPhoto || null
+  );
 
   // Page 95 & 96 state with localStorage persistence
-  const [babyWristbandPhoto, setBabyWristbandPhoto] = useState<string | null>(savedBab4?.babyWristbandPhoto || null);
-  const [momWristbandPhoto, setMomWristbandPhoto] = useState<string | null>(savedBab4?.momWristbandPhoto || null);
-  const [familyPhoto, setFamilyPhoto] = useState<string | null>(savedBab4?.familyPhoto || null);
+  const [babyWristbandPhoto, setBabyWristbandPhoto] = useState<string | null>(
+    savedBab4?.babyWristbandPhoto || savedBab4?.wristbandPhoto || null
+  );
+  const [momWristbandPhoto, setMomWristbandPhoto] = useState<string | null>(
+    savedBab4?.momWristbandPhoto || null
+  );
+  const [familyPhoto, setFamilyPhoto] = useState<string | null>(
+    savedBab4?.familyPhoto || savedBab4?.familyHomePhoto || null
+  );
 
-  // Persist back to bunda_bab4 automatically
+  // Persist back to bunda_bab4 automatically (P0.3: merge, jangan hapus field tak dikenal)
   useEffect(() => {
     try {
       const data = {
@@ -78,7 +93,12 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
         momWristbandPhoto,
         familyPhoto,
       };
-      localStorage.setItem('bunda_bab4', JSON.stringify(data));
+      let existing: Record<string, unknown> = {};
+      try {
+        const s = localStorage.getItem('bunda_bab4');
+        if (s) existing = JSON.parse(s) as Record<string, unknown>;
+      } catch {}
+      localStorage.setItem('bunda_bab4', JSON.stringify({ ...existing, ...data }));
     } catch {}
   }, [
     contractionTime, arrivalTime, laborStory, birthPhoto, holdingBabyFeeling,
@@ -113,11 +133,11 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
             <div>
               <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
                 <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 4: Kelahiran</span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Hari Yang Dinanti</h2>
+                <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Hari Yang Dinanti</h2>
               </div>
 
               <div className="space-y-3 mb-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
+                <div className="grid grid-cols-1 grid-cols-2 gap-2 text-[10px]">
                   <div className="bg-white p-2 border rounded-xs" style={{ borderColor: theme.borderColor }}>
                     <span className="text-[8px] text-stone-400 uppercase block font-medium">Kontraksi Pertama:</span>
                     {isFillMode ? (
@@ -187,11 +207,11 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
             <div>
               <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
                 <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 4: Kelahiran</span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Tangisan Pertamamu</h2>
+                <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Tangisan Pertamamu</h2>
               </div>
 
               {/* Photo placeholder for Birth / IMD */}
-              <div className="relative w-full max-w-[280px] sm:max-w-[320px] mx-auto bg-white p-2.5 shadow-md border border-stone-200 mb-3">
+              <div className="relative w-full max-w-[280px] max-w-[320px] mx-auto bg-white p-2.5 shadow-md border border-stone-200 mb-3">
                 <div className="washi-tape" style={{ position: 'absolute', width: '32mm', height: '8mm', backgroundColor: theme.washiBg, transform: 'rotate(-3deg)', top: '-4mm', left: '50%', marginLeft: '-16mm', zIndex: 10 }} />
                 
                 <label className="block cursor-pointer group">
@@ -205,10 +225,10 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                     <img 
                       src={birthPhoto} 
                       alt="Foto Kelahiran" 
-                      className="w-full h-40 sm:h-48 object-cover border border-stone-200" 
+                      className="w-full h-40 h-48 object-cover border border-stone-200" 
                     />
                   ) : (
-                    <div className="w-full h-40 sm:h-48 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
+                    <div className="w-full h-40 h-48 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
                       <Camera className="w-6 h-6 text-stone-400 mb-1 group-hover:scale-110 transition-transform" />
                       <span className="text-[10px] font-semibold text-stone-600 block">
                         Tempel Foto Momen IMD / Pelukan Pertama
@@ -269,7 +289,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
             <div>
               <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
                 <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 4: Kelahiran</span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Biodata Sang Bayi</h2>
+                <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Biodata Sang Bayi</h2>
               </div>
 
               {/* Certificate Style Box */}
@@ -281,7 +301,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                       type="text"
                       value={babyName}
                       onChange={(e) => setBabyName(e.target.value)}
-                      className="font-serif text-lg sm:text-xl font-bold text-center w-full bg-transparent outline-none mt-0.5" 
+                      className="font-serif text-lg text-xl font-bold text-center w-full bg-transparent outline-none mt-0.5" 
                       style={{ color: theme.textColor }}
                     />
                   ) : (
@@ -364,7 +384,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                 </div>
 
                 <div className="border-t border-stone-200 pt-2 text-[9.5px] text-stone-600 flex justify-between">
-                  <span>RS: <strong>{userProfile.hospitalName || 'RSIA Bunda'}</strong></span>
+                  <span>RS: <strong>{userProfile.hospitalName || '-'}</strong></span>
                   <span>Dokter: <strong>{userProfile.doctorName || '-'}</strong></span>
                 </div>
               </div>
@@ -386,7 +406,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
             <div>
               <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
                 <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 4: Kelahiran</span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Cap Kaki & Tangan</h2>
+                <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Cap Kaki & Tangan</h2>
               </div>
 
               {/* Footprint Stamps Container with Upload Option */}
@@ -398,7 +418,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                     className="hidden" 
                     onChange={(e) => handleImageUpload(e, setLeftFootprint)} 
                   />
-                  <div className="bg-white border-2 border-dashed h-40 sm:h-48 p-2 flex flex-col items-center justify-center text-center rounded-xs hover:bg-stone-50" style={{ borderColor: theme.borderColor }}>
+                  <div className="bg-white border-2 border-dashed h-40 h-48 p-2 flex flex-col items-center justify-center text-center rounded-xs hover:bg-stone-50" style={{ borderColor: theme.borderColor }}>
                     {leftFootprint ? (
                       <img src={leftFootprint} alt="Kaki Kiri" className="w-full h-full object-contain" />
                     ) : (
@@ -418,7 +438,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                     className="hidden" 
                     onChange={(e) => handleImageUpload(e, setRightFootprint)} 
                   />
-                  <div className="bg-white border-2 border-dashed h-40 sm:h-48 p-2 flex flex-col items-center justify-center text-center rounded-xs hover:bg-stone-50" style={{ borderColor: theme.borderColor }}>
+                  <div className="bg-white border-2 border-dashed h-40 h-48 p-2 flex flex-col items-center justify-center text-center rounded-xs hover:bg-stone-50" style={{ borderColor: theme.borderColor }}>
                     {rightFootprint ? (
                       <img src={rightFootprint} alt="Kaki Kanan" className="w-full h-full object-contain" />
                     ) : (
@@ -461,7 +481,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
           <div>
             <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
               <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 4: Kelahiran</span>
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Gelang Kenangan RS</h2>
+              <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Gelang Kenangan RS</h2>
             </div>
 
             <div className="space-y-3 mb-3">
@@ -533,10 +553,10 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
           <div>
             <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
               <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 4: Kelahiran</span>
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Keluarga Perdana</h2>
+              <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Keluarga Perdana</h2>
             </div>
 
-            <div className="relative w-full max-w-[280px] sm:max-w-[320px] mx-auto bg-white p-2.5 shadow-md border border-stone-200 mb-3">
+            <div className="relative w-full max-w-[280px] max-w-[320px] mx-auto bg-white p-2.5 shadow-md border border-stone-200 mb-3">
               <div className="washi-tape" style={{ position: 'absolute', width: '32mm', height: '8mm', backgroundColor: theme.washiBg, transform: 'rotate(3deg)', top: '-4mm', left: '50%', marginLeft: '-16mm', zIndex: 10 }} />
               
               <label className="block cursor-pointer group">
@@ -547,9 +567,9 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                   onChange={(e) => handleImageUpload(e, setFamilyPhoto)} 
                 />
                 {familyPhoto ? (
-                  <img src={familyPhoto} alt="Foto Keluarga" className="w-full h-40 sm:h-48 object-cover border border-stone-200" />
+                  <img src={familyPhoto} alt="Foto Keluarga" className="w-full h-40 h-48 object-cover border border-stone-200" />
                 ) : (
-                  <div className="w-full h-40 sm:h-48 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
+                  <div className="w-full h-40 h-48 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
                     <Camera className="w-6 h-6 text-stone-400 mb-1 group-hover:scale-110 transition-transform" />
                     <span className="text-[10px] font-semibold text-stone-600 block">
                       Tempel Foto Bertiga: Ayah, Bunda & Buah Hati

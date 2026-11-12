@@ -1,22 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap');
-
-/* Local font embedding for PDF export reliability */
-@font-face {
-  font-family: 'Lora';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('https://fonts.gstatic.com/s/lora/v35/0QI6MX1D_JOuGQbT0gvTJPa787weuxJBkq0.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 300 700;
-  font-display: swap;
-  src: url('https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2') format('woff2');
-}
 @import "tailwindcss";
+@import './fonts.css';
 
 @theme {
   --font-serif: "Lora", Georgia, serif;
@@ -128,11 +111,11 @@
   margin: 0 !important;
 }
 
-/* 1 Muka Penuh: Setiap spread berukuran tepat 176mm (lebar 1 halaman B5) */
+/* 1 Muka Penuh: setiap spread = lebar 1 halaman A4 (210mm) */
 .studio-vertical-spread {
-  width: 176mm !important;
-  max-width: 176mm !important;
-  min-width: 176mm !important;
+  width: 210mm !important;
+  max-width: 210mm !important;
+  min-width: 210mm !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -145,9 +128,9 @@
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  width: 176mm !important;
-  max-width: 176mm !important;
-  min-width: 176mm !important;
+  width: 210mm !important;
+  max-width: 210mm !important;
+  min-width: 210mm !important;
   box-sizing: border-box !important;
   gap: 0 !important;
 }
@@ -294,29 +277,36 @@
   margin-bottom: 0 !important;
 }
 
-/* Strict B5 Page Dimensions (176mm x 250mm) across desktop and scaled mobile */
+/* Page box = A4 210 x 297 mm.
+   Aturan ini dipakai SAMA PERSIS oleh preview dan hasil cetak.
+   Hanya shadow/scale yang berbeda, jadi hasil print tidak lebih rapi dari preview. */
 .b5-page {
-  width: 176mm !important;
-  max-width: 176mm !important;
-  min-width: 176mm !important;
-  height: 250mm !important;
-  max-height: 250mm !important;
-  min-height: 250mm !important;
+  width: 210mm !important;
+  max-width: 210mm !important;
+  min-width: 210mm !important;
+  height: 297mm !important;
+  min-height: 297mm !important;
+  max-height: 297mm !important;
+  padding: 20mm !important;
   box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
   overflow: hidden !important;
   flex-shrink: 0 !important;
   position: relative;
+  border: none !important;
+  border-radius: 0 !important;
 }
 
-/* Margin Jilidan Cetak Hardcover:
-   Dibuat simetris 20mm (2cm) di seluruh sisi atas, bawah, kanan, kiri
-   sebagai batas pemisah aman jilidan cetak hardcover */
+/* Margin cetak 20 mm semua sisi (mengikuti benchmark). */
 .b5-page-left,
 .b5-page-right,
 .b5-page {
   padding: 20mm !important;
   box-sizing: border-box !important;
 }
+.b5-page .innerPageContainer { max-width: 75% !important; margin: 0 auto !important; }
 
 /* Touch Action Utility for Smooth Mobile Pinch-to-Zoom */
 .pinch-zoom-viewport {
@@ -531,26 +521,240 @@
   }
 }
 
-/* PDF Export: Force absolute sizing for consistent rendering */
+/* PDF Export: halaman A4 penuh (legacy html-to-image, tetap dipakai untuk share 1 halaman) */
 .pdf-export-container .b5-page,
 .pdf-export-container .preview-pdf-page {
-  width: 176mm !important;
-  height: 250mm !important;
-  font-size: 10pt !important;
-  line-height: 1.4 !important;
+  width: 210mm !important;
+  height: 297mm !important;
   overflow: hidden !important;
 }
 
-.pdf-export-container h1 { font-size: 18pt !important; }
-.pdf-export-container h2 { font-size: 14pt !important; }
-.pdf-export-container h3 { font-size: 12pt !important; }
-.pdf-export-container p,
-.pdf-export-container span,
-.pdf-export-container label { font-size: 9pt !important; }
-.pdf-export-container .text-xs { font-size: 8pt !important; }
-.pdf-export-container .text-sm { font-size: 9pt !important; }
-.pdf-export-container .text-base { font-size: 10pt !important; }
-.pdf-export-container .text-lg { font-size: 12pt !important; }
-.pdf-export-container .text-xl { font-size: 14pt !important; }
-.pdf-export-container .text-2xl { font-size: 16pt !important; }
-.pdf-export-container .text-3xl { font-size: 18pt !important; }
+/* FIX teks panjang fleksibel natural - tidak kaku */
+.journal-text, .dailyText, [class*="cardBody"], [class*="dailyRow"], [class*="cardHeaderText"], [class*="cardHeaderSubtext"], [class*="tableRowLabel"], [class*="tableRowValue"], textarea, .b5-page p, .b5-page span {
+  white-space: pre-wrap !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+}
+textarea { white-space: pre-wrap !important; word-break: normal !important; overflow-wrap: break-word !important; hyphens: auto !important; overflow: visible !important; height: auto !important; min-height: 110px !important; max-height: none !important; resize: none !important; }
+.cardContainer, .dailyRowsContainer, .cardBody { overflow: visible !important; height: auto !important; max-height: none !important; }
+.b5-page .cardContainer { height: auto !important; }
+
+/* Textarea di dalam halaman buku: tinggi mengikuti `rows`, bukan 110px global.
+   Ini yang bikin catatan harian dulu meluber dan mendorong layout. */
+.b5-page textarea {
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: hidden !important;
+}
+
+/* ============================================================== */
+/* HALAMAN /print — flow Jurnal > Download > browser > print       */
+/* ============================================================== */
+.print-book-root {
+  background: #EDEAE4;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Jangan tampilkan elemen bantu/dev saat mode cetak */
+.print-book-mode #dev-toolbar,
+.print-book-mode .page-badge-watermark,
+.print-book-mode .badge-penanda,
+.print-book-mode .b5-page-left::before,
+.print-book-mode .b5-page-right::before {
+  display: none !important;
+}
+
+.print-book-mode .print-book-toolbar {
+  position: static;
+}
+
+.print-book-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #1F1D1B;
+  color: #FAF9F7;
+  padding: 12px 16px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.print-book-toolbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.print-book-toolbar-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 2px;
+}
+
+.print-book-toolbar-sub {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #D6D3D1;
+  margin: 0;
+}
+
+.print-book-toolbar-loading {
+  font-size: 11px;
+  color: #C87A64;
+  text-align: center;
+  margin: 8px 0 0;
+}
+
+.print-book-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.print-book-btn {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: #FAF9F7;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.print-book-btn-primary {
+  background: #556B2F;
+  border-color: #556B2F;
+}
+
+.print-book-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0 40px;
+}
+
+.print-book-spread {
+  width: 210mm;
+  flex-shrink: 0;
+}
+
+/* Di layar halaman ditumpuk (bukan dua kolom), persis seperti hasil cetak. */
+.print-book-spread > div {
+  display: block !important;
+  width: 210mm !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.print-book-spread .b5-page {
+  margin: 0 auto 12px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12) !important;
+}
+
+@media (max-width: 900px) {
+  .print-book-pages {
+    align-items: flex-start;
+    overflow-x: auto;
+    padding: 12px;
+  }
+  .print-book-spread {
+    transform: scale(calc(min(1, (100vw - 24px) / 793.7)));
+    transform-origin: top left;
+  }
+}
+
+/* ============================================================== */
+/* ATURAN CETAK FINAL (harus paling akhir agar menang)            */
+/* Halaman /print: satu .b5-page = satu lembar A4, tanpa margin   */
+/* ============================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0 !important;
+  }
+
+  html, body {
+    background: #FFFFFF !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Aturan lama di atas menyembunyikan semua anak #root. Halaman /print
+     harus tetap tampil — jadi dikecualikan di sini (blok ini paling akhir). */
+  #root > div.print-book-root > .print-book-pages {
+    display: block !important;
+  }
+
+  #dev-toolbar {
+    display: none !important;
+  }
+
+  .print-book-root .page-badge-watermark,
+  .print-book-root .badge-penanda {
+    display: none !important;
+  }
+
+  .print-book-toolbar {
+    display: none !important;
+  }
+
+  .print-book-root,
+  .print-book-pages {
+    background: #FFFFFF !important;
+    display: block !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+  }
+
+  .print-book-spread {
+    display: block !important;
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .print-book-spread > div {
+    display: block !important;
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-book-spread .b5-page {
+    width: 210mm !important;
+    min-width: 210mm !important;
+    max-width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    padding: 20mm !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

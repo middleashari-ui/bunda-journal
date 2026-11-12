@@ -115,13 +115,13 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                 <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">
                   Bab 1: Awal Mula Kisah
                 </span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>
+                <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>
                   Momen Garis Dua
                 </h2>
               </div>
 
               {/* Photo Box for Test Pack */}
-              <div className="relative w-full max-w-[280px] sm:max-w-[320px] mx-auto bg-white p-2.5 shadow-md border border-stone-200 mb-3">
+              <div className="relative w-full max-w-[280px] max-w-[320px] mx-auto bg-white p-2.5 shadow-md border border-stone-200 mb-3">
                 <div 
                   className="washi-tape"
                   style={{
@@ -148,10 +148,10 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                     <img 
                       src={testPackPhoto} 
                       alt="Test Pack" 
-                      className="w-full h-36 sm:h-44 object-cover border border-stone-200" 
+                      className="w-full h-36 h-44 object-cover border border-stone-200" 
                     />
                   ) : (
-                    <div className="w-full h-36 sm:h-44 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
+                    <div className="w-full h-36 h-44 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
                       <Camera className="w-6 h-6 text-stone-400 mb-1 group-hover:scale-110 transition-transform" />
                       <span className="text-[10px] font-semibold text-stone-600 block">
                         Tempel Foto Test Pack Garis Dua
@@ -169,7 +169,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
               </div>
 
               {/* Discovery Metadata (Interactive / Editable) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3 text-[10.5px]">
+              <div className="grid grid-cols-1 grid-cols-2 gap-2 mb-3 text-[10.5px]">
                 <div className="bg-white p-2 border rounded-xs" style={{ borderColor: theme.borderColor }}>
                   <span className="text-[8px] text-stone-400 uppercase tracking-wider block font-medium">Hari & Tanggal:</span>
                   {isFillMode ? (
@@ -241,7 +241,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                 <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">
                   Bab 1: Awal Mula Kisah
                 </span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>
+                <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>
                   Kabar Gembira untuk Ayah
                 </h2>
               </div>
@@ -322,13 +322,13 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
               <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">
                 Bab 1: Awal Mula Kisah
               </span>
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>
+              <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>
                 USG & Detak Pertama
               </h2>
             </div>
 
             {/* USG Photo Frame with Direct Upload */}
-            <div className="relative w-full max-w-[280px] sm:max-w-[320px] mx-auto bg-white p-2.5 shadow-md border border-stone-200 mb-3">
+            <div className="relative w-full max-w-[280px] max-w-[320px] mx-auto bg-white p-2.5 shadow-md border border-stone-200 mb-3">
               <div 
                 className="washi-tape"
                 style={{
@@ -354,10 +354,10 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                   <img 
                     src={usgPhoto} 
                     alt="USG Pertama" 
-                    className="w-full h-36 sm:h-44 object-cover border border-stone-200" 
+                    className="w-full h-36 h-44 object-cover border border-stone-200" 
                   />
                 ) : (
-                  <div className="w-full h-36 sm:h-44 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
+                  <div className="w-full h-36 h-44 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
                     <Camera className="w-6 h-6 text-stone-400 mb-1 group-hover:scale-110 transition-transform" />
                     <span className="text-[10px] font-semibold text-stone-600 block">
                       Tempel Foto USG Kantung Janin Pertama
@@ -375,7 +375,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
             </div>
 
             {/* Clinic Info Grid (Interactive / Editable) */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3 text-[10px]">
+            <div className="grid grid-cols-1 grid-cols-3 gap-2 mb-3 text-[10px]">
               <div className="bg-white p-2 border rounded-xs" style={{ borderColor: theme.borderColor }}>
                 <span className="text-[8px] text-stone-400 uppercase block font-medium">Rumah Sakit:</span>
                 {isFillMode ? (
@@ -461,7 +461,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
               <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">
                 Bab 1: Awal Mula Kisah
               </span>
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>
+              <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>
                 Gejala Awal & Ngidam
               </h2>
             </div>

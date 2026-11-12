@@ -1,8 +1,30 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { getWeekData } from '../../../data/pregnancyWeeks';
+import { getWeekDatesMonday, fmtDayMonth, fmtWeekRange } from '../../../lib/pregnancyDate';
 import { BookThemeConfig } from '../../../types/bookPrint';
 import { PhotoMemory, JournalEntry } from '../../../types';
 import { Camera, Check, Edit2 } from 'lucide-react';
+import { readDayHabits, isHabitDone, toggleHabitDone, getWeekHabits, writeActivity } from '../../../lib/habitStore';
+
+// Batas catatan harian: 1 baris kalau pendek, 2 baris kalau panjang.
+// Kapasitas nyata satu baris di kolom A4 ±85 karakter, jadi 80 adalah ambang aman
+// supaya teks 150 karakter tidak pernah terpotong (150 / 85 ≈ 1,8 baris).
+const NOTE_MAX_CHARS = 160;
+const NOTE_LINE_CHARS = 80;
+
+const MONTHS_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+/** "2026-11-06" -> "6 Nov 2026" (format yang dipakai benchmark). */
+function formatDisplayDate(raw: string): string {
+  const value = String(raw || '').trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!iso) return value;
+  const day = Number(iso[3]);
+  const month = Number(iso[2]) - 1;
+  const year = Number(iso[1]);
+  if (month < 0 || month > 11) return value;
+  return `${day} ${MONTHS_SHORT_ID[month]} ${year}`;
+}
 
 interface WeeklyJournalSpreadProps {
   week: number;
@@ -29,9 +51,15 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // User-editable state with direct two-way sync with TabJurnal & LocalStorage
+  // Tanggal minggu: pakai tanggal ASLI minggu itu (Sen–Min), BUKAN tanggal hari ini.
+  // Kalau tidak bisa dihitung -> '-', jangan tampilkan tanggal dummy.
   const [dateText, setDateText] = useState<string>(() => {
-    return journalEntry?.date || new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date());
+    if (journalEntry?.date) return formatDisplayDate(journalEntry.date);
+    const range = fmtWeekRange(week);
+    return range || '-';
   });
+
+  const weekDates = getWeekDatesMonday(week);
 
   const [dailyTexts, setDailyTexts] = useState<Record<string, string>>(() => {
     try {
@@ -134,19 +162,6 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
           setSleepHours([null, null, null, null, null, null, null]);
         }
 
-        // Sinkronisasi otomatis kebiasaan sehat dari Health Data Context
-        const savedWater = localStorage.getItem('bunda_water_liters');
-        const isWaterTargetMet = savedWater ? parseFloat(savedWater) >= 1.5 : false;
-
-        const savedGoals = localStorage.getItem('bunda_activity_goals');
-        let isWalkTargetMet = false;
-        if (savedGoals) {
-          const parsedG = JSON.parse(savedGoals);
-          if (typeof parsedG.walkMinutes === 'number') {
-            isWalkTargetMet = parsedG.walkMinutes >= 15;
-          }
-        }
-
         const savedMoods = localStorage.getItem(`bunda_daily_moods_w${week}`);
         if (savedMoods) {
           try {
@@ -156,12 +171,14 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
           setDailyMoods([null, null, null, null, null, null, null]);
         }
 
+        // Ceklis kesehatan: dibaca dari Habit Store (sumber tunggal yang sama
+        // dengan Beranda), per hari — bukan lagi dari nilai global semua hari.
         const newChecks: Record<string, boolean> = {};
-        if (savedWater) {
-          for (let d = 0; d < 7; d++) newChecks[`water-${d}`] = isWaterTargetMet;
-        }
-        if (savedGoals) {
-          for (let d = 0; d < 7; d++) newChecks[`walk-${d}`] = isWalkTargetMet;
+        for (let d = 0; d < 7; d += 1) {
+          const dayHabits = readDayHabits(week, d);
+          newChecks[`vit-${d}`] = isHabitDone(dayHabits, 'vitamin');
+          newChecks[`water-${d}`] = isHabitDone(dayHabits, 'water');
+          newChecks[`walk-${d}`] = isHabitDone(dayHabits, 'activity');
         }
         setCheckedItems(newChecks);
       } catch {}
@@ -178,7 +195,13 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
 
   // Dedicated direct change handlers
   const handleDailyTextChange = (dayKey: string, val: string) => {
-    const trimmed = val.slice(0, 100);
+    // Batasi 150 karakter, tapi jangan memotong di tengah kata.
+    let trimmed = val;
+    if (val.length > NOTE_MAX_CHARS) {
+      const cut = val.slice(0, NOTE_MAX_CHARS);
+      const lastSpace = cut.lastIndexOf(' ');
+      trimmed = lastSpace > 40 ? cut.slice(0, lastSpace) : cut;
+    }
     setDailyTexts(prev => {
       const next = { ...prev, [dayKey]: trimmed };
       try {
@@ -221,7 +244,17 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
   const [dailyMoods, setDailyMoods] = useState<(number | null)[]>([null, null, null, null, null, null, null]);
 
   const toggleCheck = (id: string) => {
-    setCheckedItems(prev => ({ ...prev, [id]: !prev[id] }));
+    // id: `vit-3`, `water-3`, `walk-3` — ditulis ke Habit Store, bukan state lokal saja.
+    const [row, dayRaw] = id.split('-');
+    const dayIndex = Number(dayRaw);
+    if (!Number.isFinite(dayIndex)) return;
+
+    const kind = row === 'vit' ? 'vitamin' : row === 'water' ? 'water' : 'activity';
+    const current = readDayHabits(week, dayIndex);
+    const nextDone = !isHabitDone(current, kind);
+
+    toggleHabitDone(week, dayIndex, kind, nextDone);
+    setCheckedItems((prev) => ({ ...prev, [id]: nextDone }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -254,7 +287,19 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
   ];
 
   // Helper cek apakah grafik ada isinya (jika belum diisi, grafik disembunyikan)
-  const hasSleepData = sleepHours.some(val => val !== null && val !== undefined);
+  // Tidur per hari diambil dari data jasmani (sumber yang sama dengan Beranda).
+  const weekSleepHours = getWeekHabits(week).map((h) => h.sleepHours);
+  const hoursToLevel = (hours: number): number | null => {
+    if (!hours || hours <= 0) return null;
+    if (hours >= 8.5) return 0;
+    if (hours >= 6.5) return 1;
+    if (hours >= 5) return 2;
+    return 3;
+  };
+  const levelToHours = (level: number): number => [9, 7.5, 5.5, 4.5][level] ?? 7.5;
+  const weekSleepLevels = weekSleepHours.map(hoursToLevel);
+
+  const hasSleepData = weekSleepHours.some((h) => h > 0);
   const hasMoodData = dailyMoods.some(val => val !== null && val !== undefined);
   const hasChecklistData = Object.values(checkedItems).some(val => val === true);
 
@@ -279,7 +324,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
           borderColor: theme.borderColor,
         }}
       >
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex flex-col h-full justify-start">
           <div>
             {/* Header */}
             <div 
@@ -290,14 +335,14 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                 <span className="text-[8.5px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">
                   Bab 2: Jurnal Kehamilan
                 </span>
-                <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal leading-none" style={{ color: theme.textColor }}>
+                <h1 className="font-serif text-3xl text-4xl text-5xl font-normal leading-none" style={{ color: theme.textColor }}>
                   Week {week}
                 </h1>
               </div>
 
               {/* Editable Date Box */}
               <div 
-                className="border bg-white px-2 py-1 text-[10px] flex items-center min-w-[130px] sm:min-w-[150px] rounded-sm"
+                className="border bg-white px-2 py-1 text-[10px] flex items-center min-w-[130px] min-w-[150px] rounded-sm"
                 style={{ borderColor: theme.borderColor }}
               >
                 <span className="text-stone-400 mr-1.5 shrink-0">Tanggal:</span>
@@ -315,7 +360,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
             </div>
 
             {/* Cerita Harian (Senin - Minggu) */}
-            <div className={`mb-2 ${!hasSleepData && !hasChecklistData && !hasMoodData ? 'flex-1' : ''}`}>
+            <div className="mb-2">
               <div 
                 className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
                 style={{ 
@@ -328,104 +373,164 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
               </div>
 
               <div className="space-y-1">
-                {daysLabel.map((dayObj, idx) => (
-                  <div key={idx} className="flex items-start gap-1">
-                    <span 
-                      className="w-6 sm:w-[9mm] text-[8px] font-bold uppercase shrink-0 pt-0.5"
-                      style={{ color: dayObj.isSunday ? theme.secondaryColor : theme.mutedText }}
-                    >
-                      {dayObj.label}
-                    </span>
-                    <textarea 
-                      rows={2}
-                      maxLength={100}
-                      placeholder={`Catatan hari ${dayObj.label}...`}
-                      value={dailyTexts[dayObj.key] || ''}
-                      onChange={(e) => handleDailyTextChange(dayObj.key, e.target.value)}
-                      className={`flex-1 text-[8.5px] sm:text-[9px] font-serif italic text-stone-700 bg-transparent border-b border-stone-300 px-1 py-0.5 focus:bg-amber-50/40 focus:outline-hidden leading-[1.2] resize-none overflow-hidden ${
-                        !hasSleepData && !hasChecklistData && !hasMoodData ? 'h-[48px]' : 'h-[25px]'
-                      }`}
-                      style={{ borderColor: theme.borderColor }}
-                    />
-                  </div>
-                ))}
+                {daysLabel.map((dayObj, idx) => {
+                  const noteText = dailyTexts[dayObj.key] || '';
+                  const noteLines = noteText.length > NOTE_LINE_CHARS ? 2 : 1;
+
+                  return (
+                    <div key={idx} className="flex items-start gap-1">
+                      <span
+                        className="w-6 w-[9mm] text-[8px] font-bold uppercase shrink-0 pt-0.5 flex flex-col leading-tight"
+                        style={{ color: dayObj.isSunday ? theme.secondaryColor : theme.mutedText }}
+                      >
+                        <span>{dayObj.label}</span>
+                        <span className="font-normal normal-case text-[6.5px] text-stone-400">
+                          {fmtDayMonth(weekDates[idx] || null)}
+                        </span>
+                      </span>
+                      <textarea
+                        rows={noteLines}
+                        maxLength={NOTE_MAX_CHARS}
+                        placeholder={`Catatan hari ${dayObj.label}...`}
+                        value={noteText}
+                        onChange={(e) => handleDailyTextChange(dayObj.key, e.target.value)}
+                        className="flex-1 text-[8.5px] text-[9px] font-serif italic text-stone-700 bg-transparent border-b border-stone-300 px-1 pr-2 py-0.5 focus:bg-amber-50/40 focus:outline-hidden leading-[1.2] resize-none overflow-hidden"
+                        style={{
+                          borderColor: theme.borderColor,
+                          height: noteLines === 1 ? '15px' : '27px',
+                        }}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Tracker Kombinasi (Sleep Graph & Ceklis Kesehatan) */}
-            {(hasSleepData || hasChecklistData) && (
-              <div className="flex gap-2 mb-2">
-                {/* Sleep Graph with Clickable Points */}
-                {hasSleepData && (
-                  <div className={`${hasChecklistData ? 'w-1/2' : 'w-full'} flex flex-col`}>
-                    <div 
-                      className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
-                      style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor, color: theme.textColor }}
-                    >
-                      Grafik Tidur (Jam)
-                    </div>
-                    <div 
-                      className="h-[24mm] border bg-white p-1 flex rounded-xs"
-                      style={{ borderColor: theme.borderColor }}
-                    >
-                      {/* Sumbu Y (Jam) */}
-                      <div className="flex flex-col justify-between text-[7.5px] font-medium text-stone-500 pr-1 border-r border-stone-200">
-                        <span>9+</span>
-                        <span>7-8</span>
-                        <span>5-6</span>
-                        <span>&lt;5</span>
-                      </div>
-                      {/* Sumbu X & Interactive Sleep Matrix */}
-                      <div className="flex-1 flex flex-col relative">
-                        <div className="flex-1 grid grid-cols-7 gap-0">
-                          {[0, 1, 2, 3, 4, 5, 6].map((dayIdx) => (
-                            <div key={dayIdx} className="flex flex-col justify-between items-center py-0.5 border-r border-stone-100 last:border-r-0">
-                              {[0, 1, 2, 3].map((lvlIdx) => {
-                                const isSelected = sleepHours[dayIdx] === lvlIdx;
-                                return (
-                                  <button
-                                    key={lvlIdx}
-                                    type="button"
-                                    onClick={() => {
-                                      setSleepHours(prev => {
-                                        const next = [...prev];
-                                        next[dayIdx] = lvlIdx;
-                                        return next;
-                                      });
-                                    }}
-                                    className="w-3.5 h-3 flex items-center justify-center cursor-pointer"
-                                    title={`Pilih tidur hari ke-${dayIdx + 1}`}
-                                  >
-                                    <span className={`w-1.5 h-1.5 rounded-full transition-transform ${
-                                      isSelected ? 'scale-125' : 'bg-stone-200 hover:bg-stone-300'
-                                    }`} 
-                                    style={{ backgroundColor: isSelected ? theme.primaryColor : undefined }}
-                                    />
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          ))}
-                        </div>
+            {/* Pemantauan mingguan ringkas — air & gerak, dari Habit Store */}
+            {(() => {
+              const weekHabits = getWeekHabits(week);
+              const maxWater = Math.max(2000, ...weekHabits.map((h) => h.waterMl));
+              const doneDays = weekHabits.filter((h) => h.vitaminDone || h.waterDone || h.activityDone).length;
+              const totalActivity = weekHabits.reduce((acc, h) => acc + h.activityMinutes, 0);
 
-                        <div className="flex text-center text-[7px] text-stone-500 font-bold border-t border-stone-200 pt-0.5">
-                          <div className="flex-1">S</div>
-                          <div className="flex-1">S</div>
-                          <div className="flex-1">R</div>
-                          <div className="flex-1">K</div>
-                          <div className="flex-1">J</div>
-                          <div className="flex-1">S</div>
-                          <div className="flex-1 font-bold" style={{ color: theme.secondaryColor }}>M</div>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-[6px] text-stone-400 text-center mt-0.5 italic">Pola jam tidur harian</p>
+              // Skala kurva: 0–2 L (target), tinggi grafik 50 unit
+              const waterX = (i: number) => 50 + i * (700 / 7);
+              const waterY = (ml: number) => 44 - Math.min(1, ml / 2000) * 26;
+              const waterPoints = weekHabits
+                .map((h, i) => `${waterX(i).toFixed(1)},${waterY(h.waterMl).toFixed(1)}`)
+                .join(' ');
+              const waterAreaPath =
+                `M ${waterX(0).toFixed(1)},44 ` +
+                weekHabits.map((h, i) => `L ${waterX(i).toFixed(1)},${waterY(h.waterMl).toFixed(1)}`).join(' ') +
+                ` L ${waterX(6).toFixed(1)},44 Z`;
+
+              return (
+                <div
+                  className="mb-2 border rounded-xs overflow-hidden"
+                  style={{ borderColor: theme.borderColor }}
+                >
+                  <div
+                    className="flex items-center justify-between px-1.5 py-1 border-b"
+                    style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor }}
+                  >
+                    <span className="text-[7.5px] font-semibold uppercase tracking-widest">
+                      Pemantauan minggu ini
+                    </span>
+                    <span className="text-[6.5px] font-sans" style={{ color: theme.mutedText }}>
+                      {doneDays}/7 hari · {totalActivity} mnt gerak
+                    </span>
                   </div>
-                )}
 
-                {/* Ceklis Rutinitas with Interactive Tap */}
-                {hasChecklistData && (
-                  <div className={`${hasSleepData ? 'w-1/2' : 'w-full'} flex flex-col`}>
+                  {/* Kurva air 7 hari (garis putus-putus = target 2 L) */}
+                  <div className="px-1.5 pt-1.5">
+                    <svg
+                      viewBox="0 0 700 50"
+                      preserveAspectRatio="none"
+                      className="w-full"
+                      style={{ height: '12mm' }}
+                      aria-label="Kurva air mingguan"
+                    >
+                      <line
+                        x1="50"
+                        y1="18"
+                        x2="650"
+                        y2="18"
+                        stroke={theme.borderColor}
+                        strokeWidth="1.5"
+                        strokeDasharray="6 5"
+                      />
+                      <path d={waterAreaPath} fill="#7FA6BC" fillOpacity="0.22" />
+                      <polyline
+                        points={waterPoints}
+                        fill="none"
+                        stroke="#7FA6BC"
+                        strokeWidth="2.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      {weekHabits.map((h, i) => (
+                        <circle
+                          key={h.dayIndex}
+                          cx={waterX(i)}
+                          cy={waterY(h.waterMl)}
+                          r="4"
+                          fill={h.waterDone ? '#7FA6BC' : '#CBD8DF'}
+                          stroke="#FFFFFF"
+                          strokeWidth="1.2"
+                        >
+                          <title>{`${h.dayName}: ${(h.waterMl / 1000).toFixed(1)} L`}</title>
+                        </circle>
+                      ))}
+                    </svg>
+                  </div>
+
+                  <div className="flex items-start justify-between gap-1 px-1.5 pb-1">
+                    {weekHabits.map((h) => (
+                      <div key={h.dayIndex} className="flex-1 flex flex-col items-center gap-0.5">
+                        <div className="flex items-center gap-[2px]">
+                          <span
+                            className={`w-1 h-1 rounded-full ${h.vitaminDone ? '' : 'opacity-20'}`}
+                            style={{ backgroundColor: theme.primaryColor }}
+                            title={`Vitamin ${h.dayName}`}
+                          />
+                          <span
+                            className={`w-1 h-1 rounded-full ${h.activityDone ? '' : 'opacity-20'}`}
+                            style={{ backgroundColor: theme.secondaryColor }}
+                            title={`Gerak ${h.dayName}`}
+                          />
+                        </div>
+                        <span className="text-[5.5px] leading-none" style={{ color: theme.mutedText }}>
+                          {h.dayName.slice(0, 3)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div
+                    className="flex items-center justify-end gap-2 px-1.5 pb-1 text-[5.5px] font-sans"
+                    style={{ color: theme.mutedText }}
+                  >
+                    <span className="flex items-center gap-[2px]">
+                      <span className="w-1.5 h-1.5 rounded-[1px]" style={{ backgroundColor: '#7FA6BC' }} />
+                      air (target 2 L)
+                    </span>
+                    <span className="flex items-center gap-[2px]">
+                      <span className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.primaryColor }} />
+                      vitamin
+                    </span>
+                    <span className="flex items-center gap-[2px]">
+                      <span className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.secondaryColor }} />
+                      gerak
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Ceklis kesehatan mingguan */}
+            <div className="flex gap-2 mb-2">
+                {/* Ceklis Rutinitas — selalu tampil (seperti benchmark), kosong = lingkaran */}
+                <div className="w-full flex flex-col">
                     <div 
                       className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
                       style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor, color: theme.textColor }}
@@ -482,79 +587,40 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                       </table>
                     </div>
                   </div>
-                )}
               </div>
-            )}
 
-            {/* Mood Graph with Interactive Tap for each day */}
-            {hasMoodData && (
-              <div className="w-full flex flex-col mt-0.5">
-                <div 
-                  className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
-                  style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor, color: theme.textColor }}
-                >
-                  Suasana Hati
-                </div>
-                <div 
-                  className="h-[22mm] border bg-white p-1 flex rounded-xs"
-                  style={{ borderColor: theme.borderColor }}
-                >
-                  {/* Sumbu Y (Emoji) */}
-                  <div className="flex flex-col justify-between text-[9px] pr-1.5 border-r border-stone-200 select-none">
-                    <span>🥰</span>
-                    <span>😊</span>
-                    <span>🥺</span>
-                    <span>😫</span>
-                  </div>
-                  {/* Sumbu X & Mood Matrix */}
-                  <div className="flex-1 flex flex-col relative">
-                    <div className="flex-1 grid grid-cols-7 gap-0">
-                      {[0, 1, 2, 3, 4, 5, 6].map((dayIdx) => (
-                        <div key={dayIdx} className="flex flex-col justify-between items-center py-0.5 border-r border-stone-100 last:border-r-0">
-                          {[0, 1, 2, 3].map((moodLvl) => {
-                            const isSelected = dailyMoods[dayIdx] === moodLvl;
-                            return (
-                              <button
-                                key={moodLvl}
-                                type="button"
-                                onClick={() => {
-                                  setDailyMoods(prev => {
-                                    const next = [...prev];
-                                    next[dayIdx] = moodLvl;
-                                    return next;
-                                  });
-                                }}
-                                className="w-3.5 h-3 flex items-center justify-center cursor-pointer"
-                              >
-                                <span className={`w-1.5 h-1.5 rounded-full transition-transform ${
-                                  isSelected ? 'scale-125' : 'bg-stone-200 hover:bg-stone-300'
-                                }`} 
-                                style={{ backgroundColor: isSelected ? theme.secondaryColor : undefined }}
-                                />
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex text-center text-[7px] text-stone-500 font-bold border-t border-stone-200 pt-0.5">
-                      <div className="flex-1">Sen</div>
-                      <div className="flex-1">Sel</div>
-                      <div className="flex-1">Rab</div>
-                      <div className="flex-1">Kam</div>
-                      <div className="flex-1">Jum</div>
-                      <div className="flex-1">Sab</div>
-                      <div className="flex-1 font-bold" style={{ color: theme.secondaryColor }}>Min</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Ringkasan parameter lain: tidur & suasana hati */}
+            <div
+              className="flex items-center justify-between px-1 text-[6.5px] font-sans"
+              style={{ color: theme.mutedText }}
+            >
+              <span>
+                {(() => {
+                  const hours = getWeekHabits(week).map((h) => h.sleepHours).filter((v) => v > 0);
+                  if (!hours.length) return 'Tidur: belum dicatat';
+                  const avg = hours.reduce((a, b) => a + b, 0) / hours.length;
+                  return `Tidur rata-rata ${avg.toFixed(1)} jam`;
+                })()}
+              </span>
+              <span>
+                {(() => {
+                  const counts: Record<number, number> = {};
+                  dailyMoods.forEach((m) => {
+                    if (typeof m === 'number') counts[m] = (counts[m] || 0) + 1;
+                  });
+                  const entries = Object.entries(counts);
+                  if (!entries.length) return 'Suasana hati: belum diisi';
+                  const [idx, count] = entries.sort((a, b) => b[1] - a[1])[0];
+                  const emoji = ['🥰', '😊', '🥺', '😫'][Number(idx)] || '😊';
+                  const label = ['Bahagia', 'Tenang', 'Cemas', 'Lelah'][Number(idx)] || 'Tenang';
+                  return `${emoji} ${label} paling sering (${count}/7 hari)`;
+                })()}
+              </span>
+            </div>
           </div>
 
           {/* Footer Page Number */}
-          <div className="pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+          <div className="mt-auto pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
             <span>{leftPageNum}</span>
             <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">
               Bunda Journal • Week {week}
@@ -574,7 +640,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
           borderColor: theme.borderColor,
         }}
       >
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex flex-col h-full justify-start">
           <div>
             {/* Weekly Fact / Milestone */}
             <div 
@@ -590,7 +656,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
               >
                 Milestone Minggu ke-{week} • {weekData.fruitName}
               </p>
-              <p className="text-[9.5px] sm:text-[10px] text-stone-700 font-serif italic leading-snug">
+              <p className="text-[9.5px] text-[10px] text-stone-700 font-serif italic leading-snug">
                 "{weekData.quote}"
               </p>
             </div>
@@ -598,7 +664,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
             {/* Photo Placeholder (Polaroid Style with Washi Tape) */}
             <div 
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-full max-w-[280px] sm:max-w-[310px] mx-auto bg-white p-2 shadow-xs border border-stone-200 mb-2.5 group cursor-pointer hover:border-[#556B2F] transition-all rounded-xs"
+              className="relative w-full max-w-[280px] max-w-[310px] mx-auto bg-white p-2 shadow-xs border border-stone-200 mb-2.5 group cursor-pointer hover:border-[#556B2F] transition-all rounded-xs"
               title="Ketuk untuk unggah / ganti foto minggu ini"
             >
               {/* Washi Tape */}
@@ -736,7 +802,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
           </div>
 
           {/* Footer Page Number */}
-          <div className="pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+          <div className="mt-auto pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
             <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">
               Dokumentasi Foto & Medis
             </span>
