@@ -1,0 +1,40 @@
+name: e2e
+
+on:
+  push:
+    branches: [main, feat/journal-print-polish]
+  pull_request:
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Run E2E (Chromium + WebKit)
+        run: npx playwright test --reporter=list
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            test-results
+            playwright-report
+          retention-days: 7
