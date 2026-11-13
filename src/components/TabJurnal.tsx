@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import { OnboardingJurnalTutorial } from './OnboardingJurnalTutorial';
 import { getTodayPosition, getWeekStrip, isSameDay } from '../lib/pregnancyDate';
-import { DAILY_NOTE_MAX_CHARS } from '../config/journal';
+import { DAILY_NOTE_MAX_CHARS, clampDailyNote, countDailyNoteChars } from '../config/journal';
 import {
   AppointmentData,
   EMPTY_APPOINTMENT,
@@ -864,7 +864,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   };
 
   const handleUpdateDailyNote = (dayKey: string, val: string) => {
-    const trimmed = val.slice(0, DAILY_NOTE_MAX_CHARS);
+    const trimmed = clampDailyNote(val);
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     const status: 'Selesai' | 'Belum' = trimmed.trim() ? 'Selesai' : 'Belum';
@@ -1198,7 +1198,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   const activeNote = dayNotesMap[selectedDayIndex]?.text !== undefined ? dayNotesMap[selectedDayIndex].text : (dailyNotes[activeDay.key] || '');
 
   const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const [currentNoteLength, setCurrentNoteLength] = useState<number>(() => activeNote.length);
+  const [currentNoteLength, setCurrentNoteLength] = useState<number>(() => countDailyNoteChars(activeNote));
 
   // Auto-balik 5 menit ditangani SATU tempat di App.tsx (event `bunda_return_today`),
   // supaya tidak ada 2 timer yang saling menimpa. Handler di atas yang menerapkan
@@ -1211,7 +1211,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     if (noteTextareaRef.current && noteTextareaRef.current.value !== text) {
       noteTextareaRef.current.value = text;
     }
-    setCurrentNoteLength(text.length);
+    setCurrentNoteLength(countDailyNoteChars(text));
   }, [selectedDayIndex, week, activeDay.key]);
 
   return (
@@ -1497,7 +1497,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                 ref={noteTextareaRef}
                 id="textarea-catatan-harian"
                 rows={4}
-                maxLength={DAILY_NOTE_MAX_CHARS}
+                maxLength={DAILY_NOTE_MAX_CHARS * 2}
                 defaultValue={activeNote}
                 inputMode="text"
                 enterKeyHint="done"
@@ -1506,8 +1506,10 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                   const ta = e.currentTarget as HTMLTextAreaElement;
                   ta.style.height = 'auto';
                   ta.style.height = ta.scrollHeight + 'px';
-                  const val = ta.value.slice(0, DAILY_NOTE_MAX_CHARS);
-                  setCurrentNoteLength(val.length);
+                  const rawVal = ta.value;
+                  const val = clampDailyNote(rawVal);
+                  if (val !== rawVal) ta.value = val;
+                  setCurrentNoteLength(countDailyNoteChars(val));
                   handleUpdateDailyNote(activeDay.key, val);
                 }}
                 onTouchEnd={(e: React.TouchEvent<HTMLTextAreaElement>) => {

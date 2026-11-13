@@ -9,3 +9,21 @@ export const DAILY_NOTE_MAX_CHARS = 160;
 
 /** Di atas jumlah ini, catatan butuh 2 baris di buku. */
 export const DAILY_NOTE_LINE_CHARS = 80;
+
+/**
+ * Batasi catatan harian dengan aman untuk emoji.
+ * Panjang dihitung per code point (bukan UTF-16), supaya emoji tidak terbelah
+ * menjadi karakter rusak saat dipotong.
+ */
+export function clampDailyNote(value: string): string {
+  const chars = Array.from(String(value ?? ''));
+  if (chars.length <= DAILY_NOTE_MAX_CHARS) return String(value ?? '');
+  const cut = chars.slice(0, DAILY_NOTE_MAX_CHARS).join('');
+  const lastSpace = cut.lastIndexOf(' ');
+  return lastSpace > 40 ? cut.slice(0, lastSpace) : cut;
+}
+
+/** Jumlah karakter yang dilihat user (emoji = 1). */
+export function countDailyNoteChars(value: string): number {
+  return Array.from(String(value ?? '')).length;
+}

@@ -5,7 +5,7 @@ import { BookThemeConfig } from '../../../types/bookPrint';
 import { PhotoMemory, JournalEntry } from '../../../types';
 import { Camera, Check, Edit2 } from 'lucide-react';
 import { readDayHabits, isHabitDone, toggleHabitDone, getWeekHabits, writeActivity } from '../../../lib/habitStore';
-import { DAILY_NOTE_MAX_CHARS, DAILY_NOTE_LINE_CHARS } from '../../../config/journal';
+import { DAILY_NOTE_MAX_CHARS, DAILY_NOTE_LINE_CHARS, clampDailyNote } from '../../../config/journal';
 
 // Batas catatan harian diambil dari satu sumber: src/config/journal.ts
 
@@ -193,12 +193,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
   // Dedicated direct change handlers
   const handleDailyTextChange = (dayKey: string, val: string) => {
     // Batasi 150 karakter, tapi jangan memotong di tengah kata.
-    let trimmed = val;
-    if (val.length > DAILY_NOTE_MAX_CHARS) {
-      const cut = val.slice(0, DAILY_NOTE_MAX_CHARS);
-      const lastSpace = cut.lastIndexOf(' ');
-      trimmed = lastSpace > 40 ? cut.slice(0, lastSpace) : cut;
-    }
+    const trimmed = clampDailyNote(val);
     setDailyTexts(prev => {
       const next = { ...prev, [dayKey]: trimmed };
       try {
@@ -372,10 +367,10 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
               <div className="space-y-1">
                 {daysLabel.map((dayObj, idx) => {
                   const rawNote = dailyTexts[dayObj.key] || '';
-                  const noteText = rawNote.length > DAILY_NOTE_MAX_CHARS
-                    ? `${rawNote.slice(0, DAILY_NOTE_MAX_CHARS).trimEnd()}…`
+                  const noteText = Array.from(rawNote).length > DAILY_NOTE_MAX_CHARS
+                    ? `${Array.from(rawNote).slice(0, DAILY_NOTE_MAX_CHARS).join("").trimEnd()}…`
                     : rawNote;
-                  const noteLines = noteText.length > DAILY_NOTE_LINE_CHARS ? 2 : 1;
+                  const noteLines = Array.from(noteText).length > DAILY_NOTE_LINE_CHARS ? 2 : 1;
 
                   return (
                     <div key={idx} className="flex items-start gap-1">
