@@ -2,14 +2,16 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
-
+import {devApiPlugin} from './dev/devApiPlugin';
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   const midtransDevPlugin = {
     name: 'midtrans-dev-api',
     configureServer(server: any) {
-      server.middlewares.use('/api/midtrans/charge', async (req: any, res: any) => {
+      // Dev lokal: charge ke Midtrans SANDBOX (uang bohongan).
+      // UI tetap dikunci toggle ON/OFF di pojok layar (PaymentDevToggle).
+      const sandboxCharge = async (req: any, res: any) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;
           res.end(JSON.stringify({ error: 'Method Not Allowed' }));
@@ -61,22 +63,35 @@ export default defineConfig(({mode}) => {
             res.end(JSON.stringify({ error: err.message }));
           }
         });
-      });
+      };
+      server.middlewares.use('/api/midtrans/charge', sandboxCharge);
+      server.middlewares.use('/api/upgrade', sandboxCharge);
     }
   };
 
   return {
-    plugins: [react(), tailwindcss(), midtransDevPlugin],
+    plugins: [react(), tailwindcss(), devApiPlugin(env), midtransDevPlugin],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
     },
     server: {
-      port: 3000,
-      host: '0.0.0.0',
+      port: 5173,
+      // WAJIB loopback: dev tidak boleh kebuka ke jaringan.
+      host: '127.0.0.1',
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
+      // Dev: HANYA auth Google yang di-proxy ke produksi (butuh client ID Google).
+      // Semua /api user/tier/order/userdata lain dilayani dev/devApiPlugin.ts
+      // (file .dev-db.json) supaya data test tidak masuk D1 produksi.
+      proxy: {
+        '/api/auth/google': {
+          target: 'https://www.bundajournal.my.id',
+          changeOrigin: true,
+          secure: true,
+        },
+      },
     },
   };
 });

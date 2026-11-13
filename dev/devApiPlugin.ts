@@ -13,7 +13,7 @@ type DB = {
 
 const empty = (): DB => ({ users: {}, subs: {}, userdata: {}, orders: [] });
 
-export function devApiPlugin() {
+export function devApiPlugin(env: Record<string, string> = {}) {
   const file = path.resolve(process.cwd(), '.dev-db.json');
 
   const load = (): DB => {
@@ -151,7 +151,7 @@ export function devApiPlugin() {
         // Client ID OAuth publik untuk Google Drive backup (dev).
         if (p === '/api/google-config') {
           const clientId =
-            String(process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+            String(env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '').trim();
           return send(res, 200, { ok: true, clientId });
         }
 
