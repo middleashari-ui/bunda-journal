@@ -173,8 +173,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
 
           {/* Hero Visual: screenshot asli aplikasi */}
           <div className="relative md:ml-auto w-full max-w-[290px] mx-auto md:mx-0">
-            <div className="rounded-[38px] border-[9px] border-[#111] bg-[#111] shadow-[0_30px_70px_-30px_rgba(0,0,0,0.5)] overflow-hidden">
-              <img src="/landing/beranda.png" alt="Tampilan Beranda Bunda Journal" className="w-full block" />
+            <div className="rounded-[38px] border-[9px] border-[#111] bg-[#111] shadow-[0_30px_70px_-30px_rgba(0,0,0,0.5)] overflow-hidden aspect-[9/17]">
+              <img src="/landing/beranda.png" alt="Tampilan Beranda Bunda Journal" className="w-full h-full object-cover object-top" />
             </div>
             <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white border border-[#E5E5E5] rounded-full px-3 py-1 text-[10px] text-[#666] shadow-sm whitespace-nowrap">
               Tampilan asli aplikasi
@@ -198,9 +198,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { src: '/landing/cerita.png', title: 'Ringkasan mingguan', desc: 'Ritme, streak, dan momen yang Bunda tulis.' },
-              { src: '/landing/jurnal.png', title: 'Jurnal & jadwal kontrol', desc: 'Catatan harian, jadwal dokter, dan pesan untuk Ayah.' },
-              { src: '/landing/buku.png', title: 'Buku 100 halaman', desc: 'Halaman A4, lengkap dengan pemantauan minggu.' },
+              { src: '/landing/cerita-card.png', title: 'Ringkasan mingguan', desc: 'Ritme, streak, dan momen yang Bunda tulis.' },
+              { src: '/landing/catatan-card.png', title: 'Jurnal harian', desc: 'Catatan, suasana hati, dan batas 160 karakter agar muat di buku.' },
+              { src: '/landing/buku-card.png', title: 'Buku 100 halaman', desc: 'Halaman A4, lengkap dengan pemantauan minggu.' },
             ].map((shot) => (
               <figure key={shot.title} className="bg-[#FAFAF9] border border-[#E5E5E5] rounded-[14px] p-4">
                 <div className="rounded-[10px] overflow-hidden border border-[#E5E5E5] bg-white">
