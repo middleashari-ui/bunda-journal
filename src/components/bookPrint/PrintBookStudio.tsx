@@ -36,9 +36,6 @@ import {
   ExternalLink,
   BookMarked
 } from 'lucide-react';
-import { pdf } from '@react-pdf/renderer';
-import { JournalPdfDocument, PdfBookPageData } from '../../utils/JournalPdfDocument';
-import { generatePDF, exportPagesListToB5PDF, extractPagesFromContainer, PDFExportProgress } from '../../utils/pdfGenerator';
 import { UpgradeModal } from '../UpgradeModal';
 
 interface PrintBookStudioProps {
@@ -401,19 +398,8 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   };
 
   // Memoized 50 spreads / 100 pages data for @react-pdf/renderer
-  const bookPages: PdfBookPageData[] = useMemo(() => {
-    return Array.from({ length: 50 }).map((_, sIdx) => {
-      const info = getSpreadInfo(sIdx);
-      return {
-        spreadIndex: sIdx,
-        leftPageNum: info.pages[0],
-        rightPageNum: info.pages[1],
-        type: info.type,
-        chapterTitle: info.chapterTitle,
-        week: info.week,
-      };
-    });
-  }, []);
+  // (dihapus: layout buku sekarang dirender oleh komponen halaman yang sama,
+  //  bukan dokumen @react-pdf terpisah)
 
   const renderSpreadContent = (spreadIdx: number) => {
     const info = getSpreadInfo(spreadIdx);
