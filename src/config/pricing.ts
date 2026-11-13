@@ -26,9 +26,9 @@ export const PRICING_CONFIG: Record<'essential' | 'vip' | 'hardcover' | 'upgrade
     name: 'VIP Bundle',
     price: 129000,
     label: 'Rp 129.000',
-    badge: '100 Halaman + Voice QR',
+    badge: '100 Halaman A4',
     adminFeeText: 'Gratis biaya admin (QRIS 0%)',
-    desc: 'Akses 100 halaman lengkap + 10 Voice QR suara detak jantung + grafik berat & tendangan + 3 template cetak.',
+    desc: 'Akses 100 halaman A4 lengkap + grafik pertumbuhan & tendangan + 5 tema buku + ekspor PDF.',
   },
   upgrade_vip: {
     id: 'upgrade_vip',
@@ -37,7 +37,7 @@ export const PRICING_CONFIG: Record<'essential' | 'vip' | 'hardcover' | 'upgrade
     label: 'Rp 80.000',
     badge: '+Rp 80rb',
     adminFeeText: 'Gratis biaya admin (QRIS 0%)',
-    desc: 'Bunda Essential tambah Rp 80rb untuk akses VIP 100 Halaman + Voice QR penuh.',
+    desc: 'Bunda Essential tambah Rp 80rb untuk membuka 100 halaman A4 penuh.',
   },
   hardcover: {
     id: 'hardcover',
@@ -46,6 +46,6 @@ export const PRICING_CONFIG: Record<'essential' | 'vip' | 'hardcover' | 'upgrade
     label: 'Rp 249.000',
     badge: 'Cetak Fisik',
     adminFeeText: 'Gratis biaya admin (QRIS 0%)',
-    desc: 'Buku hardcover linen mewah 100 halaman B5 dicetak fisik dan dikirim ke rumah.',
+    desc: 'Buku hardcover linen 100 halaman A4, dicetak fisik dan dikirim ke rumah.',
   },
 };
