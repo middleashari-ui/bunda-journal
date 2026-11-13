@@ -95,6 +95,13 @@ async function loadGis(): Promise<any> {
 }
 
 async function resolveClientId(): Promise<string> {
+  // 1) Build-time env (client ID bersifat publik) — bekerja juga di preview
+  //    deployment yang tidak mewarisi environment production.
+  try {
+    const fromBuild = String((import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '').trim();
+    if (fromBuild) return fromBuild;
+  } catch {}
+
   try {
     const cached = localStorage.getItem(CLIENT_ID_KEY) || '';
     if (cached) return cached;
