@@ -5,12 +5,9 @@ import { BookThemeConfig } from '../../../types/bookPrint';
 import { PhotoMemory, JournalEntry } from '../../../types';
 import { Camera, Check, Edit2 } from 'lucide-react';
 import { readDayHabits, isHabitDone, toggleHabitDone, getWeekHabits, writeActivity } from '../../../lib/habitStore';
+import { DAILY_NOTE_MAX_CHARS, DAILY_NOTE_LINE_CHARS } from '../../../config/journal';
 
-// Batas catatan harian: 1 baris kalau pendek, 2 baris kalau panjang.
-// Kapasitas nyata satu baris di kolom A4 ±85 karakter, jadi 80 adalah ambang aman
-// supaya teks 150 karakter tidak pernah terpotong (150 / 85 ≈ 1,8 baris).
-const NOTE_MAX_CHARS = 160;
-const NOTE_LINE_CHARS = 80;
+// Batas catatan harian diambil dari satu sumber: src/config/journal.ts
 
 const MONTHS_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
@@ -197,8 +194,8 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
   const handleDailyTextChange = (dayKey: string, val: string) => {
     // Batasi 150 karakter, tapi jangan memotong di tengah kata.
     let trimmed = val;
-    if (val.length > NOTE_MAX_CHARS) {
-      const cut = val.slice(0, NOTE_MAX_CHARS);
+    if (val.length > DAILY_NOTE_MAX_CHARS) {
+      const cut = val.slice(0, DAILY_NOTE_MAX_CHARS);
       const lastSpace = cut.lastIndexOf(' ');
       trimmed = lastSpace > 40 ? cut.slice(0, lastSpace) : cut;
     }
@@ -374,8 +371,11 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
 
               <div className="space-y-1">
                 {daysLabel.map((dayObj, idx) => {
-                  const noteText = dailyTexts[dayObj.key] || '';
-                  const noteLines = noteText.length > NOTE_LINE_CHARS ? 2 : 1;
+                  const rawNote = dailyTexts[dayObj.key] || '';
+                  const noteText = rawNote.length > DAILY_NOTE_MAX_CHARS
+                    ? `${rawNote.slice(0, DAILY_NOTE_MAX_CHARS).trimEnd()}…`
+                    : rawNote;
+                  const noteLines = noteText.length > DAILY_NOTE_LINE_CHARS ? 2 : 1;
 
                   return (
                     <div key={idx} className="flex items-start gap-1">
@@ -390,7 +390,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                       </span>
                       <textarea
                         rows={noteLines}
-                        maxLength={NOTE_MAX_CHARS}
+                        maxLength={DAILY_NOTE_MAX_CHARS}
                         placeholder={`Catatan hari ${dayObj.label}...`}
                         value={noteText}
                         onChange={(e) => handleDailyTextChange(dayObj.key, e.target.value)}

@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { OnboardingJurnalTutorial } from './OnboardingJurnalTutorial';
 import { getTodayPosition, getWeekStrip, isSameDay } from '../lib/pregnancyDate';
+import { DAILY_NOTE_MAX_CHARS } from '../config/journal';
 import {
   AppointmentData,
   EMPTY_APPOINTMENT,
@@ -863,7 +864,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   };
 
   const handleUpdateDailyNote = (dayKey: string, val: string) => {
-    const trimmed = val.slice(0, 15000);
+    const trimmed = val.slice(0, DAILY_NOTE_MAX_CHARS);
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     const status: 'Selesai' | 'Belum' = trimmed.trim() ? 'Selesai' : 'Belum';
@@ -1496,7 +1497,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                 ref={noteTextareaRef}
                 id="textarea-catatan-harian"
                 rows={4}
-                maxLength={15000}
+                maxLength={DAILY_NOTE_MAX_CHARS}
                 defaultValue={activeNote}
                 inputMode="text"
                 enterKeyHint="done"
@@ -1505,7 +1506,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                   const ta = e.currentTarget as HTMLTextAreaElement;
                   ta.style.height = 'auto';
                   ta.style.height = ta.scrollHeight + 'px';
-                  const val = ta.value.slice(0, 15000);
+                  const val = ta.value.slice(0, DAILY_NOTE_MAX_CHARS);
                   setCurrentNoteLength(val.length);
                   handleUpdateDailyNote(activeDay.key, val);
                 }}
@@ -1556,13 +1557,13 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                   {saveStatus}
                 </span>
                 <span className={`font-sans font-medium ${
-                  currentNoteLength >= 15000
+                  currentNoteLength >= DAILY_NOTE_MAX_CHARS
                     ? 'text-rose-500 font-bold'
-                    : currentNoteLength >= 12000
+                    : currentNoteLength >= DAILY_NOTE_MAX_CHARS - 20
                     ? 'text-amber-600'
                     : 'text-stone-400'
-                }`}>
-                  {currentNoteLength > 12000 ? `${currentNoteLength} / 15.000 karakter` : `${currentNoteLength} karakter`}
+                }`} title="Batas agar catatan muat 2 baris di buku jurnal">
+                  {`${currentNoteLength}/${DAILY_NOTE_MAX_CHARS} karakter`}
                 </span>
               </div>
             </div>
