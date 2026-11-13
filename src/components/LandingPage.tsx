@@ -29,6 +29,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
   const [isPaidPreview, setIsPaidPreview] = useState<boolean>(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [shotPreview, setShotPreview] = useState<{ src: string; full?: string; title: string } | null>(null);
 
   const pricingRef = useRef<HTMLDivElement>(null);
   const journalRef = useRef<HTMLDivElement>(null);
@@ -200,12 +201,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
             {[
               { src: '/landing/cerita-card.png', title: 'Ringkasan mingguan', desc: 'Ritme, streak, dan momen yang Bunda tulis.' },
               { src: '/landing/catatan-card.png', title: 'Jurnal harian', desc: 'Catatan, suasana hati, dan batas 160 karakter agar muat di buku.' },
-              { src: '/landing/buku-card.png', title: 'Buku 100 halaman', desc: 'Halaman A4, lengkap dengan pemantauan minggu.' },
+              { src: '/landing/buku-card.png', title: 'Buku 100 halaman', desc: 'Halaman A4, lengkap dengan pemantauan minggu. Ketuk untuk memperbesar.' },
             ].map((shot) => (
               <figure key={shot.title} className="bg-[#FAFAF9] border border-[#E5E5E5] rounded-[14px] p-4">
-                <div className="rounded-[10px] overflow-hidden border border-[#E5E5E5] bg-white">
+                <button
+                  type="button"
+                  onClick={() => setShotPreview({ src: shot.src, full: (shot as any).full, title: shot.title })}
+                  className="block w-full rounded-[10px] overflow-hidden border border-[#E5E5E5] bg-white cursor-zoom-in group relative"
+                  aria-label={"Perbesar: " + shot.title}
+                >
                   <img src={shot.src} alt={shot.title} className="w-full block object-cover object-top aspect-[4/5]" />
-                </div>
+                  <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                    Ketuk untuk memperbesar
+                  </span>
+                </button>
                 <figcaption className="mt-3">
                   <div className="serif text-[15px] text-[#111]">{shot.title}</div>
                   <p className="text-[12px] text-[#666] leading-[1.5] mt-0.5">{shot.desc}</p>
@@ -739,6 +748,35 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
           </div>
         </div>
       )}
+      {/* Lightbox screenshot */}
+      {shotPreview && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/85 flex items-center justify-center p-4"
+          onClick={() => setShotPreview(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            onClick={() => setShotPreview(null)}
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
+            aria-label="Tutup"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <figure className="max-w-[96vw] max-h-[90vh] flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
+            <div className="max-h-[84vh] overflow-auto rounded-[10px] bg-white shadow-2xl w-full flex justify-start md:justify-center">
+              <img
+                src={shotPreview.full || shotPreview.src}
+                alt={shotPreview.title}
+                className="w-[860px] max-w-none md:w-auto md:max-w-[80vw] h-auto block"
+              />
+            </div>
+            <figcaption className="text-white/80 text-[12px]">{shotPreview.title}</figcaption>
+          </figure>
+        </div>
+      )}
+
     </div>
   );
 };
