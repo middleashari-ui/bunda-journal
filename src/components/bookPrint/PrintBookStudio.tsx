@@ -678,7 +678,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
           <button
             onClick={() => { if (guardOutput('export_pdf')) handleOpenPrintWindow(); }}
             className="w-8 h-8 rounded-lg bg-[#556B2F] hover:bg-[#465926] text-white flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95 border border-[#465926]"
-            title="Download PDF (100 Halaman)"
+            title="Simpan buku (100 halaman)"
             aria-label="Download PDF"
           >
             <Download className="w-4 h-4" />

@@ -9,6 +9,7 @@ const PAGES = [0, 19, 43, 45, 48];
 
 test.describe('Buku jurnal — visual baseline', () => {
   test('halaman kunci tetap stabil', async ({ page }) => {
+    test.skip(test.info().project.name !== 'chromium', 'visual baseline hanya untuk Chromium');
     await openApp(page, '/#/print');
     await page.waitForSelector('.print-book-spread');
 
