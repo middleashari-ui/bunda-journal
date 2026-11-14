@@ -35,13 +35,13 @@ test.describe('Buku jurnal /print', () => {
     await expect(spread).toContainText('Ceklis Kesehatan');
     await expect(spread).toContainText('Tidur');
     await expect(spread).toContainText('Vitamin');
+    await expect(spread).toContainText('kesimpulan');
+    await expect(spread).toContainText('Streak');
     await expect(spread).toContainText('Ayah bikin bubur ayam');
 
-    // kurva air harus benar-benar tergambar
-    const polyline = spread.locator('svg polyline').first();
-    await expect(polyline).toHaveCount(1);
-    const points = await polyline.getAttribute('points');
-    expect(points?.split(' ').length).toBe(7);
+    // activity rings harus tergambar (3 cincin: vitamin, air, gerak)
+    const rings = spread.locator('svg circle[stroke-dasharray]');
+    await expect(rings).toHaveCount(3);
   });
 
   test('halaman kanan memuat statistik dan catatan dokter', async ({ page }) => {

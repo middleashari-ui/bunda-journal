@@ -402,7 +402,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
               </div>
             </div>
 
-            {/* Kesimpulan minggu ini — sama dengan kartu "Cerita minggu" di Beranda */}
+                        {/* Kesimpulan & pemantauan minggu ini — semua parameter Beranda */}
             {(() => {
               const habits = getWeekHabits(week);
               const score = getWeekHabitScore(week);
@@ -413,6 +413,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                 (acc, t) => acc + String(t || '').trim().length,
                 0
               );
+
               let streak = 0;
               let run = 0;
               habits.forEach((h) => {
@@ -424,6 +425,22 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                 }
               });
 
+              const totalActivity = habits.reduce((a, h) => a + h.activityMinutes, 0);
+              const avgWater = habits.reduce((a, h) => a + h.waterMl, 0) / 7 / 1000;
+              const sleepVals = habits.map((h) => h.sleepHours).filter((v) => v > 0);
+              const avgSleep = sleepVals.length ? sleepVals.reduce((a, b) => a + b, 0) / sleepVals.length : 0;
+
+              const moodCounts: Record<number, number> = {};
+              dailyMoods.forEach((m) => { if (typeof m === 'number') moodCounts[m] = (moodCounts[m] || 0) + 1; });
+              const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0];
+              const moodEmoji = topMood ? (['🥰', '😊', '🥺', '😫'][Number(topMood[0])] || '😊') : '—';
+              const moodLabel = topMood ? (['Bahagia', 'Tenang', 'Cemas', 'Lelah'][Number(topMood[0])] || 'Tenang') : 'belum diisi';
+
+              const highlight = Object.entries(dailyTexts)
+                .map(([day, text]) => ({ day, text: String(text || '').trim() }))
+                .filter((entry) => entry.text.length > 0)
+                .sort((a, b) => b.text.length - a.text.length)[0];
+
               const narrative =
                 score.daysLogged === 7
                   ? '7 hari sudah tercatat. Tidak harus sempurna — yang penting Bunda hadir.'
@@ -433,266 +450,158 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                   ? `${score.daysLogged} hari tercatat. Pelan-pelan saja, yang penting tetap menulis.`
                   : 'Belum ada catatan minggu ini. Mulai dari satu kalimat saja.';
 
-              const R = 20;
-              const CIRC = 2 * Math.PI * R;
-              const filled = (Math.max(0, Math.min(100, score.overallPct)) / 100) * CIRC;
-
-              const badges: Array<{ label: string; pct: number; color: string }> = [
-                { label: 'vitamin', pct: score.vitaminPct, color: theme.primaryColor },
-                { label: 'air', pct: score.waterPct, color: '#7FA6BC' },
-                { label: 'gerak', pct: score.activityPct, color: theme.secondaryColor },
+              const rings: Array<{ pct: number; color: string; r: number }> = [
+                { pct: score.vitaminPct, color: theme.primaryColor, r: 30 },
+                { pct: score.waterPct, color: '#7FA6BC', r: 22 },
+                { pct: score.activityPct, color: theme.secondaryColor, r: 14 },
               ];
-
-              return (
-                <div
-                  className="mb-1.5 border rounded-xs px-2 py-1.5 flex items-center gap-2"
-                  style={{ borderColor: theme.borderColor, backgroundColor: '#FFFFFF' }}
-                >
-                  <svg width="48" height="48" viewBox="0 0 48 48" aria-label={`Ritme ${score.overallPct}%`}>
-                    <circle cx="24" cy="24" r={R} fill="none" stroke={theme.borderColor} strokeWidth="4" />
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r={R}
-                      fill="none"
-                      stroke={theme.primaryColor}
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      strokeDasharray={`${filled.toFixed(1)} ${CIRC.toFixed(1)}`}
-                      transform="rotate(-90 24 24)"
-                    />
-                    <text x="24" y="23" textAnchor="middle" fontSize="10" fontWeight="700" fill={theme.textColor}>
-                      {score.overallPct}%
-                    </text>
-                    <text x="24" y="31" textAnchor="middle" fontSize="4.5" fill={theme.mutedText} letterSpacing="1">
-                      RITME
-                    </text>
-                  </svg>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[7px] uppercase tracking-widest font-semibold" style={{ color: theme.mutedText }}>
-                      Kesimpulan minggu ini
-                    </div>
-                    <div className="text-[9.5px] font-serif italic leading-snug" style={{ color: theme.textColor }}>
-                      {narrative}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[7px] font-sans" style={{ color: theme.mutedText }}>
-                      {badges.map((b) => (
-                        <span key={b.label} className="flex items-center gap-[2px]">
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: b.color }} />
-                          {b.pct}% {b.label}
-                        </span>
-                      ))}
-                      <span>· {streak} hari beruntun</span>
-                      <span>· {noteChars} karakter ditulis</span>
-                      {prevScore && delta !== 0 && (
-                        <span style={{ color: delta > 0 ? theme.primaryColor : theme.secondaryColor }}>
-                          {delta > 0 ? '▲' : '▼'} {Math.abs(delta)}% dari minggu lalu
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Pemantauan mingguan — parameter sama dengan Beranda */}
-            {(() => {
-              const weekHabits = getWeekHabits(week);
-              const avgWater = weekHabits.reduce((a, h) => a + h.waterMl, 0) / 7 / 1000;
-              const vitDays = weekHabits.filter((h) => h.vitaminDone).length;
-              const waterDays = weekHabits.filter((h) => h.waterDone).length;
-              const activityDays = weekHabits.filter((h) => h.activityDone).length;
-              const totalActivity = weekHabits.reduce((a, h) => a + h.activityMinutes, 0);
-              const doneDays = weekHabits.filter((h) => h.vitaminDone || h.waterDone || h.activityDone).length;
-              const sleepVals = weekHabits.map((h) => h.sleepHours).filter((v) => v > 0);
-              const avgSleep = sleepVals.length ? sleepVals.reduce((a, b) => a + b, 0) / sleepVals.length : 0;
-
-              const moodCounts: Record<number, number> = {};
-              dailyMoods.forEach((m) => { if (typeof m === 'number') moodCounts[m] = (moodCounts[m] || 0) + 1; });
-              const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0];
-              const moodEmoji = topMood ? (['🥰', '😊', '🥺', '😫'][Number(topMood[0])] || '😊') : '—';
-
-              // Skala kurva: 0–2 L (target), tinggi grafik 50 unit
-              const waterX = (i: number) => 50 + i * (700 / 7);
-              const waterY = (ml: number) => 44 - Math.min(1, ml / 2000) * 26;
-              const waterPoints = weekHabits
-                .map((h, i) => `${waterX(i).toFixed(1)},${waterY(h.waterMl).toFixed(1)}`)
-                .join(' ');
-              const waterAreaPath =
-                `M ${waterX(0).toFixed(1)},44 ` +
-                weekHabits.map((h, i) => `L ${waterX(i).toFixed(1)},${waterY(h.waterMl).toFixed(1)}`).join(' ') +
-                ` L ${waterX(6).toFixed(1)},44 Z`;
 
               const stats: Array<{ label: string; value: string }> = [
-                { label: 'Air', value: `${avgWater.toFixed(1)} L` },
-                { label: 'Vitamin', value: `${vitDays}/7` },
-                { label: 'Gerak', value: `${totalActivity} mnt` },
-                { label: 'Tidur', value: avgSleep ? `${avgSleep.toFixed(1)} jam` : '—' },
+                { label: 'Hari tercatat', value: `${score.daysLogged}/7` },
+                { label: 'Streak', value: `${streak} hari` },
+                { label: 'Tulisan', value: `${noteChars} karakter` },
+                { label: 'Air rata-rata', value: `${avgWater.toFixed(1)} L` },
+                { label: 'Gerak total', value: `${totalActivity} mnt` },
+                { label: 'Tidur rata-rata', value: avgSleep ? `${avgSleep.toFixed(1)} jam` : '—' },
+                { label: 'Mood terbanyak', value: `${moodEmoji} ${moodLabel}` },
+                { label: 'Vs minggu lalu', value: prevScore ? `${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta)}%` : '—' },
               ];
 
               return (
                 <div
-                  className="mb-1.5 border rounded-xs overflow-hidden"
+                  className="mb-2 border rounded-xs overflow-hidden"
                   style={{ borderColor: theme.borderColor }}
                 >
                   <div
                     className="flex items-center justify-between px-2 py-1 border-b"
                     style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor }}
                   >
-                    <span className="text-[10px] font-semibold uppercase tracking-widest">
-                      Pemantauan minggu ini
+                    <span className="text-[10.5px] font-semibold uppercase tracking-widest">
+                      Pemantauan minggu ini · kesimpulan
                     </span>
                     <span className="text-[8px] font-sans" style={{ color: theme.mutedText }}>
-                      {doneDays}/7 hari · air {waterDays}/7 · gerak {activityDays}/7 · mood {moodEmoji}
+                      Ritme {score.overallPct}% · {score.daysLogged}/7 hari · streak {streak}
                     </span>
                   </div>
 
-                  {/* Ringkasan angka — sama seperti kartu Beranda */}
-                  <div className="grid grid-cols-4 gap-1 px-2 pt-1.5">
-                    {stats.map((s) => (
-                      <div key={s.label} className="text-center">
-                        <div className="text-[7px] uppercase tracking-wide" style={{ color: theme.mutedText }}>
-                          {s.label}
-                        </div>
-                        <div className="text-[12px] font-bold leading-tight" style={{ color: theme.textColor }}>
-                          {s.value}
-                        </div>
+                  <div className="flex items-start gap-2 px-2 pt-2">
+                    {/* Activity rings: vitamin / air / gerak */}
+                    <div className="shrink-0 flex flex-col items-center">
+                      <svg width="180" height="180" viewBox="0 0 80 80" aria-label={`Ritme ${score.overallPct}%`}>
+                        {rings.map((ring) => {
+                          const circ = 2 * Math.PI * ring.r;
+                          const filled = (Math.max(0, Math.min(100, ring.pct)) / 100) * circ;
+                          return (
+                            <g key={ring.r}>
+                              <circle cx="40" cy="40" r={ring.r} fill="none" stroke={theme.borderColor} strokeWidth="5" />
+                              <circle
+                                cx="40"
+                                cy="40"
+                                r={ring.r}
+                                fill="none"
+                                stroke={ring.color}
+                                strokeWidth="5"
+                                strokeLinecap="round"
+                                strokeDasharray={`${filled.toFixed(1)} ${circ.toFixed(1)}`}
+                                transform="rotate(-90 40 40)"
+                              />
+                            </g>
+                          );
+                        })}
+                        <text x="40" y="39" textAnchor="middle" fontSize="12" fontWeight="700" fill={theme.textColor}>
+                          {score.overallPct}%
+                        </text>
+                        <text x="40" y="47" textAnchor="middle" fontSize="5" fill={theme.mutedText} letterSpacing="1">
+                          RITME
+                        </text>
+                      </svg>
+                      <div className="flex items-center gap-2 mt-1 text-[8px] font-sans" style={{ color: theme.mutedText }}>
+                        <span className="flex items-center gap-[2px]">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.primaryColor }} />
+                          {score.vitaminPct}% vit
+                        </span>
+                        <span className="flex items-center gap-[2px]">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#7FA6BC' }} />
+                          {score.waterPct}% air
+                        </span>
+                        <span className="flex items-center gap-[2px]">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.secondaryColor }} />
+                          {score.activityPct}% gerak
+                        </span>
                       </div>
-                    ))}
-                  </div>
+                    </div>
 
-                  {/* Kurva air 7 hari (garis putus-putus = target 2 L) */}
-                  <div className="px-2 pt-1">
-                    <svg
-                      viewBox="0 0 700 50"
-                      preserveAspectRatio="none"
-                      className="w-full"
-                      style={{ height: '40mm' }}
-                      aria-label="Kurva air mingguan"
-                    >
-                      <line
-                        x1="50"
-                        y1="18"
-                        x2="650"
-                        y2="18"
-                        stroke={theme.borderColor}
-                        strokeWidth="1.5"
-                        strokeDasharray="6 5"
-                      />
-                      <path d={waterAreaPath} fill="#7FA6BC" fillOpacity="0.22" />
-                      <polyline
-                        points={waterPoints}
-                        fill="none"
-                        stroke="#7FA6BC"
-                        strokeWidth="2.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      {weekHabits.map((h, i) => (
-                        <circle
-                          key={h.dayIndex}
-                          cx={waterX(i)}
-                          cy={waterY(h.waterMl)}
-                          r="4"
-                          fill={h.waterDone ? '#7FA6BC' : '#CBD8DF'}
-                          stroke="#FFFFFF"
-                          strokeWidth="1.2"
-                        >
-                          <title>{`${h.dayName}: ${(h.waterMl / 1000).toFixed(1)} L`}</title>
-                        </circle>
-                      ))}
-                    </svg>
-                  </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[12px] font-serif italic leading-snug" style={{ color: theme.textColor }}>
+                        {narrative}
+                      </div>
 
-                  <div className="flex items-start justify-between gap-1 px-2 pb-1">
-                    {weekHabits.map((h) => (
-                      <div key={h.dayIndex} className="flex-1 flex flex-col items-center gap-0.5">
-                        <div className="flex items-center gap-1">
-                          <span
-                            className={`w-2 h-2 rounded-full ${h.vitaminDone ? '' : 'opacity-20'}`}
-                            style={{ backgroundColor: theme.primaryColor }}
-                            title={`Vitamin ${h.dayName}`}
-                          />
-                          <span
-                            className={`w-2 h-2 rounded-full ${h.activityDone ? '' : 'opacity-20'}`}
-                            style={{ backgroundColor: theme.secondaryColor }}
-                            title={`Gerak ${h.dayName}`}
-                          />
+                      {highlight && (
+                        <div className="text-[8.5px] italic leading-snug mt-1" style={{ color: theme.mutedText }}>
+                          Momen minggu ini — {highlight.day}: “{highlight.text.slice(0, 120)}…”
                         </div>
-                        <span className="text-[8px] leading-none font-semibold" style={{ color: theme.mutedText }}>
+                      )}
+
+                      <div className="grid grid-cols-3 gap-x-2 gap-y-1.5 mt-2">
+                        {stats.map((s) => (
+                          <div key={s.label}>
+                            <div className="text-[8.5px] uppercase tracking-wide leading-tight" style={{ color: theme.mutedText }}>
+                              {s.label}
+                            </div>
+                            <div className="text-[13.5px] font-bold leading-tight" style={{ color: theme.textColor }}>
+                              {s.value}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Strip 7 hari seperti Beranda */}
+                  <div className="flex items-start justify-between gap-1 px-2 pt-1.5 pb-2">
+                    {habits.map((h, i) => (
+                      <div key={h.dayIndex} className="flex-1 flex flex-col items-center gap-0.5">
+                        <span className="text-[8.5px] font-semibold uppercase" style={{ color: theme.mutedText }}>
                           {h.dayName.slice(0, 3)}
                         </span>
                         <span className="text-[7px] leading-none" style={{ color: theme.mutedText }}>
+                          {weekDates[i] ? weekDates[i]!.getDate() : '—'}
+                        </span>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: theme.primaryColor, opacity: h.vitaminDone ? 1 : 0.18 }} />
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#7FA6BC', opacity: h.waterDone ? 1 : 0.18 }} />
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: theme.secondaryColor, opacity: h.activityDone ? 1 : 0.18 }} />
+                        </div>
+                        <span className="text-[7.5px] leading-none" style={{ color: theme.mutedText }}>
                           {(h.waterMl / 1000).toFixed(1)} L
                         </span>
-                        <span className="text-[6.5px] leading-none" style={{ color: theme.mutedText }}>
+                        <span className="text-[7px] leading-none" style={{ color: theme.mutedText }}>
                           {h.sleepHours ? `${h.sleepHours} j` : '—'}
                         </span>
                       </div>
                     ))}
                   </div>
 
-                  {/* Batang gerak & tidur per hari — parameter Beranda */}
-                  <div className="px-2 pt-1">
-                    <div className="flex items-end justify-between gap-1" style={{ height: '22mm' }}>
-                      {weekHabits.map((h) => (
-                        <div key={h.dayIndex} className="flex-1 flex items-end justify-center gap-[2px] h-full">
-                          <div
-                            className="rounded-t-[1px]"
-                            style={{
-                              width: '34%',
-                              minHeight: 2,
-                              height: `${Math.max(4, Math.min(100, (h.activityMinutes / 60) * 100))}%`,
-                              backgroundColor: theme.secondaryColor,
-                            }}
-                            title={`Gerak ${h.dayName}: ${h.activityMinutes} menit`}
-                          />
-                          <div
-                            className="rounded-t-[1px]"
-                            style={{
-                              width: '34%',
-                              minHeight: 2,
-                              height: `${Math.max(4, Math.min(100, (h.sleepHours / 10) * 100))}%`,
-                              backgroundColor: theme.primaryColor,
-                            }}
-                            title={`Tidur ${h.dayName}: ${h.sleepHours} jam`}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div
-                    className="flex items-center justify-end gap-2 px-2 pb-1.5 text-[6.5px] font-sans"
-                    style={{ color: theme.mutedText }}
-                  >
-                    <span className="flex items-center gap-[2px]">
-                      <span className="w-2 h-2 rounded-[1px]" style={{ backgroundColor: '#7FA6BC' }} />
-                      air (target 2 L)
-                    </span>
-                    <span className="flex items-center gap-[2px]">
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: theme.primaryColor }} />
+                  <div className="flex items-center justify-center gap-3 px-2 pb-2 text-[6.5px] font-sans" style={{ color: theme.mutedText }}>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.primaryColor }} />
                       vitamin
                     </span>
-                    <span className="flex items-center gap-[2px]">
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: theme.secondaryColor }} />
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#7FA6BC' }} />
+                      air
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.secondaryColor }} />
                       gerak
                     </span>
-                    <span className="flex items-center gap-[2px]">
-                      <span className="w-1.5 h-2 rounded-[1px]" style={{ backgroundColor: theme.secondaryColor }} />
-                      gerak (mnt)
-                    </span>
-                    <span className="flex items-center gap-[2px]">
-                      <span className="w-1.5 h-2 rounded-[1px]" style={{ backgroundColor: theme.primaryColor }} />
-                      tidur (jam)
-                    </span>
+                    <span>· angka = liter air &amp; jam tidur</span>
                   </div>
                 </div>
               );
             })()}
 
-            {/* Ceklis kesehatan mingguan */}
+{/* Ceklis kesehatan mingguan */}
             <div className="flex gap-2 mb-2">
                 {/* Ceklis Rutinitas — selalu tampil (seperti benchmark), kosong = lingkaran */}
                 <div className="w-full flex flex-col">
