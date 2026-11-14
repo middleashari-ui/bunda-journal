@@ -16,6 +16,7 @@ import { getWeekHabits, getWeekHabitScore, subscribeHabits, DAY_NAMES } from '..
 import { getWeekDatesMonday, fmtDayMonth, isSameDay, getTodayPosition } from '../../lib/pregnancyDate';
 import { shrinkImageSource } from '../../lib/imageResize';
 import { isMediaKey, mediaGet } from '../../lib/mediaStore';
+import { getDailyJasmani, getWeeklyJasmani, getMonthlyJasmani } from '../../lib/jasmaniStore';
 import { PhotoMemory } from '../../types';
 
 type TimeframeOption = 'harian' | 'mingguan' | 'bulanan';
@@ -269,6 +270,20 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
   const handleOpenJournal = useCallback(() => {
     onOpenJournal?.();
   }, [onOpenJournal]);
+
+  const jasmani = useMemo(() => {
+    if (timeframe === 'harian') return getDailyJasmani(weekNum, selectedDay);
+    if (timeframe === 'mingguan') return getWeeklyJasmani(weekNum);
+    const base = dates[0] ?? new Date();
+    return getMonthlyJasmani(base.getFullYear(), base.getMonth());
+  }, [timeframe, weekNum, selectedDay, dates]);
+
+  const jasmaniLabel =
+    timeframe === 'harian'
+      ? `${DAY_NAMES[selectedDay]}${dates[selectedDay] ? ` • ${fmtDayMonth(dates[selectedDay])}` : ''}`
+      : timeframe === 'mingguan'
+      ? 'Minggu ini'
+      : (dates[0] ?? new Date()).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
   if (!ready) {
     return (
@@ -653,6 +668,41 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
           </p>
         </div>
       )}
+
+      {/* ===================== PEMANTAUAN JASMANI ===================== */}
+      <div className="rounded-[22px] border border-[#EDE6DA] bg-white px-4 py-3">
+        <div className="flex items-center justify-between">
+          <p className="text-[9px] uppercase tracking-[0.16em] text-[#8A8178] font-semibold">
+            Pemantauan jasmani
+          </p>
+          <span className="text-[9.5px] text-stone-400">{jasmaniLabel}</span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 mt-2">
+          {[
+            { dot: '🟠', label: 'Jalan', value: `${jasmani.jalanMin} mnt`, pct: jasmani.pct.jalan },
+            { dot: '🟢', label: 'Senam', value: `${jasmani.senamMin} mnt`, pct: jasmani.pct.senam },
+            {
+              dot: '🔵',
+              label: 'Tidur',
+              value: `${jasmani.tidurAvg ? jasmani.tidurAvg.toFixed(1) : '—'} jam`,
+              pct: jasmani.pct.tidur,
+            },
+          ].map((item) => (
+            <div key={item.label}>
+              <p className="text-[9px] text-stone-500">{item.dot} {item.label}</p>
+              <p className="font-serif text-[14px] font-semibold text-stone-800 leading-tight mt-0.5">
+                {item.value}
+              </p>
+              <p className="text-[8.5px] text-stone-400">{item.pct}% dari target</p>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-[9px] text-stone-400 mt-2">
+          {jasmani.days} hari tercatat · ringkasan {timeframe}
+        </p>
+      </div>
 
       {/* ===================== EMPTY STATE ===================== */}
       {!hasAnyData && (
