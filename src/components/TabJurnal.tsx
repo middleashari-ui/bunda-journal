@@ -39,6 +39,8 @@ import {
 } from 'lucide-react';
 import { OnboardingJurnalTutorial } from './OnboardingJurnalTutorial';
 import { getTodayPosition, getWeekStrip, isSameDay } from '../lib/pregnancyDate';
+import { setItemSafe } from '../lib/storageQuota';
+import { mediaGet, mediaSet, mediaRemove } from '../lib/mediaStore';
 import { DAILY_NOTE_MAX_CHARS, clampDailyNote, countDailyNoteChars } from '../config/journal';
 import {
   AppointmentData,
@@ -108,7 +110,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   // -------------------------------------------------------------
   const [bab1Data, setBab1Data] = useState(() => {
     try {
-      const saved = localStorage.getItem('bunda_bab1');
+      const saved = mediaGet('bunda_bab1');
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
@@ -167,7 +169,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   // -------------------------------------------------------------
   const [bab3Data, setBab3Data] = useState(() => {
     try {
-      const saved = localStorage.getItem('bunda_bab3');
+      const saved = mediaGet('bunda_bab3');
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
@@ -201,7 +203,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   // -------------------------------------------------------------
   const [bab4Data, setBab4Data] = useState(() => {
     try {
-      const saved = localStorage.getItem('bunda_bab4');
+      const saved = mediaGet('bunda_bab4');
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
@@ -229,7 +231,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   // -------------------------------------------------------------
   const [bab5Data, setBab5Data] = useState(() => {
     try {
-      const saved = localStorage.getItem('bunda_bab5');
+      const saved = mediaGet('bunda_bab5');
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
@@ -242,7 +244,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
 
   // Save changes automatically & broadcast to Studio Buku
   useEffect(() => {
-    localStorage.setItem('bunda_bab1', JSON.stringify(bab1Data));
+    mediaSet('bunda_bab1', JSON.stringify(bab1Data));
     window.dispatchEvent(new Event('bunda_journal_updated'));
   }, [bab1Data]);
 
@@ -268,7 +270,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
 
   const loadDayNotesForWeek = (w: number, currentDailyNotes: Record<string, string>) => {
     const result: Record<number, DailyNoteEntry> = {};
-    const dayKeys = ['Rab', 'Kam', 'Jum', 'Sab', 'Min', 'Sen', 'Sel'];
+    const dayKeys = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
     for (let i = 0; i < 7; i++) {
       try {
         const saved = localStorage.getItem(`bunda_${w}_${i}_catatan`);
@@ -720,7 +722,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   // diunggah di Jurnal harus ikut ditulis ke sana supaya langsung tercetak.
   const readGlobalPhotos = (): PhotoMemory[] => {
     try {
-      const raw = localStorage.getItem('bunda_photos');
+      const raw = mediaGet('bunda_photos');
       const parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? parsed : [];
     } catch {
@@ -743,7 +745,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           isCustom: true,
         },
       ];
-      localStorage.setItem('bunda_photos', JSON.stringify(next));
+      mediaSet('bunda_photos', JSON.stringify(next));
       setPhotos(next);
     } catch {}
   };
@@ -753,7 +755,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     try {
       const base = photos && photos.length ? photos : readGlobalPhotos();
       const next = base.filter((p) => !(p.week === w && (p.src === photo.url || p.url === photo.url)));
-      localStorage.setItem('bunda_photos', JSON.stringify(next));
+      mediaSet('bunda_photos', JSON.stringify(next));
       setPhotos(next);
     } catch {}
   };
@@ -765,7 +767,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     for (let i = 0; i < 5; i++) {
       initial[i] = null;
       try {
-        const saved = localStorage.getItem(`bunda_${w}_foto_${i}`);
+        const saved = mediaGet(`bunda_${w}_foto_${i}`);
         if (saved) initial[i] = JSON.parse(saved);
       } catch {}
     }
@@ -799,7 +801,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     setDailyNotes((prev: Record<string, string>) => {
       const updated = { ...prev, [dayKey]: entry.text };
       try {
-        localStorage.setItem(`bunda_daily_w${weekVal}`, JSON.stringify(updated));
+        setItemSafe(`bunda_daily_w${weekVal}`, JSON.stringify(updated));
         idbSet(`bunda_daily_w${weekVal}`, updated);
         addToSyncQueue({
           table: 'bunda_daily_notes',
@@ -820,7 +822,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   const persistStatsNow = (updated: any, weekVal: number) => {
     try {
       const str = JSON.stringify(updated);
-      localStorage.setItem(`bunda_momstats_w${weekVal}`, str);
+      setItemSafe(`bunda_momstats_w${weekVal}`, str);
       void idbSet(`bunda_momstats_w${weekVal}`, updated);
       void addToSyncQueue({
         table: 'bunda_momstats',
@@ -877,7 +879,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
 
     // Simpan cepat ke localStorage agar data tidak hilang
     try {
-      localStorage.setItem(`bunda_${week}_${selectedDayIndex}_catatan`, JSON.stringify(updatedEntry));
+      setItemSafe(`bunda_${week}_${selectedDayIndex}_catatan`, JSON.stringify(updatedEntry));
     } catch {}
 
     setSaveStatus('Menyimpan...');
@@ -916,12 +918,12 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   };
 
   useEffect(() => {
-    localStorage.setItem('bunda_bab3', JSON.stringify(bab3Data));
+    mediaSet('bunda_bab3', JSON.stringify(bab3Data));
     window.dispatchEvent(new Event('bunda_journal_updated'));
   }, [bab3Data]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_bab4', JSON.stringify(bab4Data));
+    mediaSet('bunda_bab4', JSON.stringify(bab4Data));
     window.dispatchEvent(new Event('bunda_journal_updated'));
     // MVP email-only: sync baby_dob (tanggal lahir) untuk segmentasi promo 0-1th. Fire-and-forget.
     if (bab4Data.birthDate) {
@@ -933,7 +935,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   }, [bab4Data]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_bab5', JSON.stringify(bab5Data));
+    mediaSet('bunda_bab5', JSON.stringify(bab5Data));
     window.dispatchEvent(new Event('bunda_journal_updated'));
   }, [bab5Data]);
 
@@ -1017,7 +1019,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       const next = [...prev];
       next[selectedDayIndex] = prev[selectedDayIndex] === idx ? null : idx;
       try {
-        localStorage.setItem(`bunda_daily_moods_w${week}`, JSON.stringify(next));
+        setItemSafe(`bunda_daily_moods_w${week}`, JSON.stringify(next));
         window.dispatchEvent(new Event('bunda_journal_updated'));
       } catch {}
       return next;
@@ -1086,9 +1088,9 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     return () => window.removeEventListener('bunda_return_today', handleReturnToday);
   }, [setWeek]);
 
-  const DAY_KEYS = ['Rab', 'Kam', 'Jum', 'Sab', 'Min', 'Sen', 'Sel'];
-  const DAY_LABELS = ['RAB', 'KAM', 'JUM', 'SAB', 'MIN', 'SEN', 'SEL'];
-  const DAY_NAMES_FULL = ['Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu', 'Senin', 'Selasa'];
+  const DAY_KEYS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+  const DAY_LABELS = ['SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB', 'MIN'];
+  const DAY_NAMES_FULL = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
   const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
   // Tanggal asli dari HPL user (HPL - 280 = HPHT, minggu 1 = Senin minggu HPHT).
@@ -1132,7 +1134,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       .filter((e: any) => e.text);
     return list.length ? list[list.length - 1] : null;
   })();
-  const activeDay = dynamicWeekDays[selectedDayIndex] || dynamicWeekDays[3];
+  const activeDay = dynamicWeekDays[selectedDayIndex] || dynamicWeekDays[0];
 
   /** Geser satu hari; otomatis pindah minggu kalau lewat Senin/Minggu. */
   const moveDayBy = (delta: number) => {
@@ -1786,8 +1788,8 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                         setMonthPhotos(prev => ({ ...prev, 0: newPhoto }));
                         syncPhotoToGlobal(week, newPhoto);
                         try {
-                          localStorage.setItem(`bunda_${week}_foto_0`, JSON.stringify(newPhoto));
-                          localStorage.setItem(`bunda_${week}_${selectedDayIndex}_foto`, JSON.stringify(newPhoto));
+                          mediaSet(`bunda_${week}_foto_0`, JSON.stringify(newPhoto));
+                          mediaSet(`bunda_${week}_${selectedDayIndex}_foto`, JSON.stringify(newPhoto));
                           window.dispatchEvent(new Event('bunda_journal_updated'));
                         } catch {}
                       });
@@ -1829,8 +1831,8 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                               setMonthPhotos(prev => ({ ...prev, [idx]: null }));
                               removePhotoFromGlobal(week, photoEntry);
                               try {
-                                localStorage.removeItem(`bunda_${week}_foto_${idx}`);
-                                localStorage.removeItem(`bunda_${week}_${selectedDayIndex}_foto`);
+                                mediaRemove(`bunda_${week}_foto_${idx}`);
+                                mediaRemove(`bunda_${week}_${selectedDayIndex}_foto`);
                               } catch {}
                             }}
                             className="absolute top-1 right-1 bg-black/60 hover:bg-rose-600 text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px] cursor-pointer"
@@ -1859,8 +1861,8 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                                 setMonthPhotos(prev => ({ ...prev, [idx]: newPhoto }));
                                 syncPhotoToGlobal(week, newPhoto);
                                 try {
-                                  localStorage.setItem(`bunda_${week}_foto_${idx}`, JSON.stringify(newPhoto));
-                                  localStorage.setItem(`bunda_${week}_${selectedDayIndex}_foto`, JSON.stringify(newPhoto));
+                                  mediaSet(`bunda_${week}_foto_${idx}`, JSON.stringify(newPhoto));
+                                  mediaSet(`bunda_${week}_${selectedDayIndex}_foto`, JSON.stringify(newPhoto));
                                   window.dispatchEvent(new Event('bunda_journal_updated'));
                                 } catch {}
                               });
@@ -1948,7 +1950,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
 
                 // Simpan momStats week ini
                 try {
-                  localStorage.setItem(`bunda_momstats_w${week}`, JSON.stringify(momStats));
+                  setItemSafe(`bunda_momstats_w${week}`, JSON.stringify(momStats));
                   idbSet(`bunda_momstats_w${week}`, momStats);
                   addToSyncQueue({
                     action: 'update',

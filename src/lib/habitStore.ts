@@ -11,6 +11,8 @@
 //    untuk kompatibilitas listener lama), jadi semua tab ikut ter-update.
 // ============================================================================
 
+import { setItemSafe } from './storageQuota';
+
 export const HABITS_EVENT = 'bunda_habits_updated';
 export const DAY_NAMES = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] as const;
 
@@ -59,9 +61,8 @@ function readJson<T>(key: string): T | null {
 }
 
 function writeJson(key: string, value: unknown) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {}
+  // Lewat setItemSafe: kalau kuota penuh, UI diberi tahu (jangan gagal diam-diam).
+  setItemSafe(key, JSON.stringify(value));
 }
 
 function hasStorage(): boolean {

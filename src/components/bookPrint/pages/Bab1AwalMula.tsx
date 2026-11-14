@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookThemeConfig } from '../../../types/bookPrint';
 import { UserProfile, PhotoMemory } from '../../../types';
+import { mediaGet, mediaSet } from '../../../lib/mediaStore';
 import { Camera } from 'lucide-react';
 
 interface Bab1AwalMulaProps {
@@ -19,7 +20,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
 }) => {
   const getSavedBab1 = () => {
     try {
-      const s = localStorage.getItem('bunda_bab1');
+      const s = mediaGet('bunda_bab1');
       if (s) return JSON.parse(s);
     } catch {}
     return null;
@@ -77,7 +78,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
         avoidedFoods,
         partnerSupport
       };
-      localStorage.setItem('bunda_bab1', JSON.stringify(data));
+      mediaSet('bunda_bab1', JSON.stringify(data));
     } catch {}
   }, [
     testPackPhoto, testPackDate, testPackTimePlace, motherFirstThought,

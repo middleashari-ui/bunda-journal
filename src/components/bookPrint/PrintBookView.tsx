@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { BOOK_THEMES, BookThemeConfig, BookThemeId } from '../../types/bookPrint';
 import { UserProfile, PhotoMemory, JournalEntry } from '../../types';
-import { buildBookFileName, getBookPagePlan, getSpreadInfo } from '../../lib/bookPages';
+import { buildBookFileName, getSpreadInfo, getVisibleSpreadCount, type BookTier } from '../../lib/bookPages';
 import { shrinkPhotos } from '../../lib/imageResize';
 import { IntroPages } from './pages/IntroPages';
 import { Bab1AwalMula } from './pages/Bab1AwalMula';
@@ -10,6 +10,7 @@ import { WeeklyJournalSpread } from './pages/WeeklyJournalSpread';
 import { Bab3Persiapan } from './pages/Bab3Persiapan';
 import { Bab4Kelahiran } from './pages/Bab4Kelahiran';
 import { Bab5KapsulWaktu } from './pages/Bab5KapsulWaktu';
+import { isMediaKey, mediaGet } from '../../lib/mediaStore';
 
 // ============================================================================
 // Halaman /print — dipakai untuk flow: Jurnal > Download > browser > print > simpan PDF.
@@ -28,7 +29,7 @@ const ENTRIES_KEY = 'bunda_entries';
 
 function readJSON<T>(key: string, fallback: T): T {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = isMediaKey(key) ? mediaGet(key) : localStorage.getItem(key);
     if (!raw) return fallback;
     return JSON.parse(raw) as T;
   } catch {
@@ -58,7 +59,15 @@ const PrintBookView: React.FC = () => {
   const printedRef = useRef(false);
 
   const fileName = useMemo(() => buildBookFileName(profile), [profile]);
-  const plan = useMemo(() => getBookPagePlan('vip'), []);
+  // Gate tier: default mati (ESSENTIAL_GATE_ENABLED=false) → selalu 100 halaman.
+  const plan = useMemo(() => {
+    let tier: BookTier = 'vip';
+    try {
+      if (localStorage.getItem('bunda_user_tier') === 'essential') tier = 'essential';
+    } catch {}
+    const spreadCount = getVisibleSpreadCount(tier);
+    return { spreads: spreadCount, pages: spreadCount * 2 };
+  }, []);
   const spreads = useMemo(() => Array.from({ length: plan.spreads }, (_, i) => i), [plan.spreads]);
 
   const customPhotos = useMemo(() => {

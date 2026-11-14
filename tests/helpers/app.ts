@@ -51,6 +51,9 @@ export async function seedApp(page: Page, options: SeedOptions = {}) {
       localStorage.setItem('bunda_week', String(week));
       localStorage.setItem('bunda_onboarding_done', 'true');
       localStorage.setItem('bunda_pwa_tutorial_dismissed', 'true');
+      // Fixture sudah memakai konvensi hari baru (Sen=0). Tanpa ini, migrasi
+      // skema v1 akan menganggap data fixture sebagai format lama dan menggesernya.
+      localStorage.setItem('bunda_schema_version', '1');
 
       if (withHabits) {
         const days = [

@@ -1,5 +1,6 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookThemeConfig } from '../../../types/bookPrint';
+import { mediaGet, mediaSet } from '../../../lib/mediaStore';
 import { Camera, CheckSquare, Square, ShoppingBag } from 'lucide-react';
 
 interface Bab3PersiapanProps {
@@ -19,7 +20,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
 }) => {
   const getSavedBab3 = () => {
     try {
-      const s = localStorage.getItem('bunda_bab3');
+      const s = mediaGet('bunda_bab3');
       if (s) return JSON.parse(s);
     } catch {}
     return null;
@@ -70,10 +71,10 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
       };
       let existing: Record<string, unknown> = {};
       try {
-        const s = localStorage.getItem('bunda_bab3');
+        const s = mediaGet('bunda_bab3');
         if (s) existing = JSON.parse(s) as Record<string, unknown>;
       } catch {}
-      localStorage.setItem('bunda_bab3', JSON.stringify({ ...existing, ...data }));
+      mediaSet('bunda_bab3', JSON.stringify({ ...existing, ...data }));
     } catch {}
   }, [candidates, chosenName, chosenMeaning, nurseryPhoto, nurseryItems]);
 

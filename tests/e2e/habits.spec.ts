@@ -7,7 +7,6 @@ test.describe('Beranda — widget cerita mingguan', () => {
     await page.locator('#dev-toolbar').evaluate((el) => el.remove()).catch(() => {});
 
     const widget = page.locator('[data-testid="dashboard-story"]');
-    await widget.scrollIntoViewIfNeeded();
     await expect(widget).toBeVisible();
 
     await expect(widget).toContainText('Cerita minggu 19');
@@ -20,7 +19,7 @@ test.describe('Beranda — widget cerita mingguan', () => {
   test('tab Harian menampilkan detail hari dan CTA jurnal', async ({ page }) => {
     await openApp(page);
     const widget = page.locator('[data-testid="dashboard-story"]');
-    await widget.scrollIntoViewIfNeeded();
+    await expect(widget).toBeVisible();
 
     await widget.getByRole('button', { name: 'harian', exact: true }).click();
     await expect(widget).toContainText('Lanjut menulis di Jurnal');
@@ -31,7 +30,6 @@ test.describe('Beranda — widget cerita mingguan', () => {
   test('data kebiasaan dari store muncul sebagai angka nyata', async ({ page }) => {
     await openApp(page);
     const widget = page.locator('[data-testid="dashboard-story"]');
-    await widget.scrollIntoViewIfNeeded();
 
     // 7 hari terisi, total gerak 140 menit
     await expect(widget).toContainText('7 hari sudah tercatat');

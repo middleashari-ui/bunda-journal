@@ -5,6 +5,8 @@ import {
   BOOK_CHAPTERS 
 } from '../../types/bookPrint';
 import { UserProfile, PhotoMemory, JournalEntry } from '../../types';
+import { mediaGet, mediaSet } from '../../lib/mediaStore';
+import { getSpreadInfo } from '../../lib/bookPages';
 import { IntroPages } from './pages/IntroPages';
 import { Bab1AwalMula } from './pages/Bab1AwalMula';
 import { PembatasTrimester } from './pages/PembatasTrimester';
@@ -259,142 +261,13 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
       onUpdatePhoto(w, newPhoto);
     }
     try {
-      const savedPhotosStr = localStorage.getItem('bunda_photos');
+      const savedPhotosStr = mediaGet('bunda_photos');
       let currentList: PhotoMemory[] = savedPhotosStr ? JSON.parse(savedPhotosStr) : [];
       currentList = currentList.filter(p => p.week !== w);
       currentList.push(newPhoto);
-      localStorage.setItem('bunda_photos', JSON.stringify(currentList));
+      mediaSet('bunda_photos', JSON.stringify(currentList));
       window.dispatchEvent(new Event('bunda_journal_updated'));
     } catch {}
-  };
-
-  const getSpreadInfo = (spreadIdx: number) => {
-    const leftPage = spreadIdx * 2 + 1;
-    const rightPage = spreadIdx * 2 + 2;
-
-    if (spreadIdx === 0) {
-      return {
-        type: 'intro',
-        chapterTitle: 'Halaman Judul & Pengantar',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 1) {
-      return {
-        type: 'bab1-a',
-        chapterTitle: 'Bab 1: Awal Mula Kisah (Test Pack & Reaksi Ayah)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 2) {
-      return {
-        type: 'bab1-b',
-        chapterTitle: 'Bab 1: Awal Mula Kisah (USG Kantung Janin & Ngidam)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 3) {
-      return {
-        type: 'pembatas-1',
-        chapterTitle: 'Pembatas Trimester 1 (Minggu 1 - 13)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx >= 4 && spreadIdx <= 12) {
-      const weekNum = 5 + (spreadIdx - 4);
-      return {
-        type: 'weekly',
-        week: weekNum,
-        chapterTitle: `Bab 2: Jurnal Kehamilan (Week ${weekNum})`,
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 13) {
-      return {
-        type: 'pembatas-2',
-        chapterTitle: 'Pembatas Trimester 2 (Minggu 14 - 27)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx >= 14 && spreadIdx <= 27) {
-      const weekNum = 14 + (spreadIdx - 14);
-      return {
-        type: 'weekly',
-        week: weekNum,
-        chapterTitle: `Bab 2: Jurnal Kehamilan (Week ${weekNum})`,
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 28) {
-      return {
-        type: 'pembatas-3',
-        chapterTitle: 'Pembatas Trimester 3 (Minggu 28 - 40)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx >= 29 && spreadIdx <= 41) {
-      const weekNum = 28 + (spreadIdx - 29);
-      return {
-        type: 'weekly',
-        week: weekNum,
-        chapterTitle: `Bab 2: Jurnal Kehamilan (Week ${weekNum})`,
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 42) {
-      return {
-        type: 'bab3-a',
-        chapterTitle: 'Bab 3: Persiapan (Nama & Kamar)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 43) {
-      return {
-        type: 'bab3-b',
-        chapterTitle: 'Bab 3: Persiapan (Daftar Belanja Bayi)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 44) {
-      return {
-        type: 'bab3-c',
-        chapterTitle: 'Bab 3: Persiapan (Checklist Tas RS)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 45) {
-      return {
-        type: 'bab4-a',
-        chapterTitle: 'Bab 4: Kelahiran (Hari Persalinan)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 46) {
-      return {
-        type: 'bab4-b',
-        chapterTitle: 'Bab 4: Kelahiran (Biodata & Cap Kaki)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 47) {
-      return {
-        type: 'bab4-c',
-        chapterTitle: 'Bab 4: Kelahiran (Gelang RS & Foto)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 48) {
-      return {
-        type: 'bab5-a',
-        chapterTitle: 'Bab 5: Kapsul Waktu (Surat Bunda)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    return {
-      type: 'bab5-b',
-      chapterTitle: 'Bab 5: Kapsul Waktu (Surat Ayah)',
-      pages: [leftPage, rightPage],
-    };
   };
 
   // Memoized 50 spreads / 100 pages data for @react-pdf/renderer
@@ -430,7 +303,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
       let matchedPhoto = customPhotos[w] || photos.find(p => p.week === w);
       if (!matchedPhoto) {
         try {
-          const savedStr = localStorage.getItem('bunda_photos');
+          const savedStr = mediaGet('bunda_photos');
           if (savedStr) {
             const list: PhotoMemory[] = JSON.parse(savedStr);
             const found = list.find(p => p.week === w);
@@ -491,7 +364,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
     // 2. Bab 1: Awal Mula Kisah (Pages 3-6)
     let bab1Data: any = null;
     try {
-      const s = localStorage.getItem('bunda_bab1');
+      const s = mediaGet('bunda_bab1');
       if (s) bab1Data = JSON.parse(s);
     } catch {}
 
@@ -547,7 +420,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
       let hasPhoto = !!customPhotos[weekNum] || photos.some(p => p.week === weekNum && p.src);
       if (!hasPhoto) {
         try {
-          const savedStr = localStorage.getItem('bunda_photos');
+          const savedStr = mediaGet('bunda_photos');
           if (savedStr) {
             const list: PhotoMemory[] = JSON.parse(savedStr);
             if (list.some(p => p.week === weekNum && p.src)) hasPhoto = true;
@@ -568,7 +441,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
     // 4. Bab 3: Persiapan (Spreads 42 to 44, pages 85 to 90)
     let bab3Data: any = null;
     try {
-      const s = localStorage.getItem('bunda_bab3');
+      const s = mediaGet('bunda_bab3');
       if (s) bab3Data = JSON.parse(s);
     } catch {}
 
@@ -579,7 +452,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
     // 5. Bab 4: Kelahiran (Spreads 45 to 47, pages 91 to 96)
     let bab4Data: any = null;
     try {
-      const s = localStorage.getItem('bunda_bab4');
+      const s = mediaGet('bunda_bab4');
       if (s) bab4Data = JSON.parse(s);
     } catch {}
 
@@ -599,7 +472,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
     // 6. Bab 5: Kapsul Waktu (Spreads 48 to 49, pages 97 to 100)
     let bab5Data: any = null;
     try {
-      const s = localStorage.getItem('bunda_bab5');
+      const s = mediaGet('bunda_bab5');
       if (s) bab5Data = JSON.parse(s);
     } catch {}
 

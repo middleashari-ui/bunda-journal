@@ -14,9 +14,19 @@ Branch: `feat/journal-print-polish` (belum di-merge, production belum di-update)
 
 - Preview live: `https://preview.bunda-journal.pages.dev` (build terakhir: landing + screenshot)
 - Production: **masih versi lama**, sengaja belum disentuh
-- Service worker source: `v20` (live masih `v18`)
-- Test: `npm run test:e2e:chromium` 9/9, `test:e2e:webkit` lulus dengan retry, `test:visual` 5 baseline Chromium
-- `npx tsc --noEmit` bersih
+- Service worker source: `v21` (live masih `v18`)
+- Test: `npx playwright test` → 27 lulus (25 langsung + 2 flaky yang lulus retry), 1 visual WebKit di-skip
+- Unit: `npm run test:unit` → 26 tes (habitStore, bookPages, batas catatan/emoji, migrasi skema)
+- Bundle awal 918 KB → **628 KB** (buku, cetak, TabJurnal, TabProfil di-code-split; chunk gagal unduh di-retry sekali)
+- `npm run audit:storage` → laporan pemakaian `localStorage` langsung + cek kebocoran key media
+- Gate tier Essential sudah berkode tapi **mati**: `ESSENTIAL_GATE_ENABLED = false`
+- `npx tsc --noEmit` bersih; `npm run build` sukses
+- Skema data **v1** (`bunda_schema_version`) dengan migrasi index hari otomatis
+- `SimulatorPanel` (panel dev) sudah dihapus dari `App.tsx`
+- Media (foto USG, foto mingguan, isi bab 1–5) sudah pindah ke **IndexedDB** lewat
+  `src/lib/mediaStore.ts` (cache sinkron dihidrasi saat boot); localStorage hanya
+  menyimpan `bunda_media_index`
+- Guard kuota: `src/lib/storageQuota.ts` → toast "Penyimpanan HP penuh" saat `QuotaExceededError`
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)
 
@@ -35,17 +45,24 @@ Branch: `feat/journal-print-polish` (belum di-merge, production belum di-update)
 - `GOOGLE_CLIENT_ID` sudah di-set sebagai **secret production** di Pages, dan juga `VITE_GOOGLE_CLIENT_ID` (build-time, agar preview ikut).
 - **R2 belum diaktifkan** di akun Cloudflare (error 10042) → Voice QR belum bisa dibangun.
 - Domain preview `preview.bunda-journal.pages.dev` belum terdaftar di Authorized JavaScript origins → consent Drive akan gagal jika dites di preview.
-- Foto masih base64 di `localStorage` (kuota ~5 MB) — lihat P0 di `docs/architecture.md`.
+- Foto & bab buku ada di IndexedDB (kuota besar); backup/sync tetap menyertakan
+  isinya lewat `mediaSnapshot()`. Fallback ke localStorage otomatis kalau IDB gagal.
 
-## Temuan bug yang belum diperbaiki
+## Temuan bug hari — SUDAH DIPERBAIKI (14 Nov)
 
-`TabJurnal` memakai `DAY_KEYS = ['Rab','Kam','Jum','Sab','Min','Sen','Sel']`
-tetapi `getWeekStrip()` mengembalikan urutan Senin–Minggu. Artinya label hari
-bisa tidak cocok dengan tanggal (mis. catatan “Sen” tersimpan di slot Kamis).
-Catatan buku (`WeeklyJournalSpread`) memakai nama hari, jadi bisa beda.
+Diagnosis di handoff sebelumnya kurang tepat. `getWeekStrip()` tidak
+mengembalikan urutan Senin–Minggu; ia mengisi array berdasarkan **index storage**.
+Masalah sebenarnya: storage memakai `0=Rabu…6=Selasa` (`storageIndexOf`), sedangkan
+`habitStore` dan buku memakai `0=Senin…6=Minggu`. Akibatnya data kebiasaan
+(suplemen/hidrasi/jasmani) & mood tampil bergeser 2 hari di Beranda dan buku.
 
-Dampak: data tetap tersimpan, tetapi penempatan hari bisa meleset. Perbaiki dengan
-satu konvensi: Sen=0 … Min=6, lalu migrasi key lama (lihat `habitStore` yang sudah benar).
+Perbaikan:
+- Konvensi tunggal **Sen=0 … Min=6** (`src/lib/pregnancyDate.ts`).
+- Migrasi data lama `+2 mod 7` via `src/lib/schemaMigration.ts`, idempoten lewat
+  `bunda_schema_version`, jalan saat boot dan saat restore payload cloud.
+- Key berbasis nama hari (`bunda_daily_w{week}`) dan slot foto (`bunda_{w}_foto_{i}`)
+  tidak diubah; ada snapshot sementara `bunda_schema_backup_v1` (di-exclude dari sync).
+- Regresi dijaga `tests/e2e/migration.spec.ts`.
 
 ## Langkah berikutnya (urut)
 
@@ -57,8 +74,17 @@ satu konvensi: Sen=0 … Min=6, lalu migrasi key lama (lihat `habitStore` yang s
    ```
 2. **Tes HP**: print → Save as PDF; kartu jadwal → Kirim ke Ayah.
 3. **Google Drive**: tambah `https://preview.bunda-journal.pages.dev` ke origins (opsional), lalu klik Backup sekali untuk consent.
-4. **Refactor Fase 1** (data safety): foto ke IndexedDB, guard kuota, `schema_version`.
+4. **Refactor Fase 1 (sisa)**: audit 235 titik `localStorage` langsung (25 file) → modul storage bertipe.
 5. Gate tier Essential — hanya setelah keputusan harga.
+
+## Keputusan yang menunggu (jangan dieksekusi tanpa tanya)
+
+| Hal | Kondisi sekarang |
+|---|---|
+| `PAYMENT_PAUSED` | masih `true` di `src/config/payments.ts`; kode Midtrans sudah ada tapi belum pernah aktif |
+| Gate tier Essential (30 halaman) | kode siap: `ESSENTIAL_GATE_ENABLED = false` di `src/lib/bookPages.ts`; tinggal dinyalakan setelah keputusan harga |
+| Voice QR | terblokir R2 (error 10042) |
+| Commit working tree | puluhan file Midtrans/auth/legal/QA belum di-commit |
 
 ## Prompt pembuka sesi baru
 

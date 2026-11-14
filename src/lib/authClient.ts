@@ -2,6 +2,8 @@
 // Login = email + password (hash PBKDF2 di server). Tidak ada login tanpa password.
 
 import { idbSet, idbGet, idbDelete } from './idb';
+import { migratePayload } from './schemaMigration';
+import { isMediaKey, mediaSet, mediaSnapshot, mediaWipeAll } from './mediaStore';
 
 export interface AuthUser {
   email: string;
@@ -43,6 +45,8 @@ const EXCLUDE = new Set<string>([
   'bunda_week', // posisi minggu bukan data jurnal: selalu hitung dari hari ini
   'bunda_sync_marker',
   'bunda_local_owner', // penanda pemilik data lokal (bukan data jurnal)
+  'bunda_schema_backup_v1', // snapshot sementara migrasi: jangan pernah dikirim ke server
+  'bunda_media_index', // index lokal media (foto ada di IndexedDB)
 ]);
 
 // Key yang selalu terikat ke satu email
@@ -150,6 +154,13 @@ export function collectUserPayload(): Record<string, string> {
       if (val !== null) out[base] = val;
     }
   } catch {}
+  // Foto & bab buku sekarang tinggal di IndexedDB: ikutkan ke backup/sync
+  // supaya file backup user tetap lengkap seperti sebelumnya.
+  try {
+    Object.entries(mediaSnapshot()).forEach(([k, v]) => {
+      if (!EXCLUDE.has(k)) out[k] = v;
+    });
+  } catch {}
   return out;
 }
 
@@ -179,6 +190,12 @@ function captureRawJournal(): Record<string, string> {
       const v = localStorage.getItem(k);
       if (v !== null) out[k] = v;
     }
+  } catch {}
+  // Media (foto/bab) ada di IndexedDB: sertakan agar undo ikut memulihkannya.
+  try {
+    Object.entries(mediaSnapshot()).forEach(([k, v]) => {
+      if (!EXCLUDE.has(k)) out[k] = v;
+    });
   } catch {}
   return out;
 }
@@ -214,8 +231,12 @@ export async function undoLastRestore(): Promise<{ ok: boolean; at?: string; cou
   const snap: any = await idbGet(PRE_RESTORE_KEY);
   if (!snap || !snap.keys || typeof snap.keys !== 'object') return { ok: false };
   try {
-    Object.entries(snap.keys).forEach(([k, v]) => {
-      if (typeof v === 'string') localStorage.setItem(k, v);
+    // Snapshot lama (dibuat sebelum skema v1) masih memakai index hari Rab=0.
+    const restored = migratePayload(snap.keys as Record<string, string>);
+    Object.entries(restored).forEach(([k, v]) => {
+      if (typeof v !== 'string') return;
+      if (isMediaKey(k)) mediaSet(k, v);
+      else localStorage.setItem(k, v);
     });
     await idbDelete(PRE_RESTORE_KEY);
     localStorage.removeItem(PRE_RESTORE_AT);
@@ -231,6 +252,9 @@ export async function undoLastRestore(): Promise<{ ok: boolean; at?: string; cou
 /** Tulis payload ke localStorage sebagai milik `email` (key per-user diberi suffix email). */
 export function applyUserPayload(payload: Record<string, string>, email: string) {
   if (!payload || typeof payload !== 'object') return;
+  // Payload dari backup lama masih memakai index hari Rab=0. Migrasikan dulu
+  // supaya restore tidak memunculkan kembali bug penempatan hari.
+  const migrated = migratePayload(payload);
   // PENGAMAN SEBELUM MENIMPA: simpan salinan data lokal lebih dulu.
   // Kalau hasil merge ternyata salah, user masih bisa "Batalkan pemulihan".
   writeRestoreSnapshot(email, 'restore');
@@ -257,12 +281,15 @@ export function applyUserPayload(payload: Record<string, string>, email: string)
     // 'bunda_week' SENGAJA tidak dihapus: itu posisi minggu yang sedang dibuka
     // user. Kalau dihapus, app selalu balik ke minggu hari ini (33) saat boot.
 
-    Object.keys(payload).forEach((k) => {
-      const v = payload[k];
+    Object.keys(migrated).forEach((k) => {
+      const v = migrated[k];
       if (typeof v !== 'string') return;
       if (k === 'bunda_week') return;
       if (PER_USER_BASES.includes(k)) {
         localStorage.setItem(`${k}::${email}`, v);
+      } else if (isMediaKey(k)) {
+        // Foto/bab buku disimpan di IndexedDB, bukan localStorage.
+        mediaSet(k, v);
       } else {
         localStorage.setItem(k, v);
       }
@@ -285,6 +312,8 @@ export function applyUserPayload(payload: Record<string, string>, email: string)
       toRemove.push(k);
     }
     toRemove.forEach((k) => localStorage.removeItem(k));
+    // Foto & bab buku ada di IndexedDB: ikut dibersihkan agar tidak bocor ke akun lain.
+    mediaWipeAll();
     // data sudah bersih -> tidak ada pemilik sampai akun berikutnya menulis data
     setLocalOwner('');
   } catch {}
@@ -396,7 +425,9 @@ export async function flushOfflineEdits(token: string): Promise<boolean> {
     const server = await pullUserData(token);
     if (!server.ok) return false; // gagal tarik -> jangan push (fail closed)
 
-    const serverPayload = server.payload || {};
+    // Payload server bisa berasal dari versi lama (index hari Rab=0). Normalisasi
+    // dulu SEBELUM digabung, supaya key lama tidak menimpa data lokal yang sudah v1.
+    const serverPayload = migratePayload(server.payload || {});
     let merged: Record<string, string>;
 
     if (snap) {

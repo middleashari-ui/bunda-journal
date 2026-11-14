@@ -14,6 +14,7 @@ import { useHealthData } from '../../context/HealthDataContext';
 import { getWeekHabits, getWeekHabitScore, subscribeHabits, DAY_NAMES } from '../../lib/habitStore';
 import { getWeekDatesMonday, fmtDayMonth, isSameDay, getTodayPosition } from '../../lib/pregnancyDate';
 import { shrinkImageSource } from '../../lib/imageResize';
+import { isMediaKey, mediaGet } from '../../lib/mediaStore';
 import { PhotoMemory } from '../../types';
 
 type TimeframeOption = 'harian' | 'mingguan' | 'bulanan';
@@ -34,7 +35,7 @@ const MOOD_LABEL = ['Sangat bahagia', 'Tenang', 'Cemas', 'Lelah'];
 
 function readJson<T>(key: string): T | null {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = isMediaKey(key) ? mediaGet(key) : localStorage.getItem(key);
     return raw ? (JSON.parse(raw) as T) : null;
   } catch {
     return null;

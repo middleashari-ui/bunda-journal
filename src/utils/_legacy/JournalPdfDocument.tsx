@@ -1,3 +1,7 @@
+// ARSIP — TIDAK DIPAKAI APLIKASI. Diganti oleh PrintBookView/PrintBookStudio
+// (buku A4). Disimpan hanya sebagai rujukan historis (dan dipakai skrip QA di
+// Testing/). JANGAN mengimpor file ini dari src/.
+// Catatan: pemetaan hari di file ini masih memakai konvensi lama Rab=0.
 import React from 'react';
 import { Document, Page, View, Text, StyleSheet, Image } from '@react-pdf/renderer';
 import { getWeekData } from '../data/pregnancyWeeks';

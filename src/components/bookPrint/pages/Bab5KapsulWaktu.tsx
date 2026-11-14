@@ -1,6 +1,7 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookThemeConfig } from '../../../types/bookPrint';
 import { UserProfile } from '../../../types';
+import { mediaGet, mediaSet } from '../../../lib/mediaStore';
 
 interface Bab5KapsulWaktuProps {
   theme: BookThemeConfig;
@@ -21,7 +22,7 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
 }) => {
   const getSavedBab5 = () => {
     try {
-      const s = localStorage.getItem('bunda_bab5');
+      const s = mediaGet('bunda_bab5');
       if (s) return JSON.parse(s);
     } catch {}
     return null;
@@ -60,10 +61,10 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
       };
       let existing: Record<string, unknown> = {};
       try {
-        const s = localStorage.getItem('bunda_bab5');
+        const s = mediaGet('bunda_bab5');
         if (s) existing = JSON.parse(s) as Record<string, unknown>;
       } catch {}
-      localStorage.setItem('bunda_bab5', JSON.stringify({ ...existing, ...data }));
+      mediaSet('bunda_bab5', JSON.stringify({ ...existing, ...data }));
     } catch {}
   }, [bundaLetterPart1, bundaLetterPart2, bundaSignName, ayahLetterPart1, ayahLetterPart2, ayahSignName]);
 

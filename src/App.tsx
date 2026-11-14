@@ -9,10 +9,15 @@ import {
   ReminderSettings
 } from './types';
 import { playGentleChime, sendSystemNotification } from './utils/notifications';
+import { STORAGE_FULL_EVENT } from './lib/storageQuota';
+import { mediaGet, mediaSet } from './lib/mediaStore';
 import { applyAppColorTheme, getSavedAppColorTheme } from './utils/themeManager';
 import { LandingPage } from './components/LandingPage';
 import { TabHome } from './components/TabHome';
-import { TabJurnal } from './components/TabJurnal';
+// Tab besar diunduh saat dibuka, bukan di bundle awal.
+const TabJurnal = lazyWithRetry(() =>
+  import('./components/TabJurnal').then((m) => ({ default: m.TabJurnal }))
+);
 import { notifyUserChanged } from './lib/appointmentStore';
 import { LoginModal } from './components/LoginModal';
 import {
@@ -39,19 +44,23 @@ import {
 } from './lib/authClient';
 import { getTodayPosition } from './lib/pregnancyDate';
 import { TabKatalog } from './components/TabKatalog';
-import { TabProfil } from './components/TabProfil';
+const TabProfil = lazyWithRetry(() =>
+  import('./components/TabProfil').then((m) => ({ default: m.TabProfil }))
+);
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { PrintBookStudio } from './components/bookPrint/PrintBookStudio';
-import PrintBookView from './components/bookPrint/PrintBookView';
+import { lazyWithRetry } from './lib/lazyWithRetry';
+// Code-split: buku/cetak hanya diunduh saat Studio atau /print dibuka.
+const PrintBookStudio = lazyWithRetry(() =>
+  import('./components/bookPrint/PrintBookStudio').then((m) => ({ default: m.PrintBookStudio }))
+);
+const PrintBookView = lazyWithRetry(() => import('./components/bookPrint/PrintBookView'));
 import { isJournalLocalOnly } from './config/storage';
 import { maybeAutoBackup } from './lib/driveBackup';
 import { OnboardingModal } from './components/OnboardingModal';
 import { PicModal } from './components/PicModal';
 import { CheckoutModal } from './components/CheckoutModal';
-import { SimulatorPanel } from './components/SimulatorPanel';
 import { PAYMENT_PAUSED } from './config/payments';
-import { SuccessPage } from './components/SuccessPage';
-import {
+import { SuccessPage } from './components/SuccessPage';import {
   syncSubscriptionToSupabase,
   syncProfileToSupabase,
   fetchUserTierFromSupabase,
@@ -344,7 +353,7 @@ export default function App() {
 
   const [photos, setPhotos] = useState<PhotoMemory[]>(() => {
     try {
-      const saved = localStorage.getItem('bunda_photos');
+      const saved = mediaGet('bunda_photos');
       return saved ? JSON.parse(saved) : INITIAL_PHOTOS;
     } catch {
       return INITIAL_PHOTOS;
@@ -584,7 +593,9 @@ export default function App() {
   }, [selectedMood]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_photos', JSON.stringify(photos));
+    // Foto base64 disimpan di IndexedDB (bukan localStorage) supaya kuota ~5 MB
+    // tidak penuh. `mediaSet` punya fallback ke localStorage bila IDB gagal.
+    mediaSet('bunda_photos', JSON.stringify(photos));
   }, [photos]);
 
   useEffect(() => {
@@ -749,7 +760,32 @@ export default function App() {
     }, 3500);
   };
 
-  // Mode perbaikan: checkout tidak dibuka lewat modal sama sekali, cuma toast.
+  // P0: beri tahu user kalau penyimpanan lokal penuh (foto base64).
+  useEffect(() => {
+    const onStorageFull = () => {
+      showToast('Penyimpanan HP penuh. Hapus beberapa foto lama atau ekspor data dulu.');
+    };
+    window.addEventListener(STORAGE_FULL_EVENT, onStorageFull);
+    return () => window.removeEventListener(STORAGE_FULL_EVENT, onStorageFull);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // P2: prefetch tab besar setelah idle, supaya navigasi pertama tetap instan
+  // walau bundle-nya di-code-split.
+  useEffect(() => {
+    const preload = () => {
+      void import('./components/TabJurnal');
+      void import('./components/TabProfil');
+      // Chunk /print kecil (±7 KB): prefetch supaya dialog print cepat siap.
+      void import('./components/bookPrint/PrintBookView');
+    };
+    const idle = (window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    }).requestIdleCallback;
+    if (typeof idle === 'function') idle(preload, { timeout: 4000 });
+    else setTimeout(preload, 1500);
+  }, []);
+
   const openCheckout = (plan: 'essential' | 'vip' | 'hardcover' | 'upgrade_vip' = 'essential') => {
     if (PAYMENT_PAUSED) {
       showToast('Pembayaran sedang diperbaiki. VIP segera hadir.');
@@ -816,7 +852,11 @@ export default function App() {
   // Halaman /print: render buku saja (tanpa shell aplikasi, tanpa gate login).
   // Data dibaca langsung dari localStorage/IndexedDB oleh PrintBookView.
   if (isPrintRoute) {
-    return <PrintBookView />;
+    return (
+      <React.Suspense fallback={<div style={{ padding: 24, fontFamily: 'sans-serif' }}>Memuat buku…</div>}>
+        <PrintBookView />
+      </React.Suspense>
+    );
   }
 
   return (
@@ -943,26 +983,28 @@ export default function App() {
 
               {activeTab === 'jurnal' && (
                 <ErrorBoundary fallbackTitle="Kendala pada Jurnal">
-                  <TabJurnal 
-                    week={week}
-                    setWeek={setWeek}
-                    journalText={journalText}
-                    setJournalText={setJournalText}
-                    journalSaved={journalSaved}
-                    setJournalSaved={setJournalSaved}
-                    habits={habits}
-                    toggleHabit={toggleHabit}
-                    selectedMood={selectedMood}
-                    setSelectedMood={setSelectedMood}
-                    photos={photos}
-                    setPhotos={setPhotos}
-                    pastEntries={pastEntries}
-                    userProfile={userProfile}
-                    onOpenBookPreview={() => setIsBookPreviewOpen(true)}
-                    onSaveCurrentEntry={handleSaveCurrentEntry}
-                    onDeleteEntry={handleDeleteEntry}
-                    onShowToast={showToast}
-                  />
+                  <React.Suspense fallback={null}>
+                    <TabJurnal 
+                      week={week}
+                      setWeek={setWeek}
+                      journalText={journalText}
+                      setJournalText={setJournalText}
+                      journalSaved={journalSaved}
+                      setJournalSaved={setJournalSaved}
+                      habits={habits}
+                      toggleHabit={toggleHabit}
+                      selectedMood={selectedMood}
+                      setSelectedMood={setSelectedMood}
+                      photos={photos}
+                      setPhotos={setPhotos}
+                      pastEntries={pastEntries}
+                      userProfile={userProfile}
+                      onOpenBookPreview={() => setIsBookPreviewOpen(true)}
+                      onSaveCurrentEntry={handleSaveCurrentEntry}
+                      onDeleteEntry={handleDeleteEntry}
+                      onShowToast={showToast}
+                    />
+                  </React.Suspense>
                 </ErrorBoundary>
               )}
 
@@ -984,6 +1026,7 @@ export default function App() {
 
               {activeTab === 'profil' && (
                 <ErrorBoundary fallbackTitle="Kendala pada Tab Profil">
+                  <React.Suspense fallback={null}>
                   <TabProfil 
                     userProfile={userProfile}
                     setUserProfile={setUserProfile}
@@ -1050,6 +1093,7 @@ export default function App() {
                     photos={photos}
                     habits={habits}
                   />
+                  </React.Suspense>
                 </ErrorBoundary>
               )}
             </main>
@@ -1135,28 +1179,30 @@ export default function App() {
 
         {/* Master 100-Page B5 Print Studio & Album Engine */}
         {isBookPreviewOpen && (
-          <PrintBookStudio 
-            userProfile={userProfile}
-            photos={photos}
-            pastEntries={pastEntries}
-            currentWeek={week}
-            userTier={userTier}
-            onUpdatePhoto={(w, newPhoto) => {
-              setPhotos(prev => {
-                const filtered = prev.filter(p => p.week !== w);
-                return [...filtered, newPhoto];
-              });
-            }}
-            onClose={() => setIsBookPreviewOpen(false)}
-            onGoToJournal={() => {
-              setIsBookPreviewOpen(false);
-              setActiveTab('jurnal');
-            }}
-            onOpenUpgradeModal={() => {
-              setIsBookPreviewOpen(false);
-              openCheckout('upgrade_vip');
-            }}
-          />
+          <React.Suspense fallback={null}>
+            <PrintBookStudio 
+              userProfile={userProfile}
+              photos={photos}
+              pastEntries={pastEntries}
+              currentWeek={week}
+              userTier={userTier}
+              onUpdatePhoto={(w, newPhoto) => {
+                setPhotos(prev => {
+                  const filtered = prev.filter(p => p.week !== w);
+                  return [...filtered, newPhoto];
+                });
+              }}
+              onClose={() => setIsBookPreviewOpen(false)}
+              onGoToJournal={() => {
+                setIsBookPreviewOpen(false);
+                setActiveTab('jurnal');
+              }}
+              onOpenUpgradeModal={() => {
+                setIsBookPreviewOpen(false);
+                openCheckout('upgrade_vip');
+              }}
+            />
+          </React.Suspense>
         )}
 
         {/* Login / Daftar (email + password) */}
@@ -1247,7 +1293,6 @@ export default function App() {
           }}
           onShowToast={showToast}
         />
-        <SimulatorPanel setWeek={setWeek} />
       </div>
     </div>
   );

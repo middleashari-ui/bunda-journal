@@ -46,6 +46,21 @@ export function getBookPagePlan(tier: BookTier): { spreads: number; pages: numbe
   return { spreads, pages: spreads * 2 };
 }
 
+/**
+ * Gate tier Essential (30 halaman). Default MATI sampai keputusan harga final —
+ * menyalakan ini mengubah hasil ekspor PDF untuk tier essential.
+ * Preview Studio sengaja tetap menampilkan buku penuh; yang dibatasi adalah ekspor.
+ */
+export const ESSENTIAL_GATE_ENABLED = false;
+
+export function getVisibleSpreadCount(
+  tier: BookTier,
+  gateEnabled: boolean = ESSENTIAL_GATE_ENABLED
+): number {
+  if (!gateEnabled) return TOTAL_SPREADS;
+  return getBookPagePlan(tier).spreads;
+}
+
 export function getSpreadInfo(spreadIdx: number): BookSpreadInfo {
   const leftPage = spreadIdx * 2 + 1;
   const rightPage = spreadIdx * 2 + 2;

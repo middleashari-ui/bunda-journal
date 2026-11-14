@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bunda-journal-v20';
+const CACHE_NAME = 'bunda-journal-v21';
 const APP_SHELL = [
   '/',
   '/index.html',

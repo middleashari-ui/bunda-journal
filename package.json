@@ -10,6 +10,8 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "test:e2e": "playwright test",
+    "test:unit": "vitest run",
+    "audit:storage": "node scripts/audit-storage.mjs",
     "test:e2e:chromium": "playwright test --project=chromium",
     "test:e2e:webkit": "playwright test --project=webkit",
     "test:visual": "playwright test tests/visual --project=chromium",
@@ -46,6 +48,7 @@
     "playwright": "^1.65.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0"
   }
 }

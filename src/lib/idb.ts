@@ -13,6 +13,8 @@ export interface OutboxItem {
   synced: boolean;
 }
 
+let dbPromise: Promise<IDBDatabase> | null = null;
+
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     if (typeof indexedDB === 'undefined') {
@@ -30,28 +32,64 @@ function openDB(): Promise<IDBDatabase> {
         queueStore.createIndex('timestamp', 'timestamp', { unique: false });
       }
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => db.close();
+      db.onclose = () => {
+        dbPromise = null;
+      };
+      resolve(db);
+    };
     request.onerror = () => reject(request.error);
   });
 }
 
-export async function idbSet(key: string, value: any): Promise<void> {
+/** Satu koneksi dipakai bersama; kalau gagal, dicoba lagi di panggilan berikutnya. */
+function getDB(): Promise<IDBDatabase> {
+  if (!dbPromise) {
+    dbPromise = openDB().catch((err) => {
+      dbPromise = null;
+      throw err;
+    });
+  }
+  return dbPromise;
+}
+
+/** Antrean tulis: menjamin tulisan terakhir yang menang (urutan tidak acak). */
+let writeChain: Promise<unknown> = Promise.resolve();
+
+async function runPut(key: string, value: any): Promise<boolean> {
   try {
-    const db = await openDB();
+    const db = await getDB();
     const tx = db.transaction(STORE_DATA, 'readwrite');
-    const store = tx.objectStore(STORE_DATA);
-    store.put({ key, value, updatedAt: Date.now() });
-    return new Promise((resolve, reject) => {
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
+    tx.objectStore(STORE_DATA).put({ key, value, updatedAt: Date.now() });
+    return await new Promise<boolean>((resolve) => {
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+      tx.onabort = () => resolve(false);
     });
   } catch (err) {
-    console.warn('[IDB] set failed, fallback localStorage only', err);
+    console.warn('[IDB] put failed', err);
+    return false;
   }
 }
 
+export function idbPut(key: string, value: any): Promise<boolean> {
+  const run = writeChain.then(
+    () => runPut(key, value),
+    () => runPut(key, value)
+  );
+  writeChain = run.catch(() => {});
+  return run;
+}
+
+export async function idbSet(key: string, value: any): Promise<void> {
+  const ok = await idbPut(key, value);
+  if (!ok) console.warn('[IDB] set failed, fallback localStorage only');
+}
+
 export async function idbGet<T = any>(key: string): Promise<T | null> {  try {
-    const db = await openDB();
+    const db = await getDB();
     const tx = db.transaction(STORE_DATA, 'readonly');
     const store = tx.objectStore(STORE_DATA);
     const req = store.get(key);
@@ -66,7 +104,7 @@ export async function idbGet<T = any>(key: string): Promise<T | null> {  try {
 
 export async function idbDelete(key: string): Promise<void> {
   try {
-    const db = await openDB();
+    const db = await getDB();
     const tx = db.transaction(STORE_DATA, 'readwrite');
     tx.objectStore(STORE_DATA).delete(key);
     return new Promise((resolve) => {
@@ -78,7 +116,7 @@ export async function idbDelete(key: string): Promise<void> {
 
 export async function addToSyncQueue(item: Omit<OutboxItem, 'id' | 'timestamp' | 'synced'>): Promise<number | null> {
   try {
-    const db = await openDB();
+    const db = await getDB();
     const tx = db.transaction(STORE_QUEUE, 'readwrite');
     const store = tx.objectStore(STORE_QUEUE);
     const req = store.add({
@@ -97,7 +135,7 @@ export async function addToSyncQueue(item: Omit<OutboxItem, 'id' | 'timestamp' |
 
 export async function getPendingSyncCount(): Promise<number> {
   try {
-    const db = await openDB();
+    const db = await getDB();
     const tx = db.transaction(STORE_QUEUE, 'readonly');
     const store = tx.objectStore(STORE_QUEUE);
     const req = store.getAll();
@@ -115,7 +153,7 @@ export async function getPendingSyncCount(): Promise<number> {
 
 export async function markQueueSynced(id: number): Promise<void> {
   try {
-    const db = await openDB();
+    const db = await getDB();
     const tx = db.transaction(STORE_QUEUE, 'readwrite');
     const store = tx.objectStore(STORE_QUEUE);
     store.delete(id);
@@ -128,7 +166,7 @@ export async function markQueueSynced(id: number): Promise<void> {
 
 export async function getPendingQueueItems(): Promise<OutboxItem[]> {
   try {
-    const db = await openDB();
+    const db = await getDB();
     const tx = db.transaction(STORE_QUEUE, 'readonly');
     const store = tx.objectStore(STORE_QUEUE);
     const req = store.getAll();

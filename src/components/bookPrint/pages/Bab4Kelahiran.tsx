@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookThemeConfig } from '../../../types/bookPrint';
 import { UserProfile } from '../../../types';
+import { mediaGet, mediaSet } from '../../../lib/mediaStore';
 import { Camera, Footprints, FileText } from 'lucide-react';
 
 interface Bab4KelahiranProps {
@@ -22,7 +23,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
 }) => {
   const getSavedBab4 = () => {
     try {
-      const s = localStorage.getItem('bunda_bab4');
+      const s = mediaGet('bunda_bab4');
       if (s) return JSON.parse(s);
     } catch {}
     return null;
@@ -95,10 +96,10 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
       };
       let existing: Record<string, unknown> = {};
       try {
-        const s = localStorage.getItem('bunda_bab4');
+        const s = mediaGet('bunda_bab4');
         if (s) existing = JSON.parse(s) as Record<string, unknown>;
       } catch {}
-      localStorage.setItem('bunda_bab4', JSON.stringify({ ...existing, ...data }));
+      mediaSet('bunda_bab4', JSON.stringify({ ...existing, ...data }));
     } catch {}
   }, [
     contractionTime, arrivalTime, laborStory, birthPhoto, holdingBabyFeeling,
