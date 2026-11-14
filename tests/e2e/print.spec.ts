@@ -33,7 +33,8 @@ test.describe('Buku jurnal /print', () => {
     await expect(spread).toContainText('Week 19');
     await expect(spread).toContainText('Pemantauan minggu ini');
     await expect(spread).toContainText('Ceklis Kesehatan');
-    await expect(spread).toContainText('Tidur rata-rata');
+    await expect(spread).toContainText('Tidur');
+    await expect(spread).toContainText('Vitamin');
     await expect(spread).toContainText('Ayah bikin bubur ayam');
 
     // kurva air harus benar-benar tergambar

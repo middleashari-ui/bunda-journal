@@ -310,7 +310,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
       {/* HALAMAN KIRI: TRACKER & JURNAL HARIAN                          */}
       {/* ============================================================== */}
       <div 
-        className="b5-page b5-page-left relative overflow-hidden box-border p-[20mm] flex flex-col justify-between border border-stone-200/80 shadow-xs print:shadow-none print:m-0 print:break-after-page rounded-none"
+        className="b5-page b5-page-left relative overflow-hidden box-border p-[16mm] flex flex-col justify-between border border-stone-200/80 shadow-xs print:shadow-none print:m-0 print:break-after-page rounded-none"
         style={{
           backgroundColor: theme.pageBg,
           color: theme.textColor,
@@ -321,7 +321,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
           <div>
             {/* Header */}
             <div 
-              className="flex justify-between items-end pb-2 mb-2 border-b-2"
+              className="flex justify-between items-end pb-1.5 mb-1.5 border-b-2"
               style={{ borderColor: theme.textColor }}
             >
               <div>
@@ -353,7 +353,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
             </div>
 
             {/* Cerita Harian (Senin - Minggu) */}
-            <div className="mb-2">
+            <div className="mb-1.5">
               <div 
                 className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
                 style={{ 
@@ -365,7 +365,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                 Catatan Harian Bunda
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {daysLabel.map((dayObj, idx) => {
                   const rawNote = dailyTexts[dayObj.key] || '';
                   const noteText = Array.from(rawNote).length > DAILY_NOTE_MAX_CHARS
@@ -402,12 +402,22 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
               </div>
             </div>
 
-            {/* Pemantauan mingguan ringkas — air & gerak, dari Habit Store */}
+            {/* Pemantauan mingguan — parameter sama dengan Beranda */}
             {(() => {
               const weekHabits = getWeekHabits(week);
-              const maxWater = Math.max(2000, ...weekHabits.map((h) => h.waterMl));
+              const avgWater = weekHabits.reduce((a, h) => a + h.waterMl, 0) / 7 / 1000;
+              const vitDays = weekHabits.filter((h) => h.vitaminDone).length;
+              const waterDays = weekHabits.filter((h) => h.waterDone).length;
+              const activityDays = weekHabits.filter((h) => h.activityDone).length;
+              const totalActivity = weekHabits.reduce((a, h) => a + h.activityMinutes, 0);
               const doneDays = weekHabits.filter((h) => h.vitaminDone || h.waterDone || h.activityDone).length;
-              const totalActivity = weekHabits.reduce((acc, h) => acc + h.activityMinutes, 0);
+              const sleepVals = weekHabits.map((h) => h.sleepHours).filter((v) => v > 0);
+              const avgSleep = sleepVals.length ? sleepVals.reduce((a, b) => a + b, 0) / sleepVals.length : 0;
+
+              const moodCounts: Record<number, number> = {};
+              dailyMoods.forEach((m) => { if (typeof m === 'number') moodCounts[m] = (moodCounts[m] || 0) + 1; });
+              const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0];
+              const moodEmoji = topMood ? (['🥰', '😊', '🥺', '😫'][Number(topMood[0])] || '😊') : '—';
 
               // Skala kurva: 0–2 L (target), tinggi grafik 50 unit
               const waterX = (i: number) => 50 + i * (700 / 7);
@@ -420,30 +430,51 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                 weekHabits.map((h, i) => `L ${waterX(i).toFixed(1)},${waterY(h.waterMl).toFixed(1)}`).join(' ') +
                 ` L ${waterX(6).toFixed(1)},44 Z`;
 
+              const stats: Array<{ label: string; value: string }> = [
+                { label: 'Air', value: `${avgWater.toFixed(1)} L` },
+                { label: 'Vitamin', value: `${vitDays}/7` },
+                { label: 'Gerak', value: `${totalActivity} mnt` },
+                { label: 'Tidur', value: avgSleep ? `${avgSleep.toFixed(1)} jam` : '—' },
+              ];
+
               return (
                 <div
-                  className="mb-2 border rounded-xs overflow-hidden"
+                  className="mb-1.5 border rounded-xs overflow-hidden"
                   style={{ borderColor: theme.borderColor }}
                 >
                   <div
-                    className="flex items-center justify-between px-1.5 py-1 border-b"
+                    className="flex items-center justify-between px-2 py-1 border-b"
                     style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor }}
                   >
-                    <span className="text-[7.5px] font-semibold uppercase tracking-widest">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest">
                       Pemantauan minggu ini
                     </span>
-                    <span className="text-[6.5px] font-sans" style={{ color: theme.mutedText }}>
-                      {doneDays}/7 hari · {totalActivity} mnt gerak
+                    <span className="text-[8px] font-sans" style={{ color: theme.mutedText }}>
+                      {doneDays}/7 hari · air {waterDays}/7 · gerak {activityDays}/7 · mood {moodEmoji}
                     </span>
                   </div>
 
+                  {/* Ringkasan angka — sama seperti kartu Beranda */}
+                  <div className="grid grid-cols-4 gap-1 px-2 pt-1.5">
+                    {stats.map((s) => (
+                      <div key={s.label} className="text-center">
+                        <div className="text-[7px] uppercase tracking-wide" style={{ color: theme.mutedText }}>
+                          {s.label}
+                        </div>
+                        <div className="text-[12px] font-bold leading-tight" style={{ color: theme.textColor }}>
+                          {s.value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
                   {/* Kurva air 7 hari (garis putus-putus = target 2 L) */}
-                  <div className="px-1.5 pt-1.5">
+                  <div className="px-2 pt-1">
                     <svg
                       viewBox="0 0 700 50"
                       preserveAspectRatio="none"
                       className="w-full"
-                      style={{ height: '12mm' }}
+                      style={{ height: '40mm' }}
                       aria-label="Kurva air mingguan"
                     >
                       <line
@@ -480,43 +511,87 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     </svg>
                   </div>
 
-                  <div className="flex items-start justify-between gap-1 px-1.5 pb-1">
+                  <div className="flex items-start justify-between gap-1 px-2 pb-1">
                     {weekHabits.map((h) => (
                       <div key={h.dayIndex} className="flex-1 flex flex-col items-center gap-0.5">
-                        <div className="flex items-center gap-[2px]">
+                        <div className="flex items-center gap-1">
                           <span
-                            className={`w-1 h-1 rounded-full ${h.vitaminDone ? '' : 'opacity-20'}`}
+                            className={`w-2 h-2 rounded-full ${h.vitaminDone ? '' : 'opacity-20'}`}
                             style={{ backgroundColor: theme.primaryColor }}
                             title={`Vitamin ${h.dayName}`}
                           />
                           <span
-                            className={`w-1 h-1 rounded-full ${h.activityDone ? '' : 'opacity-20'}`}
+                            className={`w-2 h-2 rounded-full ${h.activityDone ? '' : 'opacity-20'}`}
                             style={{ backgroundColor: theme.secondaryColor }}
                             title={`Gerak ${h.dayName}`}
                           />
                         </div>
-                        <span className="text-[5.5px] leading-none" style={{ color: theme.mutedText }}>
+                        <span className="text-[8px] leading-none font-semibold" style={{ color: theme.mutedText }}>
                           {h.dayName.slice(0, 3)}
+                        </span>
+                        <span className="text-[7px] leading-none" style={{ color: theme.mutedText }}>
+                          {(h.waterMl / 1000).toFixed(1)} L
+                        </span>
+                        <span className="text-[6.5px] leading-none" style={{ color: theme.mutedText }}>
+                          {h.sleepHours ? `${h.sleepHours} j` : '—'}
                         </span>
                       </div>
                     ))}
                   </div>
 
+                  {/* Batang gerak & tidur per hari — parameter Beranda */}
+                  <div className="px-2 pt-1">
+                    <div className="flex items-end justify-between gap-1" style={{ height: '22mm' }}>
+                      {weekHabits.map((h) => (
+                        <div key={h.dayIndex} className="flex-1 flex items-end justify-center gap-[2px] h-full">
+                          <div
+                            className="rounded-t-[1px]"
+                            style={{
+                              width: '34%',
+                              minHeight: 2,
+                              height: `${Math.max(4, Math.min(100, (h.activityMinutes / 60) * 100))}%`,
+                              backgroundColor: theme.secondaryColor,
+                            }}
+                            title={`Gerak ${h.dayName}: ${h.activityMinutes} menit`}
+                          />
+                          <div
+                            className="rounded-t-[1px]"
+                            style={{
+                              width: '34%',
+                              minHeight: 2,
+                              height: `${Math.max(4, Math.min(100, (h.sleepHours / 10) * 100))}%`,
+                              backgroundColor: theme.primaryColor,
+                            }}
+                            title={`Tidur ${h.dayName}: ${h.sleepHours} jam`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <div
-                    className="flex items-center justify-end gap-2 px-1.5 pb-1 text-[5.5px] font-sans"
+                    className="flex items-center justify-end gap-2 px-2 pb-1.5 text-[6.5px] font-sans"
                     style={{ color: theme.mutedText }}
                   >
                     <span className="flex items-center gap-[2px]">
-                      <span className="w-1.5 h-1.5 rounded-[1px]" style={{ backgroundColor: '#7FA6BC' }} />
+                      <span className="w-2 h-2 rounded-[1px]" style={{ backgroundColor: '#7FA6BC' }} />
                       air (target 2 L)
                     </span>
                     <span className="flex items-center gap-[2px]">
-                      <span className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.primaryColor }} />
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: theme.primaryColor }} />
                       vitamin
                     </span>
                     <span className="flex items-center gap-[2px]">
-                      <span className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.secondaryColor }} />
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: theme.secondaryColor }} />
                       gerak
+                    </span>
+                    <span className="flex items-center gap-[2px]">
+                      <span className="w-1.5 h-2 rounded-[1px]" style={{ backgroundColor: theme.secondaryColor }} />
+                      gerak (mnt)
+                    </span>
+                    <span className="flex items-center gap-[2px]">
+                      <span className="w-1.5 h-2 rounded-[1px]" style={{ backgroundColor: theme.primaryColor }} />
+                      tidur (jam)
                     </span>
                   </div>
                 </div>
@@ -585,34 +660,6 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                   </div>
               </div>
 
-            {/* Ringkasan parameter lain: tidur & suasana hati */}
-            <div
-              className="flex items-center justify-between px-1 text-[6.5px] font-sans"
-              style={{ color: theme.mutedText }}
-            >
-              <span>
-                {(() => {
-                  const hours = getWeekHabits(week).map((h) => h.sleepHours).filter((v) => v > 0);
-                  if (!hours.length) return 'Tidur: belum dicatat';
-                  const avg = hours.reduce((a, b) => a + b, 0) / hours.length;
-                  return `Tidur rata-rata ${avg.toFixed(1)} jam`;
-                })()}
-              </span>
-              <span>
-                {(() => {
-                  const counts: Record<number, number> = {};
-                  dailyMoods.forEach((m) => {
-                    if (typeof m === 'number') counts[m] = (counts[m] || 0) + 1;
-                  });
-                  const entries = Object.entries(counts);
-                  if (!entries.length) return 'Suasana hati: belum diisi';
-                  const [idx, count] = entries.sort((a, b) => b[1] - a[1])[0];
-                  const emoji = ['🥰', '😊', '🥺', '😫'][Number(idx)] || '😊';
-                  const label = ['Bahagia', 'Tenang', 'Cemas', 'Lelah'][Number(idx)] || 'Tenang';
-                  return `${emoji} ${label} paling sering (${count}/7 hari)`;
-                })()}
-              </span>
-            </div>
           </div>
 
           {/* Footer Page Number */}
@@ -629,7 +676,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
       {/* HALAMAN KANAN: GALERI USG, STATS & CATATAN DOKTER              */}
       {/* ============================================================== */}
       <div 
-        className="b5-page b5-page-right relative overflow-hidden box-border p-[20mm] flex flex-col justify-between border border-stone-200/80 shadow-xs print:shadow-none print:m-0 print:break-after-page rounded-none"
+        className="b5-page b5-page-right relative overflow-hidden box-border p-[16mm] flex flex-col justify-between border border-stone-200/80 shadow-xs print:shadow-none print:m-0 print:break-after-page rounded-none"
         style={{
           backgroundColor: theme.pageBg,
           color: theme.textColor,
