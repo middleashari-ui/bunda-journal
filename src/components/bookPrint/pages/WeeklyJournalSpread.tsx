@@ -375,7 +375,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
             {/* Cerita Harian (Senin - Minggu) */}
             <div className="mb-1.5">
               <div 
-                className="border py-0.5 text-center text-[9.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
+                className="border py-0.5 text-center text-[10.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
                 style={{ 
                   backgroundColor: theme.headerBg, 
                   borderColor: theme.borderColor, 
@@ -490,7 +490,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     className="flex items-center justify-between px-2 py-1 border-b"
                     style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor }}
                   >
-                    <span className="text-[10.5px] font-semibold uppercase tracking-widest">
+                    <span className="text-[11px] font-semibold uppercase tracking-widest">
                       Kesimpulan minggu ini
                     </span>
                     <span className="text-[8px] font-sans" style={{ color: theme.mutedText }}>
@@ -549,16 +549,13 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     className="flex items-center justify-between px-2 py-1 border-b"
                     style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor }}
                   >
-                    <span className="text-[10.5px] font-semibold uppercase tracking-widest">
+                    <span className="text-[11px] font-semibold uppercase tracking-widest">
                       Pemantauan minggu ini
-                    </span>
-                    <span className="text-[8px] font-sans" style={{ color: theme.mutedText }}>
-                      vitamin {score.vitaminPct}% · air {score.waterPct}% · gerak {score.activityPct}%
                     </span>
                   </div>
 
                   <div className="flex items-center gap-3 px-2 pt-1.5">
-                    <svg width="140" height="140" viewBox="0 0 80 80" aria-label={`Ritme ${score.overallPct}%`}>
+                    <svg width="158" height="158" viewBox="0 0 80 80" aria-label={`Ritme ${score.overallPct}%`}>
                       {rings.map((ring) => {
                         const circ = 2 * Math.PI * ring.r;
                         const filled = (Math.max(0, Math.min(100, ring.pct)) / 100) * circ;
@@ -590,11 +587,11 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     <div className="flex-1 min-w-0 flex flex-col gap-1.5 pr-1">
                       {rings.map((ring) => (
                         <div key={ring.label} className="flex items-center justify-between">
-                          <span className="flex items-center gap-1.5 text-[9.5px] font-sans" style={{ color: theme.mutedText }}>
+                          <span className="flex items-center gap-1.5 text-[10px] font-sans" style={{ color: theme.mutedText }}>
                             <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ring.color }} />
                             {ring.label}
                           </span>
-                          <span className="text-[12.5px] font-bold tabular-nums" style={{ color: theme.textColor }}>
+                          <span className="text-[13px] font-bold tabular-nums" style={{ color: theme.textColor }}>
                             {ring.pct}%
                           </span>
                         </div>
@@ -606,10 +603,10 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                   <div className="flex items-start justify-between gap-1 px-2 pt-1.5 pb-1">
                     {habits.map((h, i) => (
                       <div key={h.dayIndex} className="flex-1 flex flex-col items-center gap-0.5">
-                        <span className="text-[9.5px] font-semibold uppercase" style={{ color: theme.mutedText }}>
+                        <span className="text-[10.5px] font-semibold uppercase" style={{ color: theme.mutedText }}>
                           {h.dayName.slice(0, 3)}
                         </span>
-                        <span className="text-[9px] leading-none font-semibold" style={{ color: theme.textColor }}>
+                        <span className="text-[10px] leading-none font-semibold" style={{ color: theme.textColor }}>
                           {weekDates[i] ? weekDates[i]!.getDate() : '—'}
                         </span>
                         <div className="flex items-center gap-1 mt-0.5">
@@ -636,7 +633,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                 {/* Ceklis Rutinitas — selalu tampil (seperti benchmark), kosong = lingkaran */}
                 <div className="flex flex-col h-full">
                     <div 
-                      className="border py-0.5 text-center text-[9.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
+                      className="border py-0.5 text-center text-[10.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
                       style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor, color: theme.textColor }}
                     >
                       Ceklis Kesehatan
@@ -647,7 +644,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     >
                       <table className="w-full text-center table-fixed border-collapse">
                         <thead>
-                          <tr className="bg-stone-50 border-b border-stone-200 text-[7.5px]">
+                          <tr className="bg-stone-50 border-b border-stone-200 text-[8.5px]">
                             <th className="w-[34%] border-r border-stone-200 py-0.5 text-left px-1 font-medium">Item</th>
                             <th className="font-normal py-0.5">S</th>
                             <th className="font-normal py-0.5">S</th>
@@ -665,7 +662,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                             { key: 'walk', label: 'Aktivitas' },
                           ].map((row) => (
                             <tr key={row.key} className="border-b border-stone-200 last:border-b-0">
-                              <td className="border-r border-stone-200 text-[7px] font-medium py-0.5 text-left px-1">{row.label}</td>
+                              <td className="border-r border-stone-200 text-[8px] font-medium py-1 text-left px-1">{row.label}</td>
                               {[0, 1, 2, 3, 4, 5, 6].map((dayIdx) => {
                                 const checkKey = `${row.key}-${dayIdx}`;
                                 const isDone = !!checkedItems[checkKey];
@@ -674,12 +671,12 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                                     <button
                                       type="button"
                                       onClick={() => toggleCheck(checkKey)}
-                                      className="w-full h-4 flex items-center justify-center cursor-pointer"
+                                      className="w-full h-5 flex items-center justify-center cursor-pointer"
                                     >
-                                      <div className={`w-2.5 h-2.5 rounded-full border flex items-center justify-center transition-colors ${
+                                      <div className={`w-3 h-3 rounded-full border flex items-center justify-center transition-colors ${
                                         isDone ? 'bg-[#556B2F] border-[#556B2F] text-white' : 'border-stone-300'
                                       }`}>
-                                        {isDone && <Check className="w-2 h-2 stroke-[3]" />}
+                                        {isDone && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                                       </div>
                                     </button>
                                   </td>
@@ -689,6 +686,9 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                    <div className="mt-1 text-center text-[8px] font-sans" style={{ color: theme.mutedText }}>
+                      {Object.values(checkedItems).filter(Boolean).length}/{7 * (SUPPLEMENT_ROWS.length + 2)} kebiasaan tercentang minggu ini
                     </div>
                   </div>
               </div>
@@ -861,7 +861,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
             {/* Catatan Dokter: Editable Textarea */}
             <div>
               <div 
-                className="border py-0.5 text-center text-[9.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs flex items-center justify-center gap-1"
+                className="border py-0.5 text-center text-[10.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs flex items-center justify-center gap-1"
                 style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor, color: theme.textColor }}
               >
                 <span>Catatan Dokter / Pertanyaan Konsul</span>
