@@ -402,7 +402,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
               </div>
             </div>
 
-                        {/* Kesimpulan & pemantauan minggu ini — semua parameter Beranda */}
+                                    {/* Kesimpulan minggu ini */}
             {(() => {
               const habits = getWeekHabits(week);
               const score = getWeekHabitScore(week);
@@ -450,12 +450,6 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                   ? `${score.daysLogged} hari tercatat. Pelan-pelan saja, yang penting tetap menulis.`
                   : 'Belum ada catatan minggu ini. Mulai dari satu kalimat saja.';
 
-              const rings: Array<{ pct: number; color: string; r: number }> = [
-                { pct: score.vitaminPct, color: theme.primaryColor, r: 30 },
-                { pct: score.waterPct, color: '#7FA6BC', r: 22 },
-                { pct: score.activityPct, color: theme.secondaryColor, r: 14 },
-              ];
-
               const stats: Array<{ label: string; value: string }> = [
                 { label: 'Hari tercatat', value: `${score.daysLogged}/7` },
                 { label: 'Streak', value: `${streak} hari` },
@@ -469,6 +463,62 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
 
               return (
                 <div
+                  className="mb-1.5 border rounded-xs overflow-hidden"
+                  style={{ borderColor: theme.borderColor }}
+                >
+                  <div
+                    className="flex items-center justify-between px-2 py-1 border-b"
+                    style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor }}
+                  >
+                    <span className="text-[10.5px] font-semibold uppercase tracking-widest">
+                      Kesimpulan minggu ini
+                    </span>
+                    <span className="text-[8px] font-sans" style={{ color: theme.mutedText }}>
+                      Ritme {score.overallPct}% · {score.daysLogged}/7 hari · streak {streak}
+                    </span>
+                  </div>
+
+                  <div className="px-2 pt-1.5 pb-1.5">
+                    <div className="text-[12px] font-serif italic leading-snug" style={{ color: theme.textColor }}>
+                      {narrative}
+                    </div>
+
+                    {highlight && (
+                      <div className="text-[8.5px] italic leading-snug mt-1" style={{ color: theme.mutedText }}>
+                        Momen minggu ini — {highlight.day}: “{highlight.text.slice(0, 120)}…”
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-3 gap-x-2 gap-y-1 mt-2">
+                      {stats.map((s) => (
+                        <div key={s.label}>
+                          <div className="text-[8.5px] uppercase tracking-wide leading-tight" style={{ color: theme.mutedText }}>
+                            {s.label}
+                          </div>
+                          <div className="text-[13.5px] font-bold leading-tight" style={{ color: theme.textColor }}>
+                            {s.value}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Pemantauan minggu ini — activity rings + strip 7 hari */}
+            {(() => {
+              const habits = getWeekHabits(week);
+              const score = getWeekHabitScore(week);
+
+              const rings: Array<{ label: string; pct: number; color: string; r: number }> = [
+                { label: 'Vitamin', pct: score.vitaminPct, color: theme.primaryColor, r: 30 },
+                { label: 'Air', pct: score.waterPct, color: '#7FA6BC', r: 22 },
+                { label: 'Gerak', pct: score.activityPct, color: theme.secondaryColor, r: 14 },
+              ];
+
+              return (
+                <div
                   className="mb-2 border rounded-xs overflow-hidden"
                   style={{ borderColor: theme.borderColor }}
                 >
@@ -477,88 +527,60 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor }}
                   >
                     <span className="text-[10.5px] font-semibold uppercase tracking-widest">
-                      Pemantauan minggu ini · kesimpulan
+                      Pemantauan minggu ini
                     </span>
                     <span className="text-[8px] font-sans" style={{ color: theme.mutedText }}>
-                      Ritme {score.overallPct}% · {score.daysLogged}/7 hari · streak {streak}
+                      vitamin {score.vitaminPct}% · air {score.waterPct}% · gerak {score.activityPct}%
                     </span>
                   </div>
 
-                  <div className="flex items-start gap-2 px-2 pt-2">
-                    {/* Activity rings: vitamin / air / gerak */}
-                    <div className="shrink-0 flex flex-col items-center">
-                      <svg width="180" height="180" viewBox="0 0 80 80" aria-label={`Ritme ${score.overallPct}%`}>
-                        {rings.map((ring) => {
-                          const circ = 2 * Math.PI * ring.r;
-                          const filled = (Math.max(0, Math.min(100, ring.pct)) / 100) * circ;
-                          return (
-                            <g key={ring.r}>
-                              <circle cx="40" cy="40" r={ring.r} fill="none" stroke={theme.borderColor} strokeWidth="5" />
-                              <circle
-                                cx="40"
-                                cy="40"
-                                r={ring.r}
-                                fill="none"
-                                stroke={ring.color}
-                                strokeWidth="5"
-                                strokeLinecap="round"
-                                strokeDasharray={`${filled.toFixed(1)} ${circ.toFixed(1)}`}
-                                transform="rotate(-90 40 40)"
-                              />
-                            </g>
-                          );
-                        })}
-                        <text x="40" y="39" textAnchor="middle" fontSize="12" fontWeight="700" fill={theme.textColor}>
-                          {score.overallPct}%
-                        </text>
-                        <text x="40" y="47" textAnchor="middle" fontSize="5" fill={theme.mutedText} letterSpacing="1">
-                          RITME
-                        </text>
-                      </svg>
-                      <div className="flex items-center gap-2 mt-1 text-[8px] font-sans" style={{ color: theme.mutedText }}>
-                        <span className="flex items-center gap-[2px]">
-                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.primaryColor }} />
-                          {score.vitaminPct}% vit
-                        </span>
-                        <span className="flex items-center gap-[2px]">
-                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#7FA6BC' }} />
-                          {score.waterPct}% air
-                        </span>
-                        <span className="flex items-center gap-[2px]">
-                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.secondaryColor }} />
-                          {score.activityPct}% gerak
-                        </span>
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-3 px-2 pt-1.5">
+                    <svg width="134" height="134" viewBox="0 0 80 80" aria-label={`Ritme ${score.overallPct}%`}>
+                      {rings.map((ring) => {
+                        const circ = 2 * Math.PI * ring.r;
+                        const filled = (Math.max(0, Math.min(100, ring.pct)) / 100) * circ;
+                        return (
+                          <g key={ring.r}>
+                            <circle cx="40" cy="40" r={ring.r} fill="none" stroke={theme.borderColor} strokeWidth="5" />
+                            <circle
+                              cx="40"
+                              cy="40"
+                              r={ring.r}
+                              fill="none"
+                              stroke={ring.color}
+                              strokeWidth="5"
+                              strokeLinecap="round"
+                              strokeDasharray={`${filled.toFixed(1)} ${circ.toFixed(1)}`}
+                              transform="rotate(-90 40 40)"
+                            />
+                          </g>
+                        );
+                      })}
+                      <text x="40" y="39" textAnchor="middle" fontSize="12" fontWeight="700" fill={theme.textColor}>
+                        {score.overallPct}%
+                      </text>
+                      <text x="40" y="47" textAnchor="middle" fontSize="5" fill={theme.mutedText} letterSpacing="1">
+                        RITME
+                      </text>
+                    </svg>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[12px] font-serif italic leading-snug" style={{ color: theme.textColor }}>
-                        {narrative}
-                      </div>
-
-                      {highlight && (
-                        <div className="text-[8.5px] italic leading-snug mt-1" style={{ color: theme.mutedText }}>
-                          Momen minggu ini — {highlight.day}: “{highlight.text.slice(0, 120)}…”
+                    <div className="flex-1 max-w-[190px] flex flex-col gap-1">
+                      {rings.map((ring) => (
+                        <div key={ring.label} className="flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 text-[9px] font-sans" style={{ color: theme.mutedText }}>
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ring.color }} />
+                            {ring.label}
+                          </span>
+                          <span className="text-[12px] font-bold" style={{ color: theme.textColor }}>
+                            {ring.pct}%
+                          </span>
                         </div>
-                      )}
-
-                      <div className="grid grid-cols-3 gap-x-2 gap-y-1.5 mt-2">
-                        {stats.map((s) => (
-                          <div key={s.label}>
-                            <div className="text-[8.5px] uppercase tracking-wide leading-tight" style={{ color: theme.mutedText }}>
-                              {s.label}
-                            </div>
-                            <div className="text-[13.5px] font-bold leading-tight" style={{ color: theme.textColor }}>
-                              {s.value}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      ))}
                     </div>
                   </div>
 
                   {/* Strip 7 hari seperti Beranda */}
-                  <div className="flex items-start justify-between gap-1 px-2 pt-1.5 pb-2">
+                  <div className="flex items-start justify-between gap-1 px-2 pt-1.5 pb-1">
                     {habits.map((h, i) => (
                       <div key={h.dayIndex} className="flex-1 flex flex-col items-center gap-0.5">
                         <span className="text-[8.5px] font-semibold uppercase" style={{ color: theme.mutedText }}>
@@ -582,7 +604,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-center gap-3 px-2 pb-2 text-[6.5px] font-sans" style={{ color: theme.mutedText }}>
+                  <div className="flex items-center justify-center gap-3 px-2 pb-1.5 text-[6.5px] font-sans" style={{ color: theme.mutedText }}>
                     <span className="flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.primaryColor }} />
                       vitamin
