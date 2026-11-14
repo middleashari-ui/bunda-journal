@@ -5,7 +5,7 @@ import { getWeekDatesMonday, fmtDayMonth, fmtWeekRange } from '../../../lib/preg
 import { BookThemeConfig } from '../../../types/bookPrint';
 import { PhotoMemory, JournalEntry } from '../../../types';
 import { Camera, Check, Edit2 } from 'lucide-react';
-import { readDayHabits, isHabitDone, toggleHabitDone, getWeekHabits, writeActivity } from '../../../lib/habitStore';
+import { readDayHabits, isHabitDone, toggleHabitDone, getWeekHabits, getWeekHabitScore, writeActivity } from '../../../lib/habitStore';
 import { DAILY_NOTE_MAX_CHARS, DAILY_NOTE_LINE_CHARS, clampDailyNote } from '../../../config/journal';
 
 // Batas catatan harian diambil dari satu sumber: src/config/journal.ts
@@ -401,6 +401,100 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                 })}
               </div>
             </div>
+
+            {/* Kesimpulan minggu ini — sama dengan kartu "Cerita minggu" di Beranda */}
+            {(() => {
+              const habits = getWeekHabits(week);
+              const score = getWeekHabitScore(week);
+              const prevScore = week > 1 ? getWeekHabitScore(week - 1) : null;
+              const delta = prevScore ? score.overallPct - prevScore.overallPct : 0;
+
+              const noteChars = Object.values(dailyTexts).reduce(
+                (acc, t) => acc + String(t || '').trim().length,
+                0
+              );
+              let streak = 0;
+              let run = 0;
+              habits.forEach((h) => {
+                if (h.hasData) {
+                  run += 1;
+                  streak = Math.max(streak, run);
+                } else {
+                  run = 0;
+                }
+              });
+
+              const narrative =
+                score.daysLogged === 7
+                  ? '7 hari sudah tercatat. Tidak harus sempurna — yang penting Bunda hadir.'
+                  : score.daysLogged >= 4
+                  ? `${score.daysLogged} hari sudah tercatat. Ada hari yang terlewat, tapi Bunda tetap hadir.`
+                  : score.daysLogged > 0
+                  ? `${score.daysLogged} hari tercatat. Pelan-pelan saja, yang penting tetap menulis.`
+                  : 'Belum ada catatan minggu ini. Mulai dari satu kalimat saja.';
+
+              const R = 20;
+              const CIRC = 2 * Math.PI * R;
+              const filled = (Math.max(0, Math.min(100, score.overallPct)) / 100) * CIRC;
+
+              const badges: Array<{ label: string; pct: number; color: string }> = [
+                { label: 'vitamin', pct: score.vitaminPct, color: theme.primaryColor },
+                { label: 'air', pct: score.waterPct, color: '#7FA6BC' },
+                { label: 'gerak', pct: score.activityPct, color: theme.secondaryColor },
+              ];
+
+              return (
+                <div
+                  className="mb-1.5 border rounded-xs px-2 py-1.5 flex items-center gap-2"
+                  style={{ borderColor: theme.borderColor, backgroundColor: '#FFFFFF' }}
+                >
+                  <svg width="48" height="48" viewBox="0 0 48 48" aria-label={`Ritme ${score.overallPct}%`}>
+                    <circle cx="24" cy="24" r={R} fill="none" stroke={theme.borderColor} strokeWidth="4" />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r={R}
+                      fill="none"
+                      stroke={theme.primaryColor}
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      strokeDasharray={`${filled.toFixed(1)} ${CIRC.toFixed(1)}`}
+                      transform="rotate(-90 24 24)"
+                    />
+                    <text x="24" y="23" textAnchor="middle" fontSize="10" fontWeight="700" fill={theme.textColor}>
+                      {score.overallPct}%
+                    </text>
+                    <text x="24" y="31" textAnchor="middle" fontSize="4.5" fill={theme.mutedText} letterSpacing="1">
+                      RITME
+                    </text>
+                  </svg>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[7px] uppercase tracking-widest font-semibold" style={{ color: theme.mutedText }}>
+                      Kesimpulan minggu ini
+                    </div>
+                    <div className="text-[9.5px] font-serif italic leading-snug" style={{ color: theme.textColor }}>
+                      {narrative}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[7px] font-sans" style={{ color: theme.mutedText }}>
+                      {badges.map((b) => (
+                        <span key={b.label} className="flex items-center gap-[2px]">
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: b.color }} />
+                          {b.pct}% {b.label}
+                        </span>
+                      ))}
+                      <span>· {streak} hari beruntun</span>
+                      <span>· {noteChars} karakter ditulis</span>
+                      {prevScore && delta !== 0 && (
+                        <span style={{ color: delta > 0 ? theme.primaryColor : theme.secondaryColor }}>
+                          {delta > 0 ? '▲' : '▼'} {Math.abs(delta)}% dari minggu lalu
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Pemantauan mingguan — parameter sama dengan Beranda */}
             {(() => {
