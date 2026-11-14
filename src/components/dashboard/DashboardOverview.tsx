@@ -673,7 +673,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
       <div className="rounded-[22px] border border-[#EDE6DA] bg-white px-4 py-3">
         <div className="flex items-center justify-between">
           <p className="text-[9px] uppercase tracking-[0.16em] text-[#8A8178] font-semibold">
-            Pemantauan jasmani
+            Gerak &amp; Tidur Bunda
           </p>
           <span className="text-[9.5px] text-stone-400">{jasmaniLabel}</span>
         </div>
