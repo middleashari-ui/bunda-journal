@@ -590,6 +590,13 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                           </span>
                         </div>
                       ))}
+
+                      <div className="text-[7px] leading-snug mt-1 pt-1 border-t" style={{ color: theme.mutedText, borderColor: theme.borderColor }}>
+                        Cincin luar: <strong style={{ color: theme.primaryColor }}>vitamin</strong> · tengah:{' '}
+                        <strong style={{ color: '#7FA6BC' }}>air</strong> · dalam:{' '}
+                        <strong style={{ color: theme.secondaryColor }}>gerak</strong>. Semakin penuh cincin,
+                        semakin konsisten minggu ini.
+                      </div>
                     </div>
                   </div>
 
