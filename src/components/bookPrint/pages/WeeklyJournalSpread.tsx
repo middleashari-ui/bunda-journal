@@ -535,9 +535,9 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
               const score = getWeekHabitScore(week);
 
               const rings: Array<{ label: string; pct: number; color: string; r: number }> = [
-                { label: 'Vitamin', pct: score.vitaminPct, color: theme.primaryColor, r: 31 },
-                { label: 'Air', pct: score.waterPct, color: '#7FA6BC', r: 22 },
-                { label: 'Gerak', pct: score.activityPct, color: theme.secondaryColor, r: 13 },
+                { label: 'Vitamin', pct: score.vitaminPct, color: theme.primaryColor, r: 33 },
+                { label: 'Air', pct: score.waterPct, color: '#7FA6BC', r: 24 },
+                { label: 'Gerak', pct: score.activityPct, color: theme.secondaryColor, r: 15 },
               ];
 
               return (
@@ -561,7 +561,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                         const filled = (Math.max(0, Math.min(100, ring.pct)) / 100) * circ;
                         return (
                           <g key={ring.r}>
-                            <circle cx="40" cy="40" r={ring.r} fill="none" stroke={theme.borderColor} strokeWidth="4.5" />
+                            <circle cx="40" cy="40" r={ring.r} fill="none" stroke={theme.borderColor} strokeWidth="5" />
                             <circle
                               cx="40"
                               cy="40"
@@ -576,12 +576,6 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                           </g>
                         );
                       })}
-                      <text x="40" y="38.5" textAnchor="middle" fontSize="10" fontWeight="700" fill={theme.textColor}>
-                        {score.overallPct}%
-                      </text>
-                      <text x="40" y="45.5" textAnchor="middle" fontSize="4" fill={theme.mutedText} letterSpacing="1">
-                        RITME
-                      </text>
                     </svg>
 
                     <div className="flex-1 min-w-0 flex flex-col gap-1.5 pr-1">
