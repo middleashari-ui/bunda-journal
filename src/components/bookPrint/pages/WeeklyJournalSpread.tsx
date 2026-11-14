@@ -608,15 +608,15 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                         <div className="flex flex-col gap-0.5 text-[7px] font-sans" style={{ color: theme.mutedText }}>
                           <span className="flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: theme.secondaryColor }} />
-                            Oranye — jalan (ring luar)
+                            Jalan (ring luar)
                           </span>
                           <span className="flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: theme.primaryColor }} />
-                            Hijau — senam (ring tengah)
+                            Senam (ring tengah)
                           </span>
                           <span className="flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#7FA6BC' }} />
-                            Biru — tidur (ring dalam)
+                            Tidur (ring dalam)
                           </span>
                         </div>
                         <div className="text-[7px] leading-snug" style={{ color: theme.mutedText }}>
