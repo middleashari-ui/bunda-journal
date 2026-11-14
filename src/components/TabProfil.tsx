@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { UserProfile, JournalEntry, PhotoMemory, HabitState, ReminderSettings } from '../types';
 import { PRICING_CONFIG } from '../config/pricing';
 import { getRestoreSnapshotInfo, undoLastRestore } from '../lib/authClient';
+import { getTodayPosition } from '../lib/pregnancyDate';
 import {
   backupJournalToDrive,
   getBackupMeta,
@@ -90,6 +91,16 @@ export const TabProfil: React.FC<TabProfilProps> = ({
   habits,
 }) => {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+  // Trimester mengikuti posisi minggu saat ini (bukan hardcode).
+  const currentTrimester = (() => {
+    try {
+      const w = getTodayPosition().week;
+      return w <= 13 ? 1 : w <= 27 ? 2 : 3;
+    } catch {
+      return 1;
+    }
+  })();
   const [editName, setEditName] = useState(userProfile.name);
   const [editDoctor, setEditDoctor] = useState(userProfile.doctorName);
   const [editHpl, setEditHpl] = useState(userProfile.hplDate);
@@ -350,14 +361,20 @@ export const TabProfil: React.FC<TabProfilProps> = ({
             className="group relative w-20 h-20 rounded-full bg-stone-200 border-4 border-[#C87A64]/30 overflow-hidden shadow-xs cursor-pointer block focus:outline-hidden hover:ring-2 hover:ring-[#556B2F] transition-all"
             title="Klik untuk mengunggah atau mengganti foto profil"
           >
-            <img
-              src={userProfile.avatar || ""}
-              alt={userProfile.name}
-              className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
+            {userProfile.avatar ? (
+              <img
+                src={userProfile.avatar}
+                alt={userProfile.name}
+                className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-[#C87A64]/15 text-[#C87A64] font-serif text-2xl font-bold">
+                {(userProfile.name || 'B').trim().charAt(0).toUpperCase()}
+              </div>
+            )}
             {/* Subtle hover overlay */}
             <div className="absolute inset-0 bg-black/45 backdrop-blur-2xs opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity duration-200">
               <Camera className="w-5 h-5 mb-0.5 text-stone-100" />
@@ -380,7 +397,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           {userProfile.name || 'Bunda'}
         </h3>
         <p className="text-xs text-stone-500 font-light">
-          Calon Ibu Hebat • Trimester 1
+          Calon Ibu Hebat • Trimester {currentTrimester}
         </p>
 
         <div className="mt-4 p-3 bg-[#FAF8F5] rounded-2xl border border-stone-200/60 flex items-center justify-around text-xs">
