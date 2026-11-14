@@ -47,8 +47,21 @@ test.describe('Buku jurnal /print', () => {
     await expect(rings).toHaveCount(3);
   });
 
-  test('halaman kanan memuat statistik dan catatan dokter', async ({ page }) => {
+  test('ceklis buku menulis ke Habit Store (tersambung ke Beranda)', async ({ page }) => {
     await openApp(page, '/#/print');
+    await page.waitForSelector('.print-book-spread');
+
+    const spread = page.locator('.print-book-spread').nth(19);
+    const vitDRow = spread.locator('tr').filter({ hasText: 'Vit D' });
+    await vitDRow.locator('button').first().click();
+
+    const stored = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('bunda_19_0_suplemen') || '{}')
+    );
+    expect(stored.vitaminD).toBe(true);
+  });
+
+  test('halaman kanan memuat statistik dan catatan dokter', async ({ page }) => {    await openApp(page, '/#/print');
     await page.waitForSelector('.print-book-spread');
 
     const rightPage = page.locator('.print-book-spread').nth(19).locator('.b5-page').nth(1);

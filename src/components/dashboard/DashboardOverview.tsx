@@ -8,8 +8,6 @@ import {
   BookHeart,
   ArrowRight,
   Camera,
-  Quote,
-  Flame,
 } from 'lucide-react';
 import { useHealthData } from '../../context/HealthDataContext';
 import { getWeekHabits, getWeekHabitScore, subscribeHabits, DAY_NAMES } from '../../lib/habitStore';
@@ -234,23 +232,6 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
       }, 0),
     [notes]
   );
-
-  // Streak: hari berturut dengan minimal satu kebiasaan selesai.
-  // Kalau hari ini belum diisi, hitung sampai kemarin (lebih adil & memotivasi).
-  const streak = useMemo(() => {
-    let count = 0;
-    let start = todayIdx >= 0 ? todayIdx : 6;
-    const isDone = (i: number) => {
-      const d = days[i];
-      return !!d && (d.vitaminDone || d.waterDone || d.activityDone);
-    };
-    if (!isDone(start)) start -= 1;
-    for (let i = start; i >= 0; i -= 1) {
-      if (!isDone(i)) break;
-      count += 1;
-    }
-    return count;
-  }, [days, todayIdx]);
 
   const longestNote = useMemo(() => {
     let best = { day: '', text: '' };
@@ -486,30 +467,6 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
       {/* ===================== MOMEN MINGGU INI (Mingguan) ===================== */}
       {timeframe === 'mingguan' && (
         <>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-[20px] border border-[#EDE6DA] bg-[#F8F4EC] p-3">
-              <div className="flex items-center gap-1.5 text-[#A25E4B]">
-                <Flame className="w-3 h-3" />
-                <span className="text-[9px] uppercase tracking-wider font-semibold">Streak</span>
-              </div>
-              <p className="font-serif text-2xl text-stone-800 mt-1 leading-none">{streak}</p>
-              <p className="text-[9.5px] text-stone-500 mt-1 leading-snug">
-                {streak > 0 ? 'hari berturut Bunda jaga ritme' : 'mulai satu hari hari ini'}
-              </p>
-            </div>
-
-            <div className="rounded-[20px] border border-[#EDE6DA] bg-white p-3">
-              <div className="flex items-center gap-1.5 text-[#556B2F]">
-                <Quote className="w-3 h-3" />
-                <span className="text-[9px] uppercase tracking-wider font-semibold">Tulisan</span>
-              </div>
-              <p className="font-serif text-2xl text-stone-800 mt-1 leading-none">{wordCount}</p>
-              <p className="text-[9.5px] text-stone-500 mt-1 leading-snug">
-                kata Bunda tulis minggu ini
-              </p>
-            </div>
-          </div>
-
           {/* Kartu kenangan: catatan terpanjang / foto minggu */}
           <div className="rounded-[24px] border border-[#EDE6DA] bg-white p-4">
             <div className="flex items-center justify-between mb-2">

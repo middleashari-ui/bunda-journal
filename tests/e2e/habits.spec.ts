@@ -11,9 +11,9 @@ test.describe('Beranda — widget cerita mingguan', () => {
 
     await expect(widget).toContainText('Cerita minggu 19');
     await expect(widget).toContainText('Ritme minggu ini');
-    await expect(widget).toContainText('Streak');
-    await expect(widget).toContainText('kata Bunda tulis minggu ini');
     await expect(widget).toContainText('Momen minggu ini');
+    await expect(widget).toContainText('Gerak & Tidur Bunda');
+    await expect(widget).toContainText('Jalan');
   });
 
   test('tab Harian menampilkan detail hari dan CTA jurnal', async ({ page }) => {
