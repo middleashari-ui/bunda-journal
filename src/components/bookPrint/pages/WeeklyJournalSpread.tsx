@@ -605,14 +605,10 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                       ))}
 
                       <div className="mt-1 pt-1 border-t space-y-0.5" style={{ borderColor: theme.borderColor }}>
-                        <div className="flex flex-col gap-0.5 text-[8px] font-sans" style={{ color: theme.mutedText }}>
+                        <div className="flex flex-col gap-0.5 text-[8px] font-sans pl-3" style={{ color: theme.mutedText }}>
                           <span>🟠 Jalan</span>
                           <span>🟢 Senam</span>
                           <span>🔵 Tidur</span>
-                        </div>
-                        <div className="text-[7px] leading-snug" style={{ color: theme.mutedText }}>
-                          Target jalan {JASMANI_TARGETS.jalanDailyMin} mnt/hari · senam {JASMANI_TARGETS.senamDailyMin} mnt/hari · tidur{' '}
-                          {JASMANI_TARGETS.sleepHours} jam.
                         </div>
                       </div>
                     </div>
