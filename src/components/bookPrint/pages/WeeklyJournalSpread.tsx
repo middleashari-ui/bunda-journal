@@ -535,9 +535,9 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
               const score = getWeekHabitScore(week);
 
               const rings: Array<{ label: string; pct: number; color: string; r: number }> = [
-                { label: 'Vitamin', pct: score.vitaminPct, color: theme.primaryColor, r: 30 },
+                { label: 'Vitamin', pct: score.vitaminPct, color: theme.primaryColor, r: 31 },
                 { label: 'Air', pct: score.waterPct, color: '#7FA6BC', r: 22 },
-                { label: 'Gerak', pct: score.activityPct, color: theme.secondaryColor, r: 14 },
+                { label: 'Gerak', pct: score.activityPct, color: theme.secondaryColor, r: 13 },
               ];
 
               return (
@@ -558,13 +558,13 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                   </div>
 
                   <div className="flex items-center gap-3 px-2 pt-1.5">
-                    <svg width="132" height="132" viewBox="0 0 80 80" aria-label={`Ritme ${score.overallPct}%`}>
+                    <svg width="140" height="140" viewBox="0 0 80 80" aria-label={`Ritme ${score.overallPct}%`}>
                       {rings.map((ring) => {
                         const circ = 2 * Math.PI * ring.r;
                         const filled = (Math.max(0, Math.min(100, ring.pct)) / 100) * circ;
                         return (
                           <g key={ring.r}>
-                            <circle cx="40" cy="40" r={ring.r} fill="none" stroke={theme.borderColor} strokeWidth="5" />
+                            <circle cx="40" cy="40" r={ring.r} fill="none" stroke={theme.borderColor} strokeWidth="4.5" />
                             <circle
                               cx="40"
                               cy="40"
@@ -579,22 +579,22 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                           </g>
                         );
                       })}
-                      <text x="40" y="39" textAnchor="middle" fontSize="12" fontWeight="700" fill={theme.textColor}>
+                      <text x="40" y="38.5" textAnchor="middle" fontSize="10" fontWeight="700" fill={theme.textColor}>
                         {score.overallPct}%
                       </text>
-                      <text x="40" y="47" textAnchor="middle" fontSize="5" fill={theme.mutedText} letterSpacing="1">
+                      <text x="40" y="45.5" textAnchor="middle" fontSize="4" fill={theme.mutedText} letterSpacing="1">
                         RITME
                       </text>
                     </svg>
 
-                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                    <div className="flex-1 min-w-0 flex flex-col gap-1.5 pr-1">
                       {rings.map((ring) => (
                         <div key={ring.label} className="flex items-center justify-between">
-                          <span className="flex items-center gap-1.5 text-[10px] font-sans" style={{ color: theme.mutedText }}>
+                          <span className="flex items-center gap-1.5 text-[9.5px] font-sans" style={{ color: theme.mutedText }}>
                             <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ring.color }} />
                             {ring.label}
                           </span>
-                          <span className="text-[13px] font-bold" style={{ color: theme.textColor }}>
+                          <span className="text-[12.5px] font-bold tabular-nums" style={{ color: theme.textColor }}>
                             {ring.pct}%
                           </span>
                         </div>
