@@ -90,9 +90,11 @@ Jurnal (input)                    Beranda (ringkasan)              Buku / PDF
 | Tidak ada versi skema | perubahan struktur key = data lama tak terbaca | `bunda_schema_version` + migrasi bertahap saat boot |
 | 179 titik `localStorage` langsung | tidak konsisten, sulit diaudit | satu modul `storage/` dengan get/set bertipe |
 
-**Status 14 Nov 2026:** baris 1 (foto) dan baris 2 (versi skema) sudah dikerjakan —
-`src/lib/mediaStore.ts` (foto & bab buku → IndexedDB) dan `src/lib/schemaMigration.ts`
-(`bunda_schema_version` + migrasi index hari). Baris 3 belum.
+**Status 14 Nov 2026:** ketiga baris sudah dikerjakan —
+`src/lib/mediaStore.ts` (foto & bab buku → IndexedDB), `src/lib/schemaMigration.ts`
+(`bunda_schema_version` + migrasi index hari), dan `src/lib/storage/appStorage.ts`
+(satu pintu akses data). Audit menyisakan 58 pemanggilan di file arsip `_legacy`
++ 21 di file WIP yang belum di-commit (payments/auth/onboarding).
 
 ### P1 — menghambat perubahan
 

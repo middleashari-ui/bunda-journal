@@ -1,3 +1,4 @@
+import { storageGet, storageSet, storageRemove } from './storage/appStorage';
 // ============================================================================
 // BACKUP JURNAL KE GOOGLE DRIVE MILIK USER
 //
@@ -47,7 +48,7 @@ declare global {
 // ---------------------------------------------------------------------------
 function readCachedToken(): string {
   try {
-    const raw = localStorage.getItem(TOKEN_CACHE_KEY);
+    const raw = storageGet(TOKEN_CACHE_KEY);
     if (!raw) return '';
     const parsed = JSON.parse(raw);
     if (!parsed?.accessToken || !parsed?.expiresAt) return '';
@@ -60,7 +61,7 @@ function readCachedToken(): string {
 
 function writeCachedToken(accessToken: string, expiresInSec: number) {
   try {
-    localStorage.setItem(
+    storageSet(
       TOKEN_CACHE_KEY,
       JSON.stringify({ accessToken, expiresAt: Date.now() + expiresInSec * 1000 })
     );
@@ -68,7 +69,7 @@ function writeCachedToken(accessToken: string, expiresInSec: number) {
 }
 
 export function clearDriveToken() {
-  try { localStorage.removeItem(TOKEN_CACHE_KEY); } catch {}
+  try { storageRemove(TOKEN_CACHE_KEY); } catch {}
 }
 
 async function loadGis(): Promise<any> {
@@ -103,7 +104,7 @@ async function resolveClientId(): Promise<string> {
   } catch {}
 
   try {
-    const cached = localStorage.getItem(CLIENT_ID_KEY) || '';
+    const cached = storageGet(CLIENT_ID_KEY) || '';
     if (cached) return cached;
   } catch {}
   try {
@@ -111,7 +112,7 @@ async function resolveClientId(): Promise<string> {
     const data = await res.json();
     const id = String(data?.clientId || '').trim();
     if (id) {
-      try { localStorage.setItem(CLIENT_ID_KEY, id); } catch {}
+      try { storageSet(CLIENT_ID_KEY, id); } catch {}
       return id;
     }
   } catch {}
@@ -223,7 +224,7 @@ export function buildBackupJson(extra: Record<string, unknown> = {}): { json: st
     version: 1,
     exportedAt: new Date().toISOString(),
     email: (() => {
-      try { return localStorage.getItem('bunda_user_email') || ''; } catch { return ''; }
+      try { return storageGet('bunda_user_email') || ''; } catch { return ''; }
     })(),
     data: payload,
     ...extra,
@@ -233,7 +234,7 @@ export function buildBackupJson(extra: Record<string, unknown> = {}): { json: st
 
 export function getBackupMeta(): DriveBackupMeta | null {
   try {
-    const raw = localStorage.getItem(META_KEY);
+    const raw = storageGet(META_KEY);
     return raw ? (JSON.parse(raw) as DriveBackupMeta) : null;
   } catch {
     return null;
@@ -241,15 +242,15 @@ export function getBackupMeta(): DriveBackupMeta | null {
 }
 
 function setBackupMeta(meta: DriveBackupMeta) {
-  try { localStorage.setItem(META_KEY, JSON.stringify(meta)); } catch {}
+  try { storageSet(META_KEY, JSON.stringify(meta)); } catch {}
 }
 
 export function isAutoBackupEnabled(): boolean {
-  try { return localStorage.getItem(AUTO_KEY) === 'true'; } catch { return false; }
+  try { return storageGet(AUTO_KEY) === 'true'; } catch { return false; }
 }
 
 export function setAutoBackupEnabled(value: boolean) {
-  try { localStorage.setItem(AUTO_KEY, value ? 'true' : 'false'); } catch {}
+  try { storageSet(AUTO_KEY, value ? 'true' : 'false'); } catch {}
 }
 
 // ---------------------------------------------------------------------------
@@ -374,7 +375,7 @@ export async function downloadBackup(fileId: string): Promise<{ ok: boolean; rea
     const parsed = await res.json();
     const data = parsed?.data;
     if (!data || typeof data !== 'object') return { ok: false, reason: 'invalid-file' };
-    const email = parsed?.email || localStorage.getItem('bunda_user_email') || '';
+    const email = parsed?.email || storageGet('bunda_user_email') || '';
     // applyUserPayload otomatis membuat snapshot sebelum menimpa (bisa di-undo).
     applyUserPayload(data as Record<string, string>, email);
     return { ok: true, at: parsed?.exportedAt, count: Object.keys(data).length };

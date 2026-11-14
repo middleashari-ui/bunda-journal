@@ -1,3 +1,4 @@
+import { storageGet } from '../lib/storage/appStorage';
 import React, { useRef, useState, useEffect, lazy, Suspense } from 'react';
 import { HabitState, UserProfile, JournalEntry, ReminderSettings, PhotoMemory } from '../types';
 import { getWeekData, AVAILABLE_WEEKS } from '../data/pregnancyWeeks';
@@ -108,7 +109,7 @@ export const TabHome: React.FC<TabHomeProps> = ({
       try {
         let count = 0;
         let preview = '';
-        const savedDaily = localStorage.getItem(`bunda_daily_w${week}`);
+        const savedDaily = storageGet(`bunda_daily_w${week}`);
         if (savedDaily) {
           const parsed = JSON.parse(savedDaily);
           Object.values(parsed).forEach((text: any) => {
@@ -122,7 +123,7 @@ export const TabHome: React.FC<TabHomeProps> = ({
         let w = '';
         let bp = '';
         let doc = false;
-        const savedStats = localStorage.getItem(`bunda_momstats_w${week}`);
+        const savedStats = storageGet(`bunda_momstats_w${week}`);
         if (savedStats) {
           const parsedStats = JSON.parse(savedStats);
           if (parsedStats.weight) w = parsedStats.weight;

@@ -1,3 +1,4 @@
+import { storageGet } from './storage/appStorage';
 // Util tanggal kehamilan - SATU sumber kebenaran, berbasis HPL user.
 // Rumus: HPHT = HPL - 280 hari. Minggu 1 = minggu kalender yang memuat HPHT
 // (diselaraskan ke hari Senin). Minggu N mulai = SeninMinggu1 + (N-1)*7 hari.
@@ -32,7 +33,7 @@ export const storageIndexOf = (d: Date): number => (d.getDay() + 6) % 7;
 /** HPL user dari profil (localStorage `bunda_profile`.hplDate, format YYYY-MM-DD). */
 export function getHplDate(): Date | null {
   try {
-    const raw = localStorage.getItem('bunda_profile');
+    const raw = storageGet('bunda_profile');
     if (!raw) return null;
     const p = JSON.parse(raw);
     if (!p?.hplDate) return null;

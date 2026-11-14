@@ -1,3 +1,4 @@
+import { storageGet } from '../../lib/storage/appStorage';
 import React, { useState, memo, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   Pill,
@@ -35,7 +36,7 @@ const MOOD_LABEL = ['Sangat bahagia', 'Tenang', 'Cemas', 'Lelah'];
 
 function readJson<T>(key: string): T | null {
   try {
-    const raw = isMediaKey(key) ? mediaGet(key) : localStorage.getItem(key);
+    const raw = isMediaKey(key) ? mediaGet(key) : storageGet(key);
     return raw ? (JSON.parse(raw) as T) : null;
   } catch {
     return null;
@@ -132,7 +133,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
 
   const weekNum = useMemo(() => {
     if (typeof week === 'number' && week > 0) return week;
-    const stored = Number(localStorage.getItem('bunda_week'));
+    const stored = Number(storageGet('bunda_week'));
     return stored > 0 ? stored : getTodayPosition().week;
   }, [week]);
 

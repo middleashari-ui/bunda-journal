@@ -1,3 +1,4 @@
+import { storageGet, storageSet } from '../../../lib/storage/appStorage';
 import React, { useRef, useState, useEffect } from 'react';
 import { getWeekData } from '../../../data/pregnancyWeeks';
 import { getWeekDatesMonday, fmtDayMonth, fmtWeekRange } from '../../../lib/pregnancyDate';
@@ -60,7 +61,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
 
   const [dailyTexts, setDailyTexts] = useState<Record<string, string>>(() => {
     try {
-      const saved = localStorage.getItem(`bunda_daily_w${week}`);
+      const saved = storageGet(`bunda_daily_w${week}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object') return parsed;
@@ -80,7 +81,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
 
   const [momWeight, setMomWeight] = useState<string>(() => {
     try {
-      const saved = localStorage.getItem(`bunda_momstats_w${week}`);
+      const saved = storageGet(`bunda_momstats_w${week}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed?.weight) return parsed.weight;
@@ -91,7 +92,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
 
   const [momWaist, setMomWaist] = useState<string>(() => {
     try {
-      const saved = localStorage.getItem(`bunda_momstats_w${week}`);
+      const saved = storageGet(`bunda_momstats_w${week}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed?.waist) return parsed.waist;
@@ -102,7 +103,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
 
   const [momBp, setMomBp] = useState<string>(() => {
     try {
-      const saved = localStorage.getItem(`bunda_momstats_w${week}`);
+      const saved = storageGet(`bunda_momstats_w${week}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed?.bloodPressure) return parsed.bloodPressure;
@@ -113,7 +114,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
 
   const [doctorNote, setDoctorNote] = useState<string>(() => {
     try {
-      const saved = localStorage.getItem(`bunda_momstats_w${week}`);
+      const saved = storageGet(`bunda_momstats_w${week}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed?.doctorNote) return parsed.doctorNote;
@@ -126,7 +127,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
   useEffect(() => {
     const handleSync = () => {
       try {
-        const savedDaily = localStorage.getItem(`bunda_daily_w${week}`);
+        const savedDaily = storageGet(`bunda_daily_w${week}`);
         if (savedDaily) {
           setDailyTexts(JSON.parse(savedDaily));
         } else {
@@ -142,7 +143,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
           });
         }
 
-        const savedStats = localStorage.getItem(`bunda_momstats_w${week}`);
+        const savedStats = storageGet(`bunda_momstats_w${week}`);
         if (savedStats) {
           const parsed = JSON.parse(savedStats);
           if (parsed.weight) setMomWeight(parsed.weight);
@@ -159,7 +160,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
           setSleepHours([null, null, null, null, null, null, null]);
         }
 
-        const savedMoods = localStorage.getItem(`bunda_daily_moods_w${week}`);
+        const savedMoods = storageGet(`bunda_daily_moods_w${week}`);
         if (savedMoods) {
           try {
             setDailyMoods(JSON.parse(savedMoods));
@@ -197,7 +198,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
     setDailyTexts(prev => {
       const next = { ...prev, [dayKey]: trimmed };
       try {
-        localStorage.setItem(`bunda_daily_w${week}`, JSON.stringify(next));
+        storageSet(`bunda_daily_w${week}`, JSON.stringify(next));
         window.dispatchEvent(new Event('bunda_journal_updated'));
       } catch {}
       return next;
@@ -211,7 +212,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
     if (key === 'doctorNote') setDoctorNote(val);
 
     try {
-      const saved = localStorage.getItem(`bunda_momstats_w${week}`);
+      const saved = storageGet(`bunda_momstats_w${week}`);
       const parsed = saved ? JSON.parse(saved) : {};
       const updated = {
         ...parsed,
@@ -221,7 +222,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
         doctorNote: key === 'doctorNote' ? val : doctorNote,
         sleepHourIndex: 1
       };
-      localStorage.setItem(`bunda_momstats_w${week}`, JSON.stringify(updated));
+      storageSet(`bunda_momstats_w${week}`, JSON.stringify(updated));
       window.dispatchEvent(new Event('bunda_journal_updated'));
     } catch {}
   };

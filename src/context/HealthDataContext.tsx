@@ -1,3 +1,4 @@
+import { storageGet, storageSet } from '../lib/storage/appStorage';
 import { getTodayPosition, getWeekDatesMonday, fmtDayMonth, isSameDay } from '../lib/pregnancyDate';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
@@ -76,7 +77,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [activeDayKey, setActiveDayKey] = useState<{ week: number; dayIndex: number }>(() => {
     const pos = getTodayPosition();
     try {
-      const w = Number(localStorage.getItem('bunda_week')) || pos.week;
+      const w = Number(storageGet('bunda_week')) || pos.week;
       return { week: w, dayIndex: pos.dayIndex };
     } catch {
       return pos;
@@ -86,13 +87,13 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Water State
   const [waterLiters, setWaterLiters] = useState<number>(() => {
     try {
-      const w = Number(localStorage.getItem('bunda_week')) || 32;
-      const savedPerDay = localStorage.getItem(`bunda_${w}_3_hidrasi`);
+      const w = Number(storageGet('bunda_week')) || 32;
+      const savedPerDay = storageGet(`bunda_${w}_3_hidrasi`);
       if (savedPerDay) {
         const parsed = JSON.parse(savedPerDay);
         if (parsed?.current !== undefined) return parsed.current / 1000;
       }
-      const saved = localStorage.getItem('bunda_water_liters');
+      const saved = storageGet('bunda_water_liters');
       if (saved !== null) return Number(saved);
     } catch {}
     return 0;
@@ -109,7 +110,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setWaterLiters(prev => {
       const next = Math.max(0, Math.min(4.0, Number((prev + delta).toFixed(2))));
       try {
-        localStorage.setItem('bunda_water_liters', next.toString());
+        storageSet('bunda_water_liters', next.toString());
         savePerDayHidrasi(next, activeDayKey.week, activeDayKey.dayIndex);
       } catch {}
       return next;
@@ -119,8 +120,8 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Supplements State
   const [supplements, setSupplements] = useState<SupplementItem[]>(() => {
     try {
-      const w = Number(localStorage.getItem('bunda_week')) || 32;
-      const savedPerDay = localStorage.getItem(`bunda_${w}_3_suplemen`);
+      const w = Number(storageGet('bunda_week')) || 32;
+      const savedPerDay = storageGet(`bunda_${w}_3_suplemen`);
       if (savedPerDay) {
         const parsed = JSON.parse(savedPerDay);
         return DEFAULT_SUPPLEMENTS.map(item => {
@@ -138,7 +139,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           };
         });
       }
-      const saved = localStorage.getItem('bunda_supplements_list');
+      const saved = storageGet('bunda_supplements_list');
       if (saved) return JSON.parse(saved);
     } catch {}
     return DEFAULT_SUPPLEMENTS;
@@ -169,7 +170,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setSupplements(prev => {
       const updated = prev.map(item => (item.id === id ? { ...item, taken: !item.taken } : item));
       try {
-        localStorage.setItem('bunda_supplements_list', JSON.stringify(updated));
+        storageSet('bunda_supplements_list', JSON.stringify(updated));
         savePerDaySuplemen(updated, activeDayKey.week, activeDayKey.dayIndex);
       } catch {}
       return updated;
@@ -187,7 +188,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setSupplements(prev => {
       const updated = [...prev, newItem];
       try {
-        localStorage.setItem('bunda_supplements_list', JSON.stringify(updated));
+        storageSet('bunda_supplements_list', JSON.stringify(updated));
         savePerDaySuplemen(updated, activeDayKey.week, activeDayKey.dayIndex);
       } catch {}
       return updated;
@@ -199,7 +200,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setSupplements(prev => {
       const updated = prev.filter(item => item.id !== id);
       try {
-        localStorage.setItem('bunda_supplements_list', JSON.stringify(updated));
+        storageSet('bunda_supplements_list', JSON.stringify(updated));
         savePerDaySuplemen(updated, activeDayKey.week, activeDayKey.dayIndex);
       } catch {}
       return updated;
@@ -209,8 +210,8 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Activity Goals State
   const [activityGoals, setActivityGoals] = useState<ActivityGoals>(() => {
     try {
-      const w = Number(localStorage.getItem('bunda_week')) || 32;
-      const savedPerDay = localStorage.getItem(`bunda_${w}_3_jasmani`);
+      const w = Number(storageGet('bunda_week')) || 32;
+      const savedPerDay = storageGet(`bunda_${w}_3_jasmani`);
       if (savedPerDay) {
         const parsed = JSON.parse(savedPerDay);
         return {
@@ -219,7 +220,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           sleepHours: parsed.tidur ?? 0,
         };
       }
-      const saved = localStorage.getItem('bunda_activity_goals');
+      const saved = storageGet('bunda_activity_goals');
       if (saved) return JSON.parse(saved);
     } catch {}
     return DEFAULT_ACTIVITY;
@@ -244,7 +245,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         [key]: Math.max(0, value),
       };
       try {
-        localStorage.setItem('bunda_activity_goals', JSON.stringify(updated));
+        storageSet('bunda_activity_goals', JSON.stringify(updated));
         savePerDayJasmani(updated, activeDayKey.week, activeDayKey.dayIndex);
       } catch {}
       return updated;
@@ -260,7 +261,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       // Load suplemen for target day — fallback: pertahankan nilai Beranda bila hari tsb belum ada data (anti-flicker ke 0)
       try {
-        const savedSupp = localStorage.getItem(`bunda_${targetWeek}_${targetDayIndex}_suplemen`);
+        const savedSupp = storageGet(`bunda_${targetWeek}_${targetDayIndex}_suplemen`);
         if (savedSupp) {
           const parsed = JSON.parse(savedSupp);
           const keyMap: Record<string, string> = {
@@ -285,7 +286,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       // Load hidrasi for target day — fallback: pertahankan nilai bila belum ada data
       try {
-        const savedWater = localStorage.getItem(`bunda_${targetWeek}_${targetDayIndex}_hidrasi`);
+        const savedWater = storageGet(`bunda_${targetWeek}_${targetDayIndex}_hidrasi`);
         if (savedWater) {
           const parsed = JSON.parse(savedWater);
           if (parsed?.current !== undefined) setWaterLiters(parsed.current / 1000);
@@ -295,7 +296,7 @@ export const HealthDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       // Load jasmani for target day — fallback: pertahankan nilai bila belum ada data
       try {
-        const savedJasmani = localStorage.getItem(`bunda_${targetWeek}_${targetDayIndex}_jasmani`);
+        const savedJasmani = storageGet(`bunda_${targetWeek}_${targetDayIndex}_jasmani`);
         if (savedJasmani) {
           const parsed = JSON.parse(savedJasmani);
           setActivityGoals((prev) => ({

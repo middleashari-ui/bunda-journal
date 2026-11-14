@@ -1,3 +1,4 @@
+import { storageGet } from '../../lib/storage/appStorage';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { BOOK_THEMES, BookThemeConfig, BookThemeId } from '../../types/bookPrint';
 import { UserProfile, PhotoMemory, JournalEntry } from '../../types';
@@ -29,7 +30,7 @@ const ENTRIES_KEY = 'bunda_entries';
 
 function readJSON<T>(key: string, fallback: T): T {
   try {
-    const raw = isMediaKey(key) ? mediaGet(key) : localStorage.getItem(key);
+    const raw = isMediaKey(key) ? mediaGet(key) : storageGet(key);
     if (!raw) return fallback;
     return JSON.parse(raw) as T;
   } catch {
@@ -63,7 +64,7 @@ const PrintBookView: React.FC = () => {
   const plan = useMemo(() => {
     let tier: BookTier = 'vip';
     try {
-      if (localStorage.getItem('bunda_user_tier') === 'essential') tier = 'essential';
+      if (storageGet('bunda_user_tier') === 'essential') tier = 'essential';
     } catch {}
     const spreadCount = getVisibleSpreadCount(tier);
     return { spreads: spreadCount, pages: spreadCount * 2 };

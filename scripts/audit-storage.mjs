@@ -14,6 +14,7 @@ const ALLOWED = new Set([
   'src/lib/mediaStore.ts',
   'src/lib/schemaMigration.ts',
   'src/lib/storageQuota.ts',
+  'src/lib/storage/appStorage.ts',
   'src/lib/authClient.ts',
   'src/lib/idb.ts',
   'src/main.tsx',

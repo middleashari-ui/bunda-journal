@@ -1,3 +1,4 @@
+import { storageGet } from './storage/appStorage';
 // ============================================================================
 // HABIT STORE — satu pintu untuk data kebiasaan harian:
 // suplemen, hidrasi, dan aktivitas jasmani.
@@ -52,7 +53,7 @@ const activityKey = (week: number, day: number) => `bunda_${week}_${day}_jasmani
 
 function readJson<T>(key: string): T | null {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = storageGet(key);
     if (!raw) return null;
     return JSON.parse(raw) as T;
   } catch {

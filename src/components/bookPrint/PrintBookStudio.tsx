@@ -1,3 +1,4 @@
+import { storageGet, storageSet } from '../../lib/storage/appStorage';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   BookThemeId, 
@@ -74,7 +75,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   // Theme state — dipakai juga oleh halaman /print supaya hasil cetak sama.
   const [selectedThemeId, setSelectedThemeId] = useState<BookThemeId>(() => {
     try {
-      const saved = localStorage.getItem('bunda_book_theme') as BookThemeId | null;
+      const saved = storageGet('bunda_book_theme') as BookThemeId | null;
       if (saved && BOOK_THEMES[saved]) return saved;
     } catch {}
     return 'kinfolk-sage';
@@ -83,7 +84,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
 
   useEffect(() => {
     try {
-      localStorage.setItem('bunda_book_theme', selectedThemeId);
+      storageSet('bunda_book_theme', selectedThemeId);
     } catch {}
   }, [selectedThemeId]);
 
@@ -92,7 +93,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
 
   // Document Lock state (Mode Jurnal: Terkunci / Read-Only vs Mode Edit)
   const [isDocumentLocked, setIsDocumentLocked] = useState<boolean>(() => {
-    return localStorage.getItem('bunda_book_locked') === 'true';
+    return storageGet('bunda_book_locked') === 'true';
   });
   const [lockToast, setLockToast] = useState<{ message: string; isLocked: boolean } | null>(null);
   const lockToastTimeoutRef = useRef<number | null>(null);
@@ -123,7 +124,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('bunda_book_locked', String(isDocumentLocked));
+    storageSet('bunda_book_locked', String(isDocumentLocked));
   }, [isDocumentLocked]);
 
   const [isMobile, setIsMobile] = useState<boolean>(() => {
@@ -202,7 +203,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
     // Browser (engine print native) yang mengubah HTML jadi PDF vector —
     // tidak ada raster 100 halaman, tidak ada render ulang di device.
     try {
-      localStorage.setItem('bunda_book_theme', selectedThemeId);
+      storageSet('bunda_book_theme', selectedThemeId);
     } catch {}
 
     const target = new URL(window.location.href);
@@ -396,7 +397,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
       // Check Left Page (Tracker / Journal notes)
       let hasDailyText = false;
       try {
-        const dailySaved = localStorage.getItem(`bunda_daily_w${weekNum}`);
+        const dailySaved = storageGet(`bunda_daily_w${weekNum}`);
         if (dailySaved) {
           const parsed = JSON.parse(dailySaved);
           if (Object.values(parsed).some(v => typeof v === 'string' && (v as string).trim().length > 0)) {

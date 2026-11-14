@@ -35,12 +35,25 @@ export interface SeedOptions {
   withPhoto?: boolean;
 }
 
-/** Isi data contoh: profil, 7 hari kebiasaan, catatan, mood. */
-export async function seedApp(page: Page, options: SeedOptions = {}) {
+/**
+ * Isi data contoh SEBELUM app boot (init script), bukan setelah halaman jalan.
+ * Menyemai setelah boot bisa kalah balapan dengan efek React yang menulis
+ * default, sehingga test sesekali mendarat di landing page.
+ */
+export async function seedApp(
+  page: Page,
+  options: SeedOptions = {}
+) {
   const { week = 19, withHabits = true, withNotes = true, withPhoto = false } = options;
 
-  await page.evaluate(
+  await page.addInitScript(
     ({ week, withHabits, withNotes, withPhoto, email }) => {
+      // Hanya sekali per tab: reload berikutnya tidak boleh menghapus data.
+      try {
+        if (sessionStorage.getItem('__bunda_seeded__')) return;
+        sessionStorage.setItem('__bunda_seeded__', '1');
+      } catch {}
+
       localStorage.clear();
       localStorage.setItem('bunda_is_paid', 'true');
       localStorage.setItem('bunda_is_onboarded', 'true');
@@ -130,7 +143,6 @@ export async function seedApp(page: Page, options: SeedOptions = {}) {
 /** Buka aplikasi dengan sesi siap pakai (tanpa backend). */
 export async function openApp(page: Page, path = '/') {
   await preparePage(page);
-  await page.goto(path, { waitUntil: 'domcontentloaded' });
   await seedApp(page);
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.goto(path, { waitUntil: 'domcontentloaded' });
 }

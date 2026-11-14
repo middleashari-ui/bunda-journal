@@ -16,9 +16,9 @@ Branch: `feat/journal-print-polish` (belum di-merge, production belum di-update)
 - Production: **masih versi lama**, sengaja belum disentuh
 - Service worker source: `v21` (live masih `v18`)
 - Test: `npx playwright test` → 27 lulus (25 langsung + 2 flaky yang lulus retry), 1 visual WebKit di-skip
-- Unit: `npm run test:unit` → 26 tes (habitStore, bookPages, batas catatan/emoji, migrasi skema)
+- Unit: `npm run test:unit` → 30 tes (habitStore, bookPages, appStorage, batas catatan/emoji, migrasi skema)
 - Bundle awal 918 KB → **628 KB** (buku, cetak, TabJurnal, TabProfil di-code-split; chunk gagal unduh di-retry sekali)
-- `npm run audit:storage` → laporan pemakaian `localStorage` langsung + cek kebocoran key media
+- `npm run audit:storage` → 235 → **79** pemanggilan langsung: 58 di file arsip `_legacy` + 21 di file WIP yang belum di-commit (payments/auth/onboarding). Kode yang sudah di-commit lewat `src/lib/storage/appStorage.ts`
 - Gate tier Essential sudah berkode tapi **mati**: `ESSENTIAL_GATE_ENABLED = false`
 - `npx tsc --noEmit` bersih; `npm run build` sukses
 - Skema data **v1** (`bunda_schema_version`) dengan migrasi index hari otomatis
@@ -74,7 +74,7 @@ Perbaikan:
    ```
 2. **Tes HP**: print → Save as PDF; kartu jadwal → Kirim ke Ayah.
 3. **Google Drive**: tambah `https://preview.bunda-journal.pages.dev` ke origins (opsional), lalu klik Backup sekali untuk consent.
-4. **Refactor Fase 1 (sisa)**: audit 235 titik `localStorage` langsung (25 file) → modul storage bertipe.
+4. **Refactor Fase 1**: selesai untuk kode yang sudah di-commit (`src/lib/storage/appStorage.ts`); 21 panggilan tersisa ada di file WIP yang belum di-commit.
 5. Gate tier Essential — hanya setelah keputusan harga.
 
 ## Keputusan yang menunggu (jangan dieksekusi tanpa tanya)

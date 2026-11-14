@@ -1,3 +1,4 @@
+import { storageGet, storageSet, storageRemove, storageClear } from './lib/storage/appStorage';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   TabType, 
@@ -82,12 +83,12 @@ const INITIAL_ENTRIES: JournalEntry[] = [];
 export default function App() {
   // App navigation & layout state
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    const paid = localStorage.getItem('bunda_is_paid') === 'true';
-    const onboarded = localStorage.getItem('bunda_is_onboarded') === 'true';
-    const logged = localStorage.getItem('bunda_isLoggedIn') !== 'false';
+    const paid = storageGet('bunda_is_paid') === 'true';
+    const onboarded = storageGet('bunda_is_onboarded') === 'true';
+    const logged = storageGet('bunda_isLoggedIn') !== 'false';
     // Sudah login dengan email+password (sesi D1) => boleh masuk.
     // Pembayaran hanya mengunci fitur OUTPUT (export PDF/hardcover), bukan pintu masuk.
-    const hasSession = !!localStorage.getItem('bunda_session_token');
+    const hasSession = !!storageGet('bunda_session_token');
     if (logged && hasSession) return true;
     return paid && onboarded && logged;
   });
@@ -104,12 +105,12 @@ export default function App() {
 
   // TC03 / TC08: Paid status
   const [isPaid, setIsPaid] = useState<boolean>(() => {
-    return localStorage.getItem('bunda_is_paid') === 'true';
+    return storageGet('bunda_is_paid') === 'true';
   });
 
   // User Membership Tier: 'essential' | 'vip' (Diambil dari Supabase & fallback lokal)
   const [userTier, setUserTier] = useState<'essential' | 'vip'>(() => {
-    const saved = localStorage.getItem('bunda_user_tier');
+    const saved = storageGet('bunda_user_tier');
     return (saved === 'vip') ? 'vip' : 'essential';
   });
 
@@ -118,13 +119,13 @@ export default function App() {
 
   // TC05: Mandatory Onboarding state
   const [isOnboarded, setIsOnboarded] = useState<boolean>(() => {
-    return localStorage.getItem('bunda_is_onboarded') === 'true';
+    return storageGet('bunda_is_onboarded') === 'true';
   });
 
   // Checkout gate modal state
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string>(() => {
-    return localStorage.getItem('bunda_user_email') || '';
+    return storageGet('bunda_user_email') || '';
   });
 
   // Modal login (email + password) — auth beneran, bukan flag localStorage
@@ -154,8 +155,8 @@ export default function App() {
         setSyncReady(true);
         return;
       }
-      localStorage.setItem('bunda_user_email', me.email);
-      localStorage.setItem('bunda_user_tier', me.tier === 'vip' ? 'vip' : 'essential');
+      storageSet('bunda_user_email', me.email);
+      storageSet('bunda_user_tier', me.tier === 'vip' ? 'vip' : 'essential');
 
       // MODE LOKAL (USP): jurnal tidak pernah ditarik atau didorong ke D1.
       // Server hanya dipakai untuk validasi sesi + tier akun.
@@ -183,14 +184,14 @@ export default function App() {
         return;
       }
       // Server masih kosong tapi device ini punya data -> dorong ke D1 (jangan hilang)
-      if (ok && !exists && localStorage.getItem('bunda_profile')) {
+      if (ok && !exists && storageGet('bunda_profile')) {
         await pushUserData(token, collectUserPayload());
       }
       // Kalau profil sudah ada (dari cache / dari D1), jangan minta isi ulang.
       try {
-        const prof = JSON.parse(localStorage.getItem('bunda_profile') || '{}');
+        const prof = JSON.parse(storageGet('bunda_profile') || '{}');
         if (prof && prof.name) {
-          localStorage.setItem('bunda_is_onboarded', 'true');
+          storageSet('bunda_is_onboarded', 'true');
           setIsOnboarded(true);
         }
       } catch {}
@@ -217,7 +218,7 @@ export default function App() {
       if (!tk) return;
       if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
       // antrean offline = snapshot ada
-      if (!localStorage.getItem('bunda_offline_snapshot')) return;
+      if (!storageGet('bunda_offline_snapshot')) return;
       flushing = true;
       try {
         const ok = await flushOfflineEdits(tk);
@@ -281,7 +282,7 @@ export default function App() {
 
   // Login sukses -> simpan sesi + ambil data milik email itu (bukan data device)
   const handleLoginSuccess = async (user: AuthUser) => {
-    const prevEmail = (localStorage.getItem('bunda_user_email') || '').trim().toLowerCase();
+    const prevEmail = (storageGet('bunda_user_email') || '').trim().toLowerCase();
     saveAuthUser(user);
     try {
       if (isJournalLocalOnly()) {
@@ -289,7 +290,7 @@ export default function App() {
         // terbawa ke akun baru di device yang sama.
         if (prevEmail && prevEmail !== (user.email || '').trim().toLowerCase()) {
           wipeLocalJournalData();
-          localStorage.removeItem('bunda_is_onboarded');
+          storageRemove('bunda_is_onboarded');
         }
       } else {
         const { exists, payload } = await pullUserData(user.token);
@@ -301,7 +302,7 @@ export default function App() {
         } else {
           // akun lain di device bekas -> mulai bersih, JANGAN warisin data orang lain
           wipeLocalJournalData();
-          localStorage.removeItem('bunda_is_onboarded');
+          storageRemove('bunda_is_onboarded');
         }
       }
     } catch {}
@@ -311,19 +312,19 @@ export default function App() {
 
   // Core Pregnancy Data State
   const [week, setWeek] = useState<number>(() => {
-    const saved = localStorage.getItem('bunda_week');
+    const saved = storageGet('bunda_week');
     // Default = minggu kehamilan HARI INI (dinamis), bukan 32 hardcode
     return saved ? parseInt(saved, 10) : getTodayPosition().week;
   });
 
   const [journalText, setJournalText] = useState<string>(() => {
-    return localStorage.getItem('bunda_journal_text') || '';
+    return storageGet('bunda_journal_text') || '';
   });
   const [journalSaved, setJournalSaved] = useState<boolean>(true);
 
   const [habits, setHabits] = useState<HabitState>(() => {
     try {
-      const saved = localStorage.getItem('bunda_habits');
+      const saved = storageGet('bunda_habits');
       return saved ? JSON.parse(saved) : {
         water: false,
         vitamins: false,
@@ -344,7 +345,7 @@ export default function App() {
 
   const [selectedMood, setSelectedMood] = useState<number>(() => {
     try {
-      const saved = localStorage.getItem('bunda_mood');
+      const saved = storageGet('bunda_mood');
       return saved ? parseInt(saved, 10) : 0;
     } catch {
       return 0;
@@ -362,7 +363,7 @@ export default function App() {
 
   const [pastEntries, setPastEntries] = useState<JournalEntry[]>(() => {
     try {
-      const saved = localStorage.getItem('bunda_entries');
+      const saved = storageGet('bunda_entries');
       return saved ? JSON.parse(saved) : INITIAL_ENTRIES;
     } catch {
       return INITIAL_ENTRIES;
@@ -371,7 +372,7 @@ export default function App() {
 
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
-      const saved = localStorage.getItem('bunda_profile');
+      const saved = storageGet('bunda_profile');
       return saved ? JSON.parse(saved) : {
         name: '',
         babyNickname: '',
@@ -399,10 +400,10 @@ export default function App() {
     if (!hpl) return;
     const d = new Date(hpl);
     if (Number.isNaN(d.getTime())) return;
-    if (localStorage.getItem('bunda_week_hpl') === hpl) return;
+    if (storageGet('bunda_week_hpl') === hpl) return;
     const pos = getTodayPosition(new Date(), d);
-    localStorage.setItem('bunda_week_hpl', hpl);
-    localStorage.setItem('bunda_week', String(pos.week));
+    storageSet('bunda_week_hpl', hpl);
+    storageSet('bunda_week', String(pos.week));
     setWeek(pos.week);
   }, [userProfile.hplDate]);
 
@@ -463,7 +464,7 @@ export default function App() {
     };
   }, []);
   const [reminderSettings, setReminderSettings] = useState<ReminderSettings>(() => {
-    const saved = localStorage.getItem('bunda_reminder_settings');
+    const saved = storageGet('bunda_reminder_settings');
     return saved ? JSON.parse(saved) : {
       enabled: true,
       vitaminTime: '08:00',
@@ -513,10 +514,10 @@ export default function App() {
       if (path === '/jurnal' || hash === '#/jurnal') {
         setIsSuccessPage(false);
         // Jangan buka app tanpa dasar: wajib sesi valid, atau sudah bayar + isi form.
-        const hasSession = !!localStorage.getItem('bunda_session_token');
-        const paidNow = localStorage.getItem('bunda_is_paid') === 'true';
-        const onboardedNow = localStorage.getItem('bunda_is_onboarded') === 'true';
-        const loggedNow = localStorage.getItem('bunda_isLoggedIn') !== 'false';
+        const hasSession = !!storageGet('bunda_session_token');
+        const paidNow = storageGet('bunda_is_paid') === 'true';
+        const onboardedNow = storageGet('bunda_is_onboarded') === 'true';
+        const loggedNow = storageGet('bunda_isLoggedIn') !== 'false';
         if ((loggedNow && hasSession) || (paidNow && onboardedNow && loggedNow)) {
           setIsLoggedIn(true);
           setActiveTab('jurnal');
@@ -525,8 +526,8 @@ export default function App() {
 
       // Intercept direct access to /app or #/app
       if (path === '/app' || hash === '#/app') {
-        const paid = localStorage.getItem('bunda_is_paid') === 'true';
-        const onboarded = localStorage.getItem('bunda_is_onboarded') === 'true';
+        const paid = storageGet('bunda_is_paid') === 'true';
+        const onboarded = storageGet('bunda_is_onboarded') === 'true';
 
         if (!paid && !PAYMENT_PAUSED) {
           // Cecegat akses /app ke checkout modal
@@ -556,12 +557,12 @@ export default function App() {
   // Intercept direct access to /app or #/app and sync Tier from Supabase
   useEffect(() => {
     // Sinkronisasi status tier dari Supabase jika user punya email
-    const email = localStorage.getItem('bunda_user_email');
+    const email = storageGet('bunda_user_email');
     if (email) {
       fetchUserTierFromSupabase(email).then((tierFromDb) => {
         if (tierFromDb === 'vip' || tierFromDb === 'essential') {
           setUserTier(tierFromDb);
-          localStorage.setItem('bunda_user_tier', tierFromDb);
+          storageSet('bunda_user_tier', tierFromDb);
         }
       });
     }
@@ -569,27 +570,27 @@ export default function App() {
 
   // Save changes to localStorage
   useEffect(() => {
-    localStorage.setItem('bunda_isLoggedIn', String(isLoggedIn));
+    storageSet('bunda_isLoggedIn', String(isLoggedIn));
   }, [isLoggedIn]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_week', String(week));
+    storageSet('bunda_week', String(week));
   }, [week]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_journal_text', journalText);
+    storageSet('bunda_journal_text', journalText);
   }, [journalText]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_habits', JSON.stringify(habits));
+    storageSet('bunda_habits', JSON.stringify(habits));
   }, [habits]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_reminder_settings', JSON.stringify(reminderSettings));
+    storageSet('bunda_reminder_settings', JSON.stringify(reminderSettings));
   }, [reminderSettings]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_mood', String(selectedMood));
+    storageSet('bunda_mood', String(selectedMood));
   }, [selectedMood]);
 
   useEffect(() => {
@@ -599,11 +600,11 @@ export default function App() {
   }, [photos]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_entries', JSON.stringify(pastEntries));
+    storageSet('bunda_entries', JSON.stringify(pastEntries));
   }, [pastEntries]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_profile', JSON.stringify(userProfile));
+    storageSet('bunda_profile', JSON.stringify(userProfile));
   }, [userProfile]);
 
   // Periodic Reminder Checker (every 30s)
@@ -618,9 +619,9 @@ export default function App() {
       const todayDateStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
 
       // Check Vitamin Reminder
-      const lastVitaminAlert = localStorage.getItem('bunda_last_vitamin_date');
+      const lastVitaminAlert = storageGet('bunda_last_vitamin_date');
       if (currentTimeStr === reminderSettings.vitaminTime && lastVitaminAlert !== todayDateStr) {
-        localStorage.setItem('bunda_last_vitamin_date', todayDateStr);
+        storageSet('bunda_last_vitamin_date', todayDateStr);
         if (!habits.vitamins) {
           if (reminderSettings.soundEnabled) playGentleChime();
           sendSystemNotification(
@@ -632,9 +633,9 @@ export default function App() {
       }
 
       // Check Journal & Night Reflection Reminder
-      const lastJournalAlert = localStorage.getItem('bunda_last_journal_date');
+      const lastJournalAlert = storageGet('bunda_last_journal_date');
       if (currentTimeStr === reminderSettings.journalTime && lastJournalAlert !== todayDateStr) {
-        localStorage.setItem('bunda_last_journal_date', todayDateStr);
+        storageSet('bunda_last_journal_date', todayDateStr);
         if (reminderSettings.soundEnabled) playGentleChime();
         sendSystemNotification(
           'Waktunya Jurnal Bunda',
@@ -666,13 +667,13 @@ export default function App() {
     };
 
     const handleUserInteraction = () => {
-      localStorage.setItem('bunda_lastActive', Date.now().toString());
+      storageSet('bunda_lastActive', Date.now().toString());
       clearTimeout(idleTimer);
       idleTimer = setTimeout(resetToToday, IDLE_TIMEOUT);
     };
 
     // Cek durasi saat mount: jika ditinggal >5 menit, langsung arahkan ke hari ini
-    const lastActive = localStorage.getItem('bunda_lastActive');
+    const lastActive = storageGet('bunda_lastActive');
     if (lastActive && Date.now() - parseInt(lastActive, 10) > IDLE_TIMEOUT) {
       resetToToday();
     }
@@ -683,7 +684,7 @@ export default function App() {
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        const last = localStorage.getItem('bunda_lastActive');
+        const last = storageGet('bunda_lastActive');
         if (last && Date.now() - parseInt(last, 10) > IDLE_TIMEOUT) {
           resetToToday();
         }
@@ -722,10 +723,10 @@ export default function App() {
             // plan di URL cuma penanda. Saat payment paused, jangan kasih tier/paid.
             if (plan && !PAYMENT_PAUSED) {
               const tier = plan === 'essential' ? 'essential' : 'vip';
-              localStorage.setItem('bunda_is_paid', 'true');
-              localStorage.setItem('bunda_user_tier', tier);
+              storageSet('bunda_is_paid', 'true');
+              storageSet('bunda_user_tier', tier);
             }
-            localStorage.setItem('bunda_isLoggedIn', 'true');
+            storageSet('bunda_isLoggedIn', 'true');
           }
           try { window.history.replaceState({}, '', window.location.pathname); } catch {}
           window.location.reload();
@@ -798,7 +799,7 @@ export default function App() {
   const handleSaveCurrentEntry = () => {
     // 1. Sync daily notes of the current week to main journalText if needed
     try {
-      const savedDaily = localStorage.getItem(`bunda_daily_w${week}`);
+      const savedDaily = storageGet(`bunda_daily_w${week}`);
       let compiledText = journalText;
       if (savedDaily) {
         const parsed = JSON.parse(savedDaily);
@@ -905,12 +906,12 @@ export default function App() {
             onOpenJurnal={() => {
               setIsSuccessPage(false);
               // Paid hanya kalau SuccessPage sudah membuktikannya ke server.
-              if (localStorage.getItem('bunda_is_paid') === 'true') setIsPaid(true);
+              if (storageGet('bunda_is_paid') === 'true') setIsPaid(true);
               // Login hanya kalau ada sesi valid ATAU sudah bayar + sudah isi form.
-              const hasSession = !!localStorage.getItem('bunda_session_token');
-              const paidNow = localStorage.getItem('bunda_is_paid') === 'true';
-              const onboardedNow = localStorage.getItem('bunda_is_onboarded') === 'true';
-              const loggedNow = localStorage.getItem('bunda_isLoggedIn') !== 'false';
+              const hasSession = !!storageGet('bunda_session_token');
+              const paidNow = storageGet('bunda_is_paid') === 'true';
+              const onboardedNow = storageGet('bunda_is_onboarded') === 'true';
+              const loggedNow = storageGet('bunda_isLoggedIn') !== 'false';
               if ((loggedNow && hasSession) || (paidNow && onboardedNow && loggedNow)) {
                 setIsLoggedIn(true);
               }
@@ -938,7 +939,7 @@ export default function App() {
               }
               setIsLoggedIn(true);
               setActiveTab('home');
-              localStorage.setItem('bunda_isLoggedIn', 'true');
+              storageSet('bunda_isLoggedIn', 'true');
             }} 
           />
         ) : (
@@ -1052,16 +1053,16 @@ export default function App() {
                       setIsLoggedIn(false);
                       setIsPaid(false);
                       setUserTier('essential');
-                      localStorage.removeItem('bunda_is_paid');
-                      localStorage.removeItem('bunda_user_email');
+                      storageRemove('bunda_is_paid');
+                      storageRemove('bunda_user_email');
                       notifyUserChanged('');
-                      localStorage.removeItem('bunda_user_tier');
-                      localStorage.setItem('bunda_isLoggedIn', 'false');
+                      storageRemove('bunda_user_tier');
+                      storageSet('bunda_isLoggedIn', 'false');
                       setIsLoginOpen(false);
                       showToast('Berhasil keluar akun. Data Bunda tetap tersimpan.');
                     }}
                     onResetAll={() => {
-                      localStorage.clear();
+                      storageClear();
                       setUserProfile({
                         name: '',
                         babyNickname: '',
@@ -1224,12 +1225,12 @@ export default function App() {
             setIsPaid(true);
             setUserEmail(email);
             setUserTier(tier);
-            localStorage.setItem('bunda_is_paid', 'true');
-            localStorage.setItem('bunda_user_email', email);
+            storageSet('bunda_is_paid', 'true');
+            storageSet('bunda_user_email', email);
             notifyUserChanged(email);
-            localStorage.setItem('bunda_user_tier', tier);
+            storageSet('bunda_user_tier', tier);
             if (typeof consent === 'boolean') {
-              localStorage.setItem('bunda_promo_consent', consent ? 'true' : 'false');
+              storageSet('bunda_promo_consent', consent ? 'true' : 'false');
             }
 
             // Sinkronisasi background ke Supabase
@@ -1267,10 +1268,10 @@ export default function App() {
             setIsOnboarded(true);
             setIsLoggedIn(true);
             setActiveTab('home');
-            localStorage.setItem('bunda_is_onboarded', 'true');
-            localStorage.setItem('bunda_isLoggedIn', 'true');
-            localStorage.setItem('bunda_week', String(data.week));
-            localStorage.setItem('bunda_profile', JSON.stringify(updatedProfile));
+            storageSet('bunda_is_onboarded', 'true');
+            storageSet('bunda_isLoggedIn', 'true');
+            storageSet('bunda_week', String(data.week));
+            storageSet('bunda_profile', JSON.stringify(updatedProfile));
 
             // Simpan profil ke Supabase
             syncProfileToSupabase({

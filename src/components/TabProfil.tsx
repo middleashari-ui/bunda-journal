@@ -1,3 +1,4 @@
+import { storageGet, storageSet, storageClear } from '../lib/storage/appStorage';
 import React, { useState, useRef, useEffect } from 'react';
 import { UserProfile, JournalEntry, PhotoMemory, HabitState, ReminderSettings } from '../types';
 import { PRICING_CONFIG } from '../config/pricing';
@@ -264,7 +265,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
   const handleExportData = () => {
     let usgRecords = [];
     try {
-      const raw = localStorage.getItem('bunda_fetal_usg_records');
+      const raw = storageGet('bunda_fetal_usg_records');
       if (raw) usgRecords = JSON.parse(raw);
     } catch {
       // ignore
@@ -272,7 +273,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
 
     const backupData = {
       profile: userProfile,
-      currentWeek: Number(localStorage.getItem('bunda_week') || 12),
+      currentWeek: Number(storageGet('bunda_week') || 12),
       journalEntries,
       photos,
       habits,
@@ -301,10 +302,10 @@ export const TabProfil: React.FC<TabProfilProps> = ({
     reader.onload = (evt) => {
       try {
         const data = JSON.parse(evt.target?.result as string);
-        if (data.profile) localStorage.setItem('bunda_user_profile', JSON.stringify(data.profile));
-        if (data.currentWeek) localStorage.setItem('bunda_week', String(data.currentWeek));
-        if (data.journalEntries) localStorage.setItem('bunda_journal_entries', JSON.stringify(data.journalEntries));
-        if (data.photos) localStorage.setItem('bunda_user_photos', JSON.stringify(data.photos));
+        if (data.profile) storageSet('bunda_user_profile', JSON.stringify(data.profile));
+        if (data.currentWeek) storageSet('bunda_week', String(data.currentWeek));
+        if (data.journalEntries) storageSet('bunda_journal_entries', JSON.stringify(data.journalEntries));
+        if (data.photos) storageSet('bunda_user_photos', JSON.stringify(data.photos));
         if (onShowToast) onShowToast('Data JSON berhasil diimpor & dipulihkan!');
         setTimeout(() => window.location.reload(), 800);
       } catch {
@@ -819,7 +820,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
             const data: Record<string, any> = {};
             for (let i = 0; i < localStorage.length; i++) {
               const k = localStorage.key(i);
-              if (k) data[k] = localStorage.getItem(k);
+              if (k) data[k] = storageGet(k);
             }
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -876,7 +877,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
             if (onResetAll) {
               onResetAll();
             } else {
-              localStorage.clear();
+              storageClear();
               window.location.hash = '';
               window.location.reload();
             }
@@ -992,9 +993,9 @@ export const TabProfil: React.FC<TabProfilProps> = ({
               <button
                 onClick={() => {
                   if (kicksCount > 0) {
-                    const existing = JSON.parse(localStorage.getItem('bunda_kick_history') || '[]');
+                    const existing = JSON.parse(storageGet('bunda_kick_history') || '[]');
                     existing.push({ date: new Date().toISOString(), count: kicksCount });
-                    localStorage.setItem('bunda_kick_history', JSON.stringify(existing));
+                    storageSet('bunda_kick_history', JSON.stringify(existing));
                     if (onShowToast) onShowToast(`${kicksCount} gerakan janin tersimpan di riwayat!`);
                   }
                   setShowKickCounter(false);
@@ -1040,9 +1041,9 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                   if (contractionTimerRef.current) clearInterval(contractionTimerRef.current);
                   setIsContractionRunning(false);
                   if (contractionSeconds > 0) {
-                    const existing = JSON.parse(localStorage.getItem('bunda_contraction_history') || '[]');
+                    const existing = JSON.parse(storageGet('bunda_contraction_history') || '[]');
                     existing.push({ date: new Date().toISOString(), durationSeconds: contractionSeconds });
-                    localStorage.setItem('bunda_contraction_history', JSON.stringify(existing));
+                    storageSet('bunda_contraction_history', JSON.stringify(existing));
                     if (onShowToast) onShowToast(`Kontraksi ${contractionSeconds} detik tercatat!`);
                   }
                 } else {

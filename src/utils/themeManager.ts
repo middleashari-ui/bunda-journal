@@ -1,3 +1,4 @@
+import { storageGet, storageSet } from '../lib/storage/appStorage';
 export type ColorThemeId = 'sage' | 'sand' | 'rose';
 
 export interface ColorThemeOption {
@@ -63,12 +64,12 @@ export function applyAppColorTheme(themeId: ColorThemeId): void {
   root.style.setProperty('--color-appBg', theme.bg);
 
   try {
-    localStorage.setItem('bunda_app_color_theme', themeId);
+    storageSet('bunda_app_color_theme', themeId);
   } catch {}
 }
 
 export function getSavedAppColorTheme(): ColorThemeId {
   if (typeof localStorage === 'undefined') return 'sage';
-  const saved = localStorage.getItem('bunda_app_color_theme') as ColorThemeId;
+  const saved = storageGet('bunda_app_color_theme') as ColorThemeId;
   return saved && APP_COLOR_THEMES[saved] ? saved : 'sage';
 }

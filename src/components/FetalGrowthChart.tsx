@@ -1,3 +1,4 @@
+import { storageGet, storageSet } from '../lib/storage/appStorage';
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   ResponsiveContainer,
@@ -90,7 +91,7 @@ export const FetalGrowthChart: React.FC<FetalGrowthChartProps> = ({
   const [showLogModal, setShowLogModal] = useState(false);
   const [records, setRecords] = useState<FetalUltrasoundRecord[]>(() => {
     try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_USG_KEY);
+      const saved = storageGet(LOCAL_STORAGE_USG_KEY);
       if (saved) return JSON.parse(saved);
     } catch {
       // Fallback
@@ -111,7 +112,7 @@ export const FetalGrowthChart: React.FC<FetalGrowthChartProps> = ({
 
   useEffect(() => {
     try {
-      localStorage.setItem(LOCAL_STORAGE_USG_KEY, JSON.stringify(records));
+      storageSet(LOCAL_STORAGE_USG_KEY, JSON.stringify(records));
     } catch {
       // Ignore
     }

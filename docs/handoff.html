@@ -45,7 +45,7 @@
     <tr><th>Item</th><th>Kondisi</th></tr>
     <tr><td>Preview</td><td><code>https://preview.bunda-journal.pages.dev</code> (landing + screenshot terbaru)</td></tr>
     <tr><td>Production</td><td>versi lama, sengaja belum disentuh</td></tr>
-    <tr><td>Test</td><td>27 lulus (25 langsung + 2 flaky retry) · 1 visual WebKit di-skip · unit 26 tes</td></tr>
+    <tr><td>Test</td><td>27 lulus · 1 visual WebKit di-skip · unit 30 tes · seed sebelum boot (tanpa race)</td></tr>
     <tr><td>Bundle</td><td>app awal ±628 KB (buku/cetak/tab besar di-code-split)</td></tr>
     <tr><td>Type check</td><td><code>npx tsc --noEmit</code> bersih</td></tr>
     <tr><td>Service worker</td><td>source v21, live v18</td></tr>
@@ -58,7 +58,7 @@
     <li>Deploy production (lihat perintah di bawah) — setelah tes HP.</li>
     <li>Tes HP: print → <em>Save as PDF</em>; kartu jadwal → <em>Kirim ke Ayah</em>.</li>
     <li>Google Drive: tambahkan <code>https://preview.bunda-journal.pages.dev</code> ke Authorized JavaScript origins, lalu klik Backup sekali untuk consent.</li>
-    <li>Refactor Fase 1 (sisa): audit 235 titik <code>localStorage</code> langsung (25 file) → modul storage bertipe.</li>
+    <li>Refactor Fase 1 selesai untuk kode yang sudah di-commit: akses data lewat <code>src/lib/storage/appStorage.ts</code>. Sisa 58 panggilan di file arsip <code>_legacy</code> + 21 di file WIP yang belum di-commit.</li>
   </ol>
 
   <pre>git checkout main

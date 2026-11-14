@@ -1,3 +1,4 @@
+import { storageGet, storageSet } from '../lib/storage/appStorage';
 import React, { useRef, useState, useEffect } from 'react';
 import { HabitState, PhotoMemory, JournalEntry, UserProfile } from '../types';
 import { getWeekData } from '../data/pregnancyWeeks';
@@ -136,7 +137,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   // -------------------------------------------------------------
   const [dailyNotes, setDailyNotes] = useState<Record<string, string>>(() => {
     try {
-      const saved = localStorage.getItem(`bunda_daily_w${week}`);
+      const saved = storageGet(`bunda_daily_w${week}`);
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
@@ -152,7 +153,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
 
   const [momStats, setMomStats] = useState(() => {
     try {
-      const saved = localStorage.getItem(`bunda_momstats_w${week}`);
+      const saved = storageGet(`bunda_momstats_w${week}`);
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
@@ -273,7 +274,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     const dayKeys = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
     for (let i = 0; i < 7; i++) {
       try {
-        const saved = localStorage.getItem(`bunda_${w}_${i}_catatan`);
+        const saved = storageGet(`bunda_${w}_${i}_catatan`);
         if (saved) {
           result[i] = JSON.parse(saved);
           continue;
@@ -671,7 +672,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   // Onboarding 8-Step Interactive Tutorial State (bunda_onboarding_done)
   const [showOnboardingTutorial, setShowOnboardingTutorial] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('bunda_onboarding_done') !== 'true';
+      return storageGet('bunda_onboarding_done') !== 'true';
     } catch {
       return false;
     }
@@ -691,7 +692,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     const list = [];
     try {
       for (let w = 1; w <= 42; w++) {
-        const raw = localStorage.getItem(`bunda_momstats_w${w}`);
+        const raw = storageGet(`bunda_momstats_w${w}`);
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed?.doctorNote || parsed?.weight || parsed?.waist || parsed?.bloodPressure) {
@@ -928,7 +929,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     // MVP email-only: sync baby_dob (tanggal lahir) untuk segmentasi promo 0-1th. Fire-and-forget.
     if (bab4Data.birthDate) {
       try {
-        const email = localStorage.getItem('bunda_user_email') || '';
+        const email = storageGet('bunda_user_email') || '';
         if (email) syncBabyDobToSupabase(email, bab4Data.birthDate);
       } catch {}
     }
@@ -944,7 +945,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   useEffect(() => {
     flushAllPending();
     try {
-      const saved = localStorage.getItem(`bunda_daily_w${week}`);
+      const saved = storageGet(`bunda_daily_w${week}`);
       if (saved) {
         setDailyNotes(JSON.parse(saved));
       } else {
@@ -962,7 +963,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
         });
       }
 
-      const savedStats = localStorage.getItem(`bunda_momstats_w${week}`);
+      const savedStats = storageGet(`bunda_momstats_w${week}`);
       if (savedStats) {
         setMomStats(JSON.parse(savedStats));
       } else {
@@ -989,7 +990,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
   // (dibaca juga oleh buku jurnal & widget Beranda).
   const [weekMoods, setWeekMoods] = useState<Array<number | null>>(() => {
     try {
-      const raw = localStorage.getItem(`bunda_daily_moods_w${week}`);
+      const raw = storageGet(`bunda_daily_moods_w${week}`);
       const arr = raw ? JSON.parse(raw) : [];
       return Array.from({ length: 7 }, (_, i) => (typeof arr?.[i] === 'number' ? arr[i] : null));
     } catch {
@@ -999,7 +1000,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(`bunda_daily_moods_w${week}`);
+      const raw = storageGet(`bunda_daily_moods_w${week}`);
       const arr = raw ? JSON.parse(raw) : [];
       setWeekMoods(Array.from({ length: 7 }, (_, i) => (typeof arr?.[i] === 'number' ? arr[i] : null)));
     } catch {
@@ -2970,7 +2971,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
         onFinish={() => {
           setShowOnboardingTutorial(false);
           try {
-            localStorage.setItem('bunda_onboarding_done', 'true');
+            storageSet('bunda_onboarding_done', 'true');
           } catch {}
           setTimeout(() => {
             const textarea = document.getElementById('textarea-catatan-harian');
