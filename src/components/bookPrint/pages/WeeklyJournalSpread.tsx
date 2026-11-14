@@ -5,12 +5,21 @@ import { getWeekDatesMonday, fmtDayMonth, fmtWeekRange } from '../../../lib/preg
 import { BookThemeConfig } from '../../../types/bookPrint';
 import { PhotoMemory, JournalEntry } from '../../../types';
 import { Camera, Check, Edit2 } from 'lucide-react';
-import { readDayHabits, isHabitDone, toggleHabitDone, getWeekHabits, getWeekHabitScore, writeActivity } from '../../../lib/habitStore';
+import { readDayHabits, isHabitDone, toggleHabitDone, getWeekHabits, getWeekHabitScore, setSupplementTaken, writeActivity } from '../../../lib/habitStore';
 import { DAILY_NOTE_MAX_CHARS, DAILY_NOTE_LINE_CHARS, clampDailyNote } from '../../../config/journal';
 
 // Batas catatan harian diambil dari satu sumber: src/config/journal.ts
 
 const MONTHS_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+// Suplemen yang dipakai Beranda (id = key di bunda_{week}_{day}_suplemen)
+const SUPPLEMENT_ROWS: Array<{ id: string; label: string }> = [
+  { id: 'asamFolat', label: 'Asam folat' },
+  { id: 'vitaminD', label: 'Vit D' },
+  { id: 'dha', label: 'DHA' },
+  { id: 'kalsium', label: 'Kalsium' },
+  { id: 'zatBesi', label: 'Zat besi' },
+];
 
 /** "2026-11-06" -> "6 Nov 2026" (format yang dipakai benchmark). */
 function formatDisplayDate(raw: string): string {
@@ -174,7 +183,9 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
         const newChecks: Record<string, boolean> = {};
         for (let d = 0; d < 7; d += 1) {
           const dayHabits = readDayHabits(week, d);
-          newChecks[`vit-${d}`] = isHabitDone(dayHabits, 'vitamin');
+          SUPPLEMENT_ROWS.forEach((sup) => {
+            newChecks[`${sup.id}-${d}`] = dayHabits.supplements[sup.id] === true;
+          });
           newChecks[`water-${d}`] = isHabitDone(dayHabits, 'water');
           newChecks[`walk-${d}`] = isHabitDone(dayHabits, 'activity');
         }
@@ -237,15 +248,24 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
   const [dailyMoods, setDailyMoods] = useState<(number | null)[]>([null, null, null, null, null, null, null]);
 
   const toggleCheck = (id: string) => {
-    // id: `vit-3`, `water-3`, `walk-3` — ditulis ke Habit Store, bukan state lokal saja.
-    const [row, dayRaw] = id.split('-');
-    const dayIndex = Number(dayRaw);
+    // id: `asamFolat-3`, `water-3`, `walk-3` — ditulis ke Habit Store.
+    const lastDash = id.lastIndexOf('-');
+    const row = id.slice(0, lastDash);
+    const dayIndex = Number(id.slice(lastDash + 1));
     if (!Number.isFinite(dayIndex)) return;
 
-    const kind = row === 'vit' ? 'vitamin' : row === 'water' ? 'water' : 'activity';
     const current = readDayHabits(week, dayIndex);
-    const nextDone = !isHabitDone(current, kind);
 
+    const supplement = SUPPLEMENT_ROWS.find((s) => s.id === row);
+    if (supplement) {
+      const nextDone = current.supplements[supplement.id] !== true;
+      setSupplementTaken(week, dayIndex, supplement.id, nextDone);
+      setCheckedItems((prev) => ({ ...prev, [id]: nextDone }));
+      return;
+    }
+
+    const kind = row === 'water' ? 'water' : 'activity';
+    const nextDone = !isHabitDone(current, kind);
     toggleHabitDone(week, dayIndex, kind, nextDone);
     setCheckedItems((prev) => ({ ...prev, [id]: nextDone }));
   };
@@ -589,7 +609,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                         <span className="text-[9.5px] font-semibold uppercase" style={{ color: theme.mutedText }}>
                           {h.dayName.slice(0, 3)}
                         </span>
-                        <span className="text-[8px] leading-none" style={{ color: theme.mutedText }}>
+                        <span className="text-[9px] leading-none font-semibold" style={{ color: theme.textColor }}>
                           {weekDates[i] ? weekDates[i]!.getDate() : '—'}
                         </span>
                         <div className="flex items-center gap-1 mt-0.5">
@@ -607,21 +627,6 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     ))}
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 px-2 pb-1.5 text-[6.5px] font-sans" style={{ color: theme.mutedText }}>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.primaryColor }} />
-                      vitamin
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#7FA6BC' }} />
-                      air
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.secondaryColor }} />
-                      gerak
-                    </span>
-                    <span>· angka = liter air &amp; jam tidur</span>
-                  </div>
                 </div>
               );
             })()}
@@ -655,7 +660,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                         </thead>
                         <tbody className="text-[8.5px]">
                           {[
-                            { key: 'vit', label: 'Vitamin' },
+                            ...SUPPLEMENT_ROWS.map((s) => ({ key: s.id, label: s.label })),
                             { key: 'water', label: 'Air 2L' },
                             { key: 'walk', label: 'Aktivitas' },
                           ].map((row) => (
