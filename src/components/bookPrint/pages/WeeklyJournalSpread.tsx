@@ -355,7 +355,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
             {/* Cerita Harian (Senin - Minggu) */}
             <div className="mb-1.5">
               <div 
-                className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
+                className="border py-0.5 text-center text-[9.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
                 style={{ 
                   backgroundColor: theme.headerBg, 
                   borderColor: theme.borderColor, 
@@ -506,6 +506,9 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
               );
             })()}
 
+            {/* Baris: Pemantauan (kiri) + Ceklis (kanan) */}
+            <div className="flex gap-2 mb-2 items-stretch">
+
             {/* Pemantauan minggu ini — activity rings + strip 7 hari */}
             {(() => {
               const habits = getWeekHabits(week);
@@ -519,7 +522,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
 
               return (
                 <div
-                  className="mb-2 border rounded-xs overflow-hidden"
+                  className="flex-1 min-w-0 border rounded-xs overflow-hidden"
                   style={{ borderColor: theme.borderColor }}
                 >
                   <div
@@ -535,7 +538,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                   </div>
 
                   <div className="flex items-center gap-3 px-2 pt-1.5">
-                    <svg width="134" height="134" viewBox="0 0 80 80" aria-label={`Ritme ${score.overallPct}%`}>
+                    <svg width="132" height="132" viewBox="0 0 80 80" aria-label={`Ritme ${score.overallPct}%`}>
                       {rings.map((ring) => {
                         const circ = 2 * Math.PI * ring.r;
                         const filled = (Math.max(0, Math.min(100, ring.pct)) / 100) * circ;
@@ -564,14 +567,14 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                       </text>
                     </svg>
 
-                    <div className="flex-1 max-w-[190px] flex flex-col gap-1">
+                    <div className="flex-1 min-w-0 flex flex-col gap-1">
                       {rings.map((ring) => (
                         <div key={ring.label} className="flex items-center justify-between">
-                          <span className="flex items-center gap-1.5 text-[9px] font-sans" style={{ color: theme.mutedText }}>
+                          <span className="flex items-center gap-1.5 text-[10px] font-sans" style={{ color: theme.mutedText }}>
                             <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ring.color }} />
                             {ring.label}
                           </span>
-                          <span className="text-[12px] font-bold" style={{ color: theme.textColor }}>
+                          <span className="text-[13px] font-bold" style={{ color: theme.textColor }}>
                             {ring.pct}%
                           </span>
                         </div>
@@ -583,10 +586,10 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                   <div className="flex items-start justify-between gap-1 px-2 pt-1.5 pb-1">
                     {habits.map((h, i) => (
                       <div key={h.dayIndex} className="flex-1 flex flex-col items-center gap-0.5">
-                        <span className="text-[8.5px] font-semibold uppercase" style={{ color: theme.mutedText }}>
+                        <span className="text-[9.5px] font-semibold uppercase" style={{ color: theme.mutedText }}>
                           {h.dayName.slice(0, 3)}
                         </span>
-                        <span className="text-[7px] leading-none" style={{ color: theme.mutedText }}>
+                        <span className="text-[8px] leading-none" style={{ color: theme.mutedText }}>
                           {weekDates[i] ? weekDates[i]!.getDate() : '—'}
                         </span>
                         <div className="flex items-center gap-1 mt-0.5">
@@ -594,17 +597,17 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#7FA6BC', opacity: h.waterDone ? 1 : 0.18 }} />
                           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: theme.secondaryColor, opacity: h.activityDone ? 1 : 0.18 }} />
                         </div>
-                        <span className="text-[7.5px] leading-none" style={{ color: theme.mutedText }}>
+                        <span className="text-[8px] leading-none" style={{ color: theme.mutedText }}>
                           {(h.waterMl / 1000).toFixed(1)} L
                         </span>
-                        <span className="text-[7px] leading-none" style={{ color: theme.mutedText }}>
+                        <span className="text-[8px] leading-none" style={{ color: theme.mutedText }}>
                           {h.sleepHours ? `${h.sleepHours} j` : '—'}
                         </span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-center gap-3 px-2 pb-1.5 text-[6.5px] font-sans" style={{ color: theme.mutedText }}>
+                  <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 px-2 pb-1.5 text-[6.5px] font-sans" style={{ color: theme.mutedText }}>
                     <span className="flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.primaryColor }} />
                       vitamin
@@ -624,11 +627,11 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
             })()}
 
 {/* Ceklis kesehatan mingguan */}
-            <div className="flex gap-2 mb-2">
+            <div className="flex-1 min-w-0 flex flex-col">
                 {/* Ceklis Rutinitas — selalu tampil (seperti benchmark), kosong = lingkaran */}
-                <div className="w-full flex flex-col">
+                <div className="flex flex-col h-full">
                     <div 
-                      className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
+                      className="border py-0.5 text-center text-[9.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs"
                       style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor, color: theme.textColor }}
                     >
                       Ceklis Kesehatan
@@ -684,11 +687,12 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     </div>
                   </div>
               </div>
+            </div>
 
           </div>
 
           {/* Footer Page Number */}
-          <div className="mt-auto pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+          <div className="mt-auto pt-2 text-left text-[10px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
             <span>{leftPageNum}</span>
             <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">
               Bunda Journal • Week {week}
@@ -852,7 +856,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
             {/* Catatan Dokter: Editable Textarea */}
             <div>
               <div 
-                className="border py-0.5 text-center text-[8.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs flex items-center justify-center gap-1"
+                className="border py-0.5 text-center text-[9.5px] font-semibold uppercase tracking-widest mb-1 rounded-xs flex items-center justify-center gap-1"
                 style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor, color: theme.textColor }}
               >
                 <span>Catatan Dokter / Pertanyaan Konsul</span>
@@ -870,7 +874,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
           </div>
 
           {/* Footer Page Number */}
-          <div className="mt-auto pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+          <div className="mt-auto pt-2 text-right text-[10px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
             <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">
               Dokumentasi Foto & Medis
             </span>
