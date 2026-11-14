@@ -6,6 +6,7 @@ import { BookThemeConfig } from '../../../types/bookPrint';
 import { PhotoMemory, JournalEntry } from '../../../types';
 import { Camera, Check, Edit2 } from 'lucide-react';
 import { readDayHabits, isHabitDone, toggleHabitDone, getWeekHabits, getWeekHabitScore, setSupplementTaken, writeActivity } from '../../../lib/habitStore';
+import { getWeeklyJasmani, subscribeJasmaniSummary, JASMANI_TARGETS } from '../../../lib/jasmaniStore';
 import { DAILY_NOTE_MAX_CHARS, DAILY_NOTE_LINE_CHARS, clampDailyNote } from '../../../config/journal';
 
 // Batas catatan harian diambil dari satu sumber: src/config/journal.ts
@@ -246,6 +247,9 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
 
   // Daily mood state (0 to 3 index: 0=🥰, 1=😊, 2=🥺, 3=😫)
   const [dailyMoods, setDailyMoods] = useState<(number | null)[]>([null, null, null, null, null, null, null]);
+
+  // Simpan kesimpulan jasmani harian/mingguan/bulanan (dan perbarui saat data berubah).
+  useEffect(() => subscribeJasmaniSummary(week), [week]);
 
   const toggleCheck = (id: string) => {
     // id: `asamFolat-3`, `water-3`, `walk-3` — ditulis ke Habit Store.
@@ -529,15 +533,21 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
             {/* Baris: Pemantauan (kiri) + Ceklis (kanan) */}
             <div className="flex gap-2 mb-2 items-stretch">
 
-            {/* Pemantauan minggu ini — activity rings + strip 7 hari */}
+            {/* Pemantauan minggu ini — ring jasmani: jalan / senam / tidur */}
             {(() => {
               const habits = getWeekHabits(week);
-              const score = getWeekHabitScore(week);
+              const jasmani = getWeeklyJasmani(week);
 
-              const rings: Array<{ label: string; pct: number; color: string; r: number }> = [
-                { label: 'Vitamin', pct: score.vitaminPct, color: theme.primaryColor, r: 33 },
-                { label: 'Air', pct: score.waterPct, color: '#7FA6BC', r: 24 },
-                { label: 'Gerak', pct: score.activityPct, color: theme.secondaryColor, r: 15 },
+              const rings: Array<{ label: string; value: string; pct: number; color: string; r: number }> = [
+                { label: 'Jalan', value: `${jasmani.jalanMin} mnt`, pct: jasmani.pct.jalan, color: theme.secondaryColor, r: 33 },
+                { label: 'Senam', value: `${jasmani.senamMin} mnt`, pct: jasmani.pct.senam, color: theme.primaryColor, r: 24 },
+                {
+                  label: 'Tidur',
+                  value: `${jasmani.tidurAvg ? jasmani.tidurAvg.toFixed(1) : '—'} jam`,
+                  pct: jasmani.pct.tidur,
+                  color: '#7FA6BC',
+                  r: 15,
+                },
               ];
 
               return (
@@ -555,7 +565,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                   </div>
 
                   <div className="flex items-center gap-3 px-2 pt-1.5">
-                    <svg width="158" height="158" viewBox="0 0 80 80" aria-label={`Ritme ${score.overallPct}%`}>
+                    <svg width="158" height="158" viewBox="0 0 80 80" aria-label="Ring jasmani mingguan">
                       {rings.map((ring) => {
                         const circ = 2 * Math.PI * ring.r;
                         const filled = (Math.max(0, Math.min(100, ring.pct)) / 100) * circ;
@@ -585,8 +595,11 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                             <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ring.color }} />
                             {ring.label}
                           </span>
-                          <span className="text-[13px] font-bold tabular-nums" style={{ color: theme.textColor }}>
-                            {ring.pct}%
+                          <span className="text-[10px] font-semibold tabular-nums" style={{ color: theme.textColor }}>
+                            {ring.value}{' '}
+                            <span className="text-[8px] font-normal" style={{ color: theme.mutedText }}>
+                              ({ring.pct}%)
+                            </span>
                           </span>
                         </div>
                       ))}
@@ -594,20 +607,21 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                       <div className="mt-1 pt-1 border-t space-y-0.5" style={{ borderColor: theme.borderColor }}>
                         <div className="flex flex-col gap-0.5 text-[7px] font-sans" style={{ color: theme.mutedText }}>
                           <span className="flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: theme.secondaryColor }} />
+                            Oranye — jalan (ring luar)
+                          </span>
+                          <span className="flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: theme.primaryColor }} />
-                            Hijau — vitamin
+                            Hijau — senam (ring tengah)
                           </span>
                           <span className="flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#7FA6BC' }} />
-                            Biru — air
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: theme.secondaryColor }} />
-                            Oranye — gerak
+                            Biru — tidur (ring dalam)
                           </span>
                         </div>
                         <div className="text-[7px] leading-snug" style={{ color: theme.mutedText }}>
-                          Cincin luar vitamin · tengah air · dalam gerak.
+                          Target jalan {JASMANI_TARGETS.jalanDailyMin} mnt/hari · senam {JASMANI_TARGETS.senamDailyMin} mnt/hari · tidur{' '}
+                          {JASMANI_TARGETS.sleepHours} jam.
                         </div>
                       </div>
                     </div>
@@ -624,12 +638,12 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                           {weekDates[i] ? weekDates[i]!.getDate() : '—'}
                         </span>
                         <div className="flex items-center gap-1 mt-0.5">
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: theme.primaryColor, opacity: h.vitaminDone ? 1 : 0.18 }} />
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#7FA6BC', opacity: h.waterDone ? 1 : 0.18 }} />
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: theme.secondaryColor, opacity: h.activityDone ? 1 : 0.18 }} />
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: theme.secondaryColor, opacity: h.walkMinutes >= JASMANI_TARGETS.jalanDailyMin ? 1 : 0.18 }} />
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: theme.primaryColor, opacity: h.workoutMinutes >= JASMANI_TARGETS.senamDailyMin ? 1 : 0.18 }} />
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#7FA6BC', opacity: h.sleepHours >= JASMANI_TARGETS.sleepHours ? 1 : 0.18 }} />
                         </div>
                         <span className="text-[8px] leading-none" style={{ color: theme.mutedText }}>
-                          {(h.waterMl / 1000).toFixed(1)} L
+                          {h.walkMinutes} mnt
                         </span>
                         <span className="text-[8px] leading-none" style={{ color: theme.mutedText }}>
                           {h.sleepHours ? `${h.sleepHours} j` : '—'}

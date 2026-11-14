@@ -34,7 +34,8 @@ test.describe('Buku jurnal /print', () => {
     await expect(spread).toContainText('Pemantauan minggu ini');
     await expect(spread).toContainText('Ceklis Kesehatan');
     await expect(spread).toContainText('Tidur');
-    await expect(spread).toContainText('Vitamin');
+    await expect(spread).toContainText('Jalan');
+    await expect(spread).toContainText('Senam');
     await expect(spread).toContainText('Asam folat');
     await expect(spread).toContainText('Zat besi');
     await expect(spread).toContainText('Kesimpulan');
