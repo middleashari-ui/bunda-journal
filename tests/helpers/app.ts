@@ -60,7 +60,37 @@ export async function seedApp(
       localStorage.setItem('bunda_isLoggedIn', 'true');
       localStorage.setItem('bunda_user_email', email);
       localStorage.setItem('bunda_user_tier', 'vip');
-      localStorage.setItem('bunda_profile', JSON.stringify({ name: 'Una', babyNickname: 'Ash', hplDate: '2027-04-16' }));
+
+      // HPL dihitung agar minggu berjalan TEPAT sama dengan `week` fixture,
+      // jadi tes tidak bergantung pada tanggal hari ini.
+      const hplForWeek = (target) => {
+        const DAY = 86400000;
+        const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const today = startOfDay(new Date());
+        const weekOf = (hpl) => {
+          const hpht = new Date(hpl);
+          hpht.setDate(hpht.getDate() - 280);
+          const back = (hpht.getDay() + 6) % 7;
+          const monday = new Date(hpht);
+          monday.setDate(hpht.getDate() - back);
+          const diff = Math.round((today.getTime() - startOfDay(monday).getTime()) / DAY);
+          return Math.min(40, Math.max(1, 1 + Math.floor(diff / 7)));
+        };
+        const pad = (n) => String(n).padStart(2, '0');
+        const toLocalIso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        for (let off = 0; off < 35; off += 1) {
+          for (const sign of [1, -1]) {
+            const h = new Date(today);
+            h.setDate(h.getDate() + (40 - target) * 7 + sign * off);
+            if (weekOf(h) === target) return toLocalIso(h);
+          }
+        }
+        const fallback = new Date(today);
+        fallback.setDate(fallback.getDate() + (40 - target) * 7);
+        return toLocalIso(fallback);
+      };
+
+      localStorage.setItem('bunda_profile', JSON.stringify({ name: 'Una', babyNickname: 'Ash', hplDate: hplForWeek(week) }));
       localStorage.setItem('bunda_week', String(week));
       localStorage.setItem('bunda_onboarding_done', 'true');
       localStorage.setItem('bunda_pwa_tutorial_dismissed', 'true');
