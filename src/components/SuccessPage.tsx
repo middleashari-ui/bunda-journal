@@ -1,3 +1,4 @@
+import { storageGet, storageSet } from '../lib/storage/appStorage';
 import React, { useState, useEffect } from 'react';
 import { Check, ShieldCheck, Sparkles, BookOpen, ArrowRight, Download, RefreshCw } from 'lucide-react';
 import { PWAInstallTutorial } from './PWAInstallTutorial';
@@ -16,7 +17,7 @@ export const SuccessPage: React.FC<SuccessPageProps> = ({
 }) => {
   const [showTutorial, setShowTutorial] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('bunda_pwa_tutorial_dismissed') !== 'true';
+      return storageGet('bunda_pwa_tutorial_dismissed') !== 'true';
     } catch {
       return true;
     }
@@ -28,7 +29,7 @@ export const SuccessPage: React.FC<SuccessPageProps> = ({
       const urlParams = new URLSearchParams(window.location.search);
       return (
         urlParams.get('email') ||
-        localStorage.getItem('bunda_user_email') ||
+        storageGet('bunda_user_email') ||
         'bunda@bundajournal.my.id'
       );
     } catch {
@@ -48,7 +49,7 @@ export const SuccessPage: React.FC<SuccessPageProps> = ({
   const [tier, setTier] = useState<string>(() => {
     if (propTier) return propTier;
     try {
-      return localStorage.getItem('bunda_user_tier') || 'vip';
+      return storageGet('bunda_user_tier') || 'vip';
     } catch {
       return 'vip';
     }
@@ -99,10 +100,10 @@ export const SuccessPage: React.FC<SuccessPageProps> = ({
   const handleOpenJurnal = () => {
     try {
       // Jangan pernah menandai LUNAS tanpa verifikasi server yang lolos.
-      if (isPaidVerified) localStorage.setItem('bunda_is_paid', 'true');
-      if (email) localStorage.setItem('bunda_user_email', email);
+      if (isPaidVerified) storageSet('bunda_is_paid', 'true');
+      if (email) storageSet('bunda_user_email', email);
       notifyUserChanged(email);
-      if (tier && isPaidVerified) localStorage.setItem('bunda_user_tier', tier);
+      if (tier && isPaidVerified) storageSet('bunda_user_tier', tier);
     } catch {}
 
     if (onOpenJurnal) {

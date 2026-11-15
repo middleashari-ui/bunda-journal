@@ -1,3 +1,4 @@
+import { storageGet } from './storage/appStorage';
 import { createClient } from '@supabase/supabase-js';
 import { getToken } from './authClient';
 
@@ -206,7 +207,7 @@ export async function syncBabyDobToSupabase(email: string, babyDob: string) {
   if (!supabase || !email || !babyDob) return { error: 'missing params' };
   try {
     const consent = (() => {
-      try { return localStorage.getItem('bunda_promo_consent') !== 'false'; } catch { return true; }
+      try { return storageGet('bunda_promo_consent') !== 'false'; } catch { return true; }
     })();
     const { error } = await supabase
       .from('bunda_profiles')

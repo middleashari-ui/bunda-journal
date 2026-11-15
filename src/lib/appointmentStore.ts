@@ -1,3 +1,4 @@
+import { storageGet, storageSet } from './storage/appStorage';
 // ============================================================
 // appointmentStore.ts
 // Penyimpanan jadwal dokter (Atur Jadwal) yang PER-USER (by email).
@@ -43,7 +44,7 @@ export const normalizeEmail = (email?: string | null): string =>
 /** Email user yang sedang aktif di perangkat ini. */
 export function getActiveEmail(): string {
   try {
-    return normalizeEmail(localStorage.getItem('bunda_user_email'));
+    return normalizeEmail(storageGet('bunda_user_email'));
   } catch {
     return '';
   }
@@ -57,7 +58,7 @@ export function scopedKey(base: string, email?: string | null): string {
 
 function readJSON(key: string): any | null {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = storageGet(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === 'object' ? parsed : null;
@@ -68,7 +69,7 @@ function readJSON(key: string): any | null {
 
 function writeRaw(key: string, value: string): void {
   try {
-    localStorage.setItem(key, value);
+    storageSet(key, value);
   } catch {}
 }
 
@@ -114,9 +115,9 @@ export function saveAppointment(data: AppointmentData, email?: string | null): v
 export function loadCatatanAyah(email?: string | null): string {
   const e = normalizeEmail(email);
   try {
-    const own = localStorage.getItem(scopedKey(K_CATATAN, e));
+    const own = storageGet(scopedKey(K_CATATAN, e));
     if (own !== null) return own;
-    if (e) return localStorage.getItem(K_CATATAN) || '';
+    if (e) return storageGet(K_CATATAN) || '';
   } catch {}
   return '';
 }
@@ -128,9 +129,9 @@ export function saveCatatanAyah(text: string, email?: string | null): void {
 export function loadStatus(email?: string | null): string {
   const e = normalizeEmail(email);
   try {
-    const own = localStorage.getItem(scopedKey(K_STATUS, e));
+    const own = storageGet(scopedKey(K_STATUS, e));
     if (own) return own;
-    if (e) return localStorage.getItem(K_STATUS) || DEFAULT_STATUS;
+    if (e) return storageGet(K_STATUS) || DEFAULT_STATUS;
   } catch {}
   return DEFAULT_STATUS;
 }

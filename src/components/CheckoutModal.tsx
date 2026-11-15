@@ -1,3 +1,4 @@
+import { storageGet } from '../lib/storage/appStorage';
 import React, { useState } from 'react';
 import { X, CheckCircle2, QrCode, Mail, ArrowRight, ShieldCheck, CreditCard, Sparkles } from 'lucide-react';
 import { PRICING_CONFIG, PlanConfig } from '../config/pricing';
@@ -70,7 +71,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     try {
       // Upgrade starter->lengkap charge selisih 80rb via endpoint khusus.
       const isUpgrade = currentTier === 'essential' && selectedPlan === 'upgrade_vip';
-      const chargeFor = (localStorage.getItem('bunda_user_email') || 'bunda@bundajournal.my.id').trim().toLowerCase();
+      const chargeFor = (storageGet('bunda_user_email') || 'bunda@bundajournal.my.id').trim().toLowerCase();
       const res = await fetch(isUpgrade ? '/api/upgrade' : '/api/midtrans/charge', {
         method: 'POST',
         headers: (() => {

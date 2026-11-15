@@ -1,3 +1,4 @@
+import { storageSet } from '../lib/storage/appStorage';
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, ChevronRight, ChevronLeft, Check, Sparkles } from 'lucide-react';
 
@@ -172,7 +173,7 @@ export const OnboardingJurnalTutorial: React.FC<OnboardingJurnalTutorialProps> =
   const handleComplete = () => {
     if (dontShowAgain) {
       try {
-        localStorage.setItem('bunda_onboarding_done', 'true');
+        storageSet('bunda_onboarding_done', 'true');
       } catch {}
     }
 

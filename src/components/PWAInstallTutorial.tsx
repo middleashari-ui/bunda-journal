@@ -1,3 +1,4 @@
+import { storageSet } from '../lib/storage/appStorage';
 import React, { useState, useEffect } from 'react';
 import { Check, Download, Share2, PlusSquare, MoreVertical, Smartphone, X } from 'lucide-react';
 
@@ -50,7 +51,7 @@ export const PWAInstallTutorial: React.FC<PWAInstallTutorialProps> = ({
   const handleDismiss = () => {
     if (dontShowAgain) {
       try {
-        localStorage.setItem('bunda_pwa_tutorial_dismissed', 'true');
+        storageSet('bunda_pwa_tutorial_dismissed', 'true');
       } catch {}
     }
     onClose();
@@ -59,7 +60,7 @@ export const PWAInstallTutorial: React.FC<PWAInstallTutorialProps> = ({
   const handleInstallClick = async () => {
     if (dontShowAgain) {
       try {
-        localStorage.setItem('bunda_pwa_tutorial_dismissed', 'true');
+        storageSet('bunda_pwa_tutorial_dismissed', 'true');
       } catch {}
     }
 

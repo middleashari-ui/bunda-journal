@@ -1,3 +1,4 @@
+import { storageRemove } from '../lib/storage/appStorage';
 import React, { useState } from 'react';
 import { IS_LOCAL_DEV, isDevPaymentEnabled, setDevPaymentEnabled } from '../config/payments';
 
@@ -16,7 +17,7 @@ export const DevToolbar: React.FC = () => {
       const keep = new Set(['bunda_payment_enabled']);
       Object.keys(localStorage)
         .filter((k) => !keep.has(k))
-        .forEach((k) => localStorage.removeItem(k));
+        .forEach((k) => storageRemove(k));
     } catch {}
     location.reload();
   };
