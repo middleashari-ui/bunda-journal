@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { PAYMENT_PAUSED } from '../config/payments';
 import { 
   ArrowRight, 
   Mic, 
@@ -10,19 +11,25 @@ import {
   Users, 
   X, 
   Activity, 
-  Apple
+  Apple,
+  MessageCircle,
+  Palette,
+  LogIn
 } from 'lucide-react';
 
 interface LandingPageProps {
   onEnterApp: () => void;
   onStartCheckout?: (amount?: number) => void;
+  onLoginClick?: () => void;
+  onRegisterClick?: () => void;
   isPaid?: boolean;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartCheckout, isPaid = false }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartCheckout, onLoginClick, onRegisterClick, isPaid = false }) => {
   const [isPaidPreview, setIsPaidPreview] = useState<boolean>(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [shotPreview, setShotPreview] = useState<{ src: string; full?: string; title: string } | null>(null);
 
   const pricingRef = useRef<HTMLDivElement>(null);
   const journalRef = useRef<HTMLDivElement>(null);
@@ -58,7 +65,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
         <div className="max-w-[1120px] mx-auto px-6 md:px-8 h-[56px] flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className="cursor-pointer" onClick={onEnterApp}>
-              <img src="/bunda_journal_FINAL_BIG.png" className="h-10 md:h-12 w-auto" />
+              <img src="/bunda_journal_FINAL_BIG.png" className="h-12 md:h-14 w-auto" />
             </div>
             <nav className="hidden md:flex items-center gap-6 text-[13px] text-[#666]">
               <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-[#111] transition-colors">
@@ -75,18 +82,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
               </a>
             </nav>
           </div>
-          <button 
-            onClick={isPaid ? onEnterApp : () => {
-              if (onStartCheckout) {
-                onStartCheckout(129000);
-              } else {
-                onEnterApp();
-              }
-            }}
-            className="h-[32px] px-4 rounded-[8px] border border-[#E5E5E5] bg-white text-[13px] font-medium hover:bg-[#111] hover:text-white hover:border-[#111] transition-all cursor-pointer shadow-2xs"
-          >
-            {isPaid ? 'Buka Aplikasi' : 'Miliki VIP 129rb'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              id="btn-daftar-header"
+              onClick={() => { if (onRegisterClick) onRegisterClick(); else if (onLoginClick) onLoginClick(); else onEnterApp(); }}
+              className="h-[32px] px-3 rounded-[8px] text-[13px] font-medium text-[#666] hover:text-[#111] hover:bg-[#111]/5 transition-all cursor-pointer"
+            >
+              Daftar
+            </button>
+            <button
+              type="button"
+              id="btn-masuk-header"
+              onClick={() => { if (onLoginClick) onLoginClick(); else onEnterApp(); }}
+              className="h-[34px] px-4 rounded-[8px] border border-[#111] text-[13px] font-semibold text-[#111] hover:bg-[#111] hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              Masuk
+            </button>
+            <button 
+              onClick={isPaid ? onEnterApp : () => {
+                if (onStartCheckout) {
+                  onStartCheckout(129000);
+                } else {
+                  onEnterApp();
+                }
+              }}
+              disabled={!isPaid && PAYMENT_PAUSED}
+              title={!isPaid && PAYMENT_PAUSED ? 'Pembayaran sedang diperbaiki' : undefined}
+              className="h-[32px] px-4 rounded-[8px] border border-[#E5E5E5] bg-white text-[13px] font-medium hover:bg-[#111] hover:text-white hover:border-[#111] transition-all cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[#111] disabled:hover:border-[#E5E5E5]"
+            >
+              {isPaid ? 'Buka Aplikasi' : PAYMENT_PAUSED ? 'VIP Segera Hadir' : 'Miliki VIP 129rb'}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -103,24 +131,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
           <div className="max-w-[520px]">
             <div className="inline-flex items-center gap-2 h-[24px] px-2.5 rounded-[8px] border border-[#E5E5E5] bg-white text-[11px] tracking-wide text-[#666] mb-6 shadow-2xs">
               <span className="w-[4px] h-[4px] rounded-full bg-[#111] animate-pulse" />
-              BARU — MODE AYAH READ-ONLY
+              100 HALAMAN A4 • 5 TEMA
             </div>
 
             <h1 className="serif text-[32px] md:text-[44px] leading-[0.95] tracking-[-0.03em] font-normal mb-5 text-[#111]">
-              USG berantakan jadi <br />
-              <span className="italic">buku warisan 5 menit</span>
+              USG di galeri HP, <br />
+              <span className="italic">jadi buku yang dibaca anak nanti</span>
             </h1>
 
             <p className="text-[14px] leading-[1.6] text-[#666] mb-8 max-w-[420px]">
-              100 halaman + 10 Voice QR suara detak jantung. Sekali bayar Rp129rb, bukan langganan Rp800rb/tahun kayak Flo.
+              100 halaman A4, cerita harian, ringkasan mingguan, dan hasil cetak yang bisa dipegang. Data tersimpan di HP Bunda; backup opsional ke Google Drive sendiri. Sekali bayar, tanpa langganan.
             </p>
 
             <div className="flex items-center gap-3 mb-10">
               <button 
                 onClick={onStartCheckout ? () => onStartCheckout(129000) : onEnterApp}
-                className="h-[40px] px-5 rounded-[8px] bg-[#111] text-white text-[13px] font-medium flex items-center gap-2 hover:bg-black transition-colors cursor-pointer shadow-sm"
+                disabled={PAYMENT_PAUSED}
+                title={PAYMENT_PAUSED ? 'Pembayaran sedang diperbaiki' : undefined}
+                className="h-[40px] px-5 rounded-[8px] bg-[#111] text-white text-[13px] font-medium flex items-center gap-2 hover:bg-black transition-colors cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#111]"
               >
-                Miliki VIP — Rp 129rb <ArrowRight className="w-3.5 h-3.5" />
+                {PAYMENT_PAUSED ? 'VIP Segera Hadir' : 'Miliki VIP — Rp 129rb'} <ArrowRight className="w-3.5 h-3.5" />
               </button>
               <button 
                 onClick={() => setIsPreviewModalOpen(true)}
@@ -130,230 +160,67 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
               </button>
             </div>
 
-            <div className="flex items-center gap-6 pt-6 border-t border-[#E5E5E5]">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map((v) => (
-                  <div key={v} className="w-7 h-7 rounded-full border-2 border-[#FAFAF9] bg-[#E5E5E5] flex items-center justify-center text-[10px] font-medium text-stone-700">
-                    I
-                  </div>
-                ))}
-              </div>
-              <div className="text-[11px] leading-[1.3] text-[#666]">
-                <span className="text-[#111] font-medium">62 ibu</span> middle-low sudah buat<br />
-                buku warisan minggu ini
-              </div>
-              <div className="ml-auto flex items-center gap-1 text-[11px]">
-                <span className="text-[#111]">★★★★★</span>
-                <span className="text-[#666]">4.9/5</span>
-              </div>
+            <div className="flex flex-wrap items-center gap-2 pt-6 border-t border-[#E5E5E5]">
+              {['Data tersimpan di HP Bunda', 'Tanpa langganan', 'Backup ke Drive sendiri'].map((item) => (
+                <span
+                  key={item}
+                  className="text-[11px] text-[#444] bg-white border border-[#E5E5E5] rounded-full px-2.5 py-1 shadow-2xs"
+                >
+                  {item}
+                </span>
+              ))}
             </div>
           </div>
 
-          {/* Hero Visual Mockups */}
-          <div className="relative md:ml-auto w-full max-w-[420px] aspect-[1/1.1] md:aspect-[4/3.2] select-none">
-            <div className="absolute inset-0 rounded-[8px] border border-[#E5E5E5] bg-white overflow-hidden shadow-2xs">
-              <div 
-                className="absolute inset-0 opacity-[0.03]"
-                style={{
-                  backgroundImage: "linear-gradient(#111 1px, transparent 1px), linear-gradient(90deg, #111 1px, transparent 1px)",
-                  backgroundSize: "24px 24px"
-                }}
-              />
+          {/* Hero Visual: screenshot asli aplikasi */}
+          <div className="relative md:ml-auto w-full max-w-[290px] mx-auto md:mx-0">
+            <div className="rounded-[38px] border-[9px] border-[#111] bg-[#111] shadow-[0_30px_70px_-30px_rgba(0,0,0,0.5)] overflow-hidden aspect-[9/17]">
+              <img src="/landing/beranda.png" alt="Tampilan Beranda Bunda Journal" className="w-full h-full object-cover object-top" />
             </div>
-
-            {/* Back Polaroid Card */}
-            <div className="absolute top-[18%] left-[12%] w-[68%] rotate-[-8deg] bg-white border border-[#E5E5E5] rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.06)] p-3 pb-10 transition-transform hover:rotate-[-6deg]">
-              <div className="aspect-[4/3] bg-[#F5F5F3] rounded-[4px] border border-[#E5E5E5] overflow-hidden relative">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-[70%] h-[60%] bg-[#111]/5 rounded-full blur-[12px]" />
-                </div>
-                <div className="absolute bottom-2 left-2 text-[9px] tracking-widest text-[#999]">
-                  USG 4D • W37 • 5.4CM
-                </div>
-                <div className="absolute top-2 right-2 w-6 h-6 rounded-[4px] bg-[#111] text-white flex items-center justify-center text-[10px]">
-                  ◐
-                </div>
-              </div>
-              <div className="mt-3 serif text-[14px] leading-none text-[#111]">
-                W37 • Lemon 🍋
-              </div>
-              <div className="mt-1 text-[10px] text-[#999]">
-                Est. 2.9kg • WHO P50
-              </div>
-            </div>
-
-            {/* Front Acoustic Voice QR Card */}
-            <div className="absolute top-[28%] left-[22%] w-[68%] rotate-[4deg] bg-white border border-[#111] rounded-[8px] shadow-[0_16px_40px_rgba(0,0,0,0.12)] p-3 pb-6 transition-transform hover:rotate-[2deg]">
-              <div className="aspect-[4/3] bg-[#111] rounded-[4px] overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#222] to-[#111]" />
-                <div className="absolute inset-0 opacity-40">
-                  <div 
-                    className="w-full h-full"
-                    style={{
-                      background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.04) 2px, rgba(255,255,255,0.04) 3px)"
-                    }}
-                  />
-                </div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[48%] h-[48%] border border-white/20 rounded-[50%] flex items-center justify-center">
-                  <div className="w-[70%] h-[70%] border border-white/10 rounded-[50%]" />
-                </div>
-                <div className="absolute top-3 left-3 text-[8px] text-white/60 tracking-widest">
-                  BUNDA JOURNAL • 5.4CM
-                </div>
-                <div className="absolute bottom-3 right-3 flex gap-1 items-end">
-                  <div className="w-[2px] h-[12px] bg-white/80" />
-                  <div className="w-[2px] h-[8px] bg-white/60" />
-                  <div className="w-[2px] h-[16px] bg-white/90" />
-                  <div className="w-[2px] h-[10px] bg-white/70" />
-                </div>
-              </div>
-
-              <div className="mt-3 flex justify-between items-end">
-                <div>
-                  <div className="serif text-[15px] leading-none text-[#111]">
-                    Detak 142 bpm
-                  </div>
-                  <div className="mt-1 text-[10px] text-[#666]">
-                    15s • 30KB webm
-                  </div>
-                </div>
-                <div className="w-[56px] h-[56px] rounded-[4px] border border-[#E5E5E5] bg-white p-1">
-                  <div className="w-full h-full grid grid-cols-5 grid-rows-5 gap-[1px]">
-                    {Array.from({ length: 25 }).map((_, g) => (
-                      <div 
-                        key={g} 
-                        className={`${[0,1,2,4,6,8,10,12,14,16,18,20,21,22,24].includes(g) ? "bg-[#111]" : "bg-white"} rounded-[0.5px]`}
-                      />
-                    ))}
-                  </div>
-                  <div className="text-[5px] text-center leading-none mt-0.5 tracking-widest text-[#666]">
-                    QR VOICE
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-3 h-[28px] rounded-[4px] bg-[#FAFAF9] border border-[#E5E5E5] flex items-center px-2 gap-2">
-                <div className="w-4 h-4 rounded-full bg-[#111] flex items-center justify-center">
-                  <Play className="w-2 h-2 text-white fill-white ml-[1px]" />
-                </div>
-                <div className="flex-1 h-[2px] bg-[#E5E5E5] rounded-full overflow-hidden">
-                  <div className="h-full w-[42%] bg-[#111]" />
-                </div>
-                <span className="text-[9px] text-[#999]">0:07 / 0:15</span>
-              </div>
-            </div>
-
-            {/* Micro Badge Link */}
-            <div className="absolute bottom-[8%] right-[4%] bg-[#111] text-white rounded-[8px] px-3 py-2 text-[11px] leading-[1.2] shadow-lg rotate-[-2deg]">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-ping" />
-                <span>bundajournal.my.id/v/xxx</span>
-              </div>
-              <div className="text-white/60 text-[9px] mt-0.5">
-                scan • 10 voice QR
-              </div>
+            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white border border-[#E5E5E5] rounded-full px-3 py-1 text-[10px] text-[#666] shadow-sm whitespace-nowrap">
+              Tampilan asli aplikasi
             </div>
           </div>
         </div>
       </section>
 
-      {/* SECTION 2: FLO VS BUNDA COMPARISON */}
+      {/* SECTION 2: SCREENSHOT APP */}
       <section className="border-y border-[#E5E5E5] bg-white">
-        <div className="max-w-[1120px] mx-auto px-6 md:px-8 py-12 md:py-16">
-          <div className="flex items-end justify-between mb-8 gap-4">
-            <div>
-              <div className="text-[11px] tracking-[0.12em] text-[#999] mb-2 font-medium">
-                KENAPA PINDAH?
-              </div>
-              <h2 className="serif text-[22px] md:text-[28px] leading-[1.1] tracking-[-0.02em] text-[#111]">
-                Flo mahal & paywall. Bunda warisan.
-              </h2>
-            </div>
-            <div className="hidden md:block text-[11px] text-[#999]">
-              Perbandingan jujur • data publik
-            </div>
+        <div className="max-w-[1120px] mx-auto px-6 md:px-8 py-14 md:py-20">
+          <div className="max-w-[560px] mb-10">
+            <div className="text-[11px] tracking-[0.08em] text-[#999] mb-3 font-medium">LIHAT APP-NYA</div>
+            <h2 className="serif text-[28px] md:text-[36px] leading-[1.05] tracking-[-0.02em] text-[#111] mb-3">
+              Ini yang Bunda lihat setiap hari.
+            </h2>
+            <p className="text-[14px] leading-[1.6] text-[#666]">
+              Bukan mockup. Tiga layar di bawah diambil langsung dari aplikasi: ringkasan mingguan, jurnal harian, dan halaman buku 100 halaman A4.
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-[1fr_1fr] gap-px bg-[#E5E5E5] rounded-[8px] overflow-hidden border border-[#E5E5E5]">
-            {/* Flo Column */}
-            <div className="bg-[#FAFAF9] p-6 md:p-7">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-[8px] bg-white border border-[#E5E5E5] flex items-center justify-center text-[12px] font-medium text-stone-700">
-                    F
-                  </div>
-                  <div className="text-[14px] font-medium text-stone-800">Flo</div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-[4px] bg-[#E5E5E5] text-[#666]">
-                    $59.99 / tahun
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { src: '/landing/cerita-card.png', title: 'Ringkasan mingguan', desc: 'Ritme, streak, dan momen yang Bunda tulis.' },
+              { src: '/landing/catatan-card.png', title: 'Jurnal harian', desc: 'Catatan, suasana hati, dan batas 160 karakter agar muat di buku.' },
+              { src: '/landing/buku-card.png', title: 'Buku 100 halaman', desc: 'Halaman A4, lengkap dengan pemantauan minggu. Ketuk untuk memperbesar.' },
+            ].map((shot) => (
+              <figure key={shot.title} className="bg-[#FAFAF9] border border-[#E5E5E5] rounded-[14px] p-4">
+                <button
+                  type="button"
+                  onClick={() => setShotPreview({ src: shot.src, full: (shot as any).full, title: shot.title })}
+                  className="block w-full rounded-[10px] overflow-hidden border border-[#E5E5E5] bg-white cursor-zoom-in group relative"
+                  aria-label={"Perbesar: " + shot.title}
+                >
+                  <img src={shot.src} alt={shot.title} className="w-full block object-cover object-top aspect-[4/5]" />
+                  <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                    Ketuk untuk memperbesar
                   </span>
-                </div>
-                <span className="text-[11px] text-[#999]">4.7★ • paywall</span>
-              </div>
-
-              <div className="space-y-3 text-[13px] text-[#666]">
-                <div className="flex justify-between py-2 border-b border-[#E5E5E5]/60">
-                  <span>Rp800rb / tahun</span>
-                  <span className="text-[#999]">Langganan</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-[#E5E5E5]/60">
-                  <span>Prediksi period only</span>
-                  <span className="text-[#999]">Tidak ada buku</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-[#E5E5E5]/60">
-                  <span>Data di cloud AS</span>
-                  <span className="text-[#999]">Butuh internet</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span>Paywall artikel</span>
-                  <span className="text-[#999]">Upsell terus</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Bunda Column */}
-            <div className="bg-[#111] text-white p-6 md:p-7 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-[120px] h-[120px] bg-white/[0.04] rounded-full blur-[24px]" />
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-[8px] bg-white text-[#111] flex items-center justify-center serif text-[14px] font-bold">
-                    b.
-                  </div>
-                  <div className="text-[14px] font-medium text-white">Bunda Journal</div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-[4px] bg-white text-[#111] font-medium">
-                    Rp129rb sekali
-                  </span>
-                </div>
-                <span className="text-[11px] text-white/60">Offline • warisan</span>
-              </div>
-
-              <div className="space-y-3 text-[13px] text-white/70">
-                <div className="flex justify-between py-2 border-b border-white/10">
-                  <span className="text-white">Rp129rb one-time</span>
-                  <span className="text-white flex items-center gap-1 font-medium">
-                    <Check className="w-3 h-3 text-emerald-400" /> Hemat 84%
-                  </span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-white/10">
-                  <span className="text-white">100 hal buku + 10 Voice QR</span>
-                  <span className="text-white/60">WHO P10-P50-P90</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-white/10">
-                  <span className="text-white">Offline first, export PDF</span>
-                  <span className="text-white/60">Milik selamanya</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-white">Mode Ayah + Surat auto</span>
-                  <span className="text-white/60">Tanpa paywall</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[#999]">
-            <div className="w-px h-3 bg-[#E5E5E5]" />
-            <span>
-              62 ibu pilih Bunda karena <span className="text-[#111] font-medium">sekali bayar jadi warisan</span>, bukan sewa data bulanan.
-            </span>
+                </button>
+                <figcaption className="mt-3">
+                  <div className="serif text-[15px] text-[#111]">{shot.title}</div>
+                  <p className="text-[12px] text-[#666] leading-[1.5] mt-0.5">{shot.desc}</p>
+                </figcaption>
+              </figure>
+            ))}
           </div>
         </div>
       </section>
@@ -452,54 +319,46 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
             </div>
           </div>
 
-          {/* Card 4: Voice QR */}
+          {/* Card 4: Kirim jadwal ke Ayah */}
           <div className="bg-white p-6 min-h-[200px] flex flex-col">
             <div className="w-8 h-8 rounded-[8px] border border-[#E5E5E5] flex items-center justify-center mb-4 text-[#111]">
-              <Mic className="w-4 h-4" />
+              <MessageCircle className="w-4 h-4" />
             </div>
             <div className="text-[11px] tracking-[0.08em] text-[#999] mb-2 font-medium">
-              VOICE QR • 15S WEBM 30KB
+              JADWAL • KIRIM KE AYAH
             </div>
             <div className="serif text-[18px] leading-[1.1] mb-2 text-[#111]">
-              Suara detak jantung <br />
-              jadi QR warisan
+              Jadwal kontrol jadi <br />
+              kartu untuk Ayah
             </div>
             <p className="text-[12px] leading-[1.5] text-[#666] mb-4">
-              Rekam 15 detik, simpan 30KB. Tempel QR di buku, scan kapan pun — bundajournal.my.id/v/xxx
+              Isi sekali. Kartu berisi tanggal, dokter, dan pesan Bunda siap dikirim lewat WhatsApp.
             </p>
-            <div className="mt-auto flex items-center gap-2 h-[32px] px-2.5 rounded-[6px] bg-[#111] text-white">
-              <ScanLine className="w-4 h-4" />
-              <span className="text-[11px] tracking-wide">bundajournal.my.id/v/xxx</span>
-              <span className="ml-auto text-[10px] opacity-60">2×2cm</span>
+            <div className="mt-auto flex items-center gap-2 h-[32px] px-2.5 rounded-[6px] bg-[#25D366] text-white">
+              <MessageCircle className="w-4 h-4" />
+              <span className="text-[11px]">Kirim ke Ayah</span>
             </div>
           </div>
 
-          {/* Card 5: Mode Ayah Read-Only */}
+          {/* Card 5: 5 tema buku */}
           <div className="bg-white p-6 min-h-[200px] flex flex-col">
             <div className="w-8 h-8 rounded-[8px] border border-[#E5E5E5] flex items-center justify-center mb-4 text-[#111]">
-              <Users className="w-4 h-4" />
+              <Palette className="w-4 h-4" />
             </div>
             <div className="text-[11px] tracking-[0.08em] text-[#999] mb-2 font-medium">
-              MODE AYAH • READ-ONLY
+              5 TEMA • PREVIEW = CETAK
             </div>
             <div className="serif text-[18px] leading-[1.1] mb-2 text-[#111]">
-              Ayah bisa lihat, <br />
-              tidak bisa ubah
+              Pilih tema, <br />
+              buku tetap rapi
             </div>
             <p className="text-[12px] leading-[1.5] text-[#666] mb-4">
-              Share link read-only ke suami. Dia ikut deg-degan tanpa takut kepencet hapus data.
+              Lima palet warna siap pakai. Yang Bunda lihat di aplikasi sama dengan hasil PDF-nya.
             </p>
             <div className="mt-auto flex items-center gap-2">
-              <div className="flex -space-x-1.5">
-                <div className="w-6 h-6 rounded-full bg-[#111] border-2 border-white flex items-center justify-center text-[9px] text-white">
-                  I
-                </div>
-                <div className="w-6 h-6 rounded-full bg-[#E5E5E5] border-2 border-white flex items-center justify-center text-[9px] text-stone-700">
-                  A
-                </div>
-              </div>
-              <span className="text-[11px] text-[#666]">Ibu (edit) • Ayah (lihat)</span>
-              <span className="ml-auto w-2 h-2 rounded-full bg-emerald-500" />
+              {['#556B2F', '#B85D43', '#A85B73', '#262626', '#365345'].map((c) => (
+                <span key={c} className="w-6 h-6 rounded-full border border-black/10" style={{ backgroundColor: c }} />
+              ))}
             </div>
           </div>
 
@@ -540,7 +399,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                 Sekali bayar, jadi warisan.
               </h2>
               <p className="mt-2 text-[13px] text-[#666] max-w-[480px]">
-                Bukan langganan. File PDF + QR milikmu selamanya. Bisa cetak di percetakan dekat rumah.
+                Bukan langganan. File PDF milikmu selamanya, bisa dicetak di percetakan terdekat.
               </p>
             </div>
 
@@ -580,7 +439,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                   <span className="serif text-[32px] md:text-[36px] leading-none text-white">Rp129rb</span>
                   <span className="text-[12px] text-white/60 line-through">Rp249rb</span>
                 </div>
-                <div className="text-[12px] text-white/60 mb-6">Paling dipilih 62 ibu minggu ini</div>
+                <div className="text-[12px] text-white/60 mb-6">Sekali bayar, tanpa langganan</div>
                 <ul className="space-y-3 text-[13px] mb-8 text-white/90">
                   <li className="flex gap-2">
                     <Check className="w-4 h-4 mt-0.5 text-white" />
@@ -588,11 +447,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                   </li>
                   <li className="flex gap-2">
                     <Check className="w-4 h-4 mt-0.5 text-white" />
-                    <span><b className="font-semibold text-white">10 Voice QR</b> rekaman detak jantung</span>
+                    <span><b className="font-semibold text-white">5 tema buku</b>, semua ikut tercetak</span>
                   </li>
                   <li className="flex gap-2">
                     <Check className="w-4 h-4 mt-0.5 text-white" />
-                    <span>Mode Ayah pendamping read-only</span>
+                    <span>Arsip catatan dokter & jadwal kontrol</span>
                   </li>
                   <li className="flex gap-2">
                     <Check className="w-4 h-4 mt-0.5 text-white" />
@@ -600,14 +459,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                   </li>
                   <li className="flex gap-2">
                     <Check className="w-4 h-4 mt-0.5 text-white" />
-                    <span>Export PDF & 3 template siap cetak</span>
+                    <span>Ekspor PDF A4 & siap cetak</span>
                   </li>
                 </ul>
                 <button 
                   onClick={onStartCheckout ? () => onStartCheckout(129000) : onEnterApp}
-                  className="mt-auto h-[44px] rounded-[8px] bg-white text-[#111] text-[13px] font-semibold flex items-center justify-center gap-2 hover:bg-[#FAFAF9] transition-colors cursor-pointer shadow-sm"
+                  disabled={PAYMENT_PAUSED}
+                  title={PAYMENT_PAUSED ? 'Pembayaran sedang diperbaiki' : undefined}
+                  className="mt-auto h-[44px] rounded-[8px] bg-white text-[#111] text-[13px] font-semibold flex items-center justify-center gap-2 hover:bg-[#FAFAF9] transition-colors cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
                 >
-                  Miliki VIP — Rp 129rb <ArrowRight className="w-3.5 h-3.5" />
+                  {PAYMENT_PAUSED ? 'VIP Segera Hadir' : 'Miliki VIP — Rp 129rb'} <ArrowRight className="w-3.5 h-3.5" />
                 </button>
                 <div className="mt-3 text-[10px] text-white/50 text-center">
                   Bayar sekali seumur hidup, bukan langganan
@@ -626,7 +487,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                   <span className="serif text-[32px] md:text-[36px] leading-none text-[#111]">Rp249rb</span>
                   <span className="text-[12px] text-[#999]">cetak + kirim</span>
                 </div>
-                <div className="text-[12px] text-[#666] mb-6">Buku cetak fisik eksklusif 100 halaman B5</div>
+                <div className="text-[12px] text-[#666] mb-6">Buku cetak fisik 100 halaman A4</div>
                 <ul className="space-y-3 text-[13px] text-[#444] mb-8">
                   <li className="flex gap-2">
                     <Check className="w-4 h-4 mt-0.5 text-[#556B2F]" />
@@ -634,7 +495,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                   </li>
                   <li className="flex gap-2">
                     <Check className="w-4 h-4 mt-0.5 text-[#556B2F]" />
-                    <span>100 halaman buku cetak B5 art paper</span>
+                    <span>100 halaman A4, art paper</span>
                   </li>
                   <li className="flex gap-2">
                     <Check className="w-4 h-4 mt-0.5 text-[#556B2F]" />
@@ -647,9 +508,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                 </ul>
                 <button 
                   onClick={onStartCheckout ? () => onStartCheckout(249000) : onEnterApp}
-                  className="mt-auto h-[44px] rounded-[8px] border border-[#556B2F] text-[#556B2F] bg-white text-[13px] font-semibold hover:bg-[#556B2F] hover:text-white transition-colors cursor-pointer"
+                  disabled={PAYMENT_PAUSED}
+                  title={PAYMENT_PAUSED ? 'Pembayaran sedang diperbaiki' : undefined}
+                  className="mt-auto h-[44px] rounded-[8px] border border-[#556B2F] text-[#556B2F] bg-white text-[13px] font-semibold hover:bg-[#556B2F] hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[#556B2F]"
                 >
-                  Pesan Cetak Fisik — Rp 249rb
+                  {PAYMENT_PAUSED ? 'Cetak Fisik Segera Hadir' : 'Pesan Cetak Fisik — Rp 249rb'}
                 </button>
                 <div className="mt-3 text-[10px] text-stone-400 text-center">
                   Siap kirim setelah kehamilan selesai
@@ -672,7 +535,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                     Buku warisanmu sudah aktif, Bunda.
                   </h3>
                   <p className="text-[13px] leading-[1.6] text-[#166534] max-w-[420px] mb-8">
-                    Rp129rb sekali bayar. Tidak ada tagihan tahunan kayak Flo. 100 halaman + 10 Voice QR siap diisi.
+                    Sekali bayar, tanpa tagihan tahunan. 100 halaman siap diisi, langsung dari HP Bunda.
                   </p>
 
                   <div className="flex flex-wrap gap-3">
@@ -695,10 +558,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                       <Check className="w-3.5 h-3.5" /> 100 halaman aktif
                     </div>
                     <div className="flex items-center gap-1.5 text-[#166534]">
-                      <Check className="w-3.5 h-3.5" /> 10 Voice QR
+                      <Check className="w-3.5 h-3.5" /> 5 tema buku
                     </div>
                     <div className="flex items-center gap-1.5 text-[#166534]">
-                      <Check className="w-3.5 h-3.5" /> Mode Ayah
+                      <Check className="w-3.5 h-3.5" /> Jadwal kontrol
                     </div>
                   </div>
                 </div>
@@ -734,7 +597,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
           <div>
             <div className="serif text-[20px] font-normal text-[#111]">bunda.</div>
             <div className="mt-2 text-[11px] leading-[1.5] text-[#999] max-w-[280px]">
-              Jurnal warisan minimal untuk 62 ibu middle-low Indonesia. Dibuat offline-first, bukan SaaS mahal.
+              Jurnal kehamilan untuk Bunda yang ingin menyimpan kenangan. Dibuat offline-first, tanpa langganan.
             </div>
           </div>
 
@@ -744,7 +607,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
               <div className="space-y-2 text-[#666]">
                 <div className="hover:text-[#111] cursor-pointer" onClick={onEnterApp}>Jurnal</div>
                 <div className="hover:text-[#111] cursor-pointer" onClick={onEnterApp}>Studio Cetak</div>
-                <div className="hover:text-[#111] cursor-pointer" onClick={onEnterApp}>Voice QR</div>
+                <div className="hover:text-[#111] cursor-pointer" onClick={onEnterApp}>Buku A4</div>
               </div>
             </div>
 
@@ -752,16 +615,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
               <div className="font-medium mb-3 text-[#111]">Bantuan</div>
               <div className="space-y-2 text-[#666]">
                 <div className="hover:text-[#111] cursor-pointer" onClick={() => showToast("Format standar A5 Linen 100 halaman")}>Cara cetak</div>
-                <div className="hover:text-[#111] cursor-pointer" onClick={() => showToast("Hubungi PIC CS: m.yamin.ashri")}>WhatsApp CS</div>
+                <div className="hover:text-[#111] cursor-pointer" onClick={() => showToast("Hubungi Tim CS: support@bundajournal.my.id")}>WhatsApp CS</div>
                 <div className="hover:text-[#111] cursor-pointer" onClick={() => showToast("Data aman tersimpan di HP Bunda")}>FAQ Warisan</div>
               </div>
             </div>
           </div>
 
           <div className="text-[11px] text-[#999]">
-            © 2025–2026 Bunda Journal<br />
-            #111 / #FAFAF9 / 1px #E5E5E5 / 8px
+            © 2026 BUN - Bunda Journal<br />
+            support@bundajournal.my.id<br />
+            Midtrans: GoPay QRIS, Bank Transfer VA, GoPay eMoney, BSI VA - HTTPS Secured
           </div>
+        </div>
+        <div className="mt-6 pt-6 border-t border-[#EDE8DF] flex flex-wrap gap-4 justify-center text-[13px]" style={{ fontFamily: "Inter,sans-serif" }}>
+          <a href="/about.html" className="text-[#5A6E4A] hover:underline">Tentang Kami</a>
+          <span className="text-[#CCC]">•</span>
+          <a href="/contact.html" className="text-[#5A6E4A] hover:underline">Kontak</a>
+          <span className="text-[#CCC]">•</span>
+          <a href="/terms.html" className="text-[#5A6E4A] hover:underline">Syarat &amp; Ketentuan</a>
+          <span className="text-[#CCC]">•</span>
+          <a href="/privacy.html" className="text-[#5A6E4A] hover:underline">Kebijakan Privasi</a>
+          <span className="text-[#CCC]">•</span>
+          <a href="/refund.html" className="text-[#5A6E4A] hover:underline">Kebijakan Refund</a>
         </div>
       </footer>
 
@@ -814,7 +689,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                     </div>
                     <div className="mt-3 flex gap-2">
                       <div className="flex-1 h-[28px] rounded-[6px] bg-[#111] text-white flex items-center justify-center gap-1.5 text-[10px] font-medium">
-                        <Mic className="w-3 h-3" /> Voice QR
+                        <Mic className="w-3 h-3" /> Buku A4
                       </div>
                       <div className="w-[28px] h-[28px] rounded-[6px] border border-[#E5E5E5] bg-white grid grid-cols-3 gap-[1px] p-1">
                         <div className="bg-[#111]" /><div className="bg-white" /><div className="bg-[#111]" />
@@ -873,6 +748,35 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
           </div>
         </div>
       )}
+      {/* Lightbox screenshot */}
+      {shotPreview && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/85 flex items-center justify-center p-4"
+          onClick={() => setShotPreview(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            onClick={() => setShotPreview(null)}
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
+            aria-label="Tutup"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <figure className="max-w-[96vw] max-h-[90vh] flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
+            <div className="max-h-[84vh] overflow-auto rounded-[10px] bg-white shadow-2xl w-full flex justify-start md:justify-center">
+              <img
+                src={shotPreview.full || shotPreview.src}
+                alt={shotPreview.title}
+                className="w-[860px] max-w-none md:w-auto md:max-w-[80vw] h-auto block"
+              />
+            </div>
+            <figcaption className="text-white/80 text-[12px]">{shotPreview.title}</figcaption>
+          </figure>
+        </div>
+      )}
+
     </div>
   );
 };

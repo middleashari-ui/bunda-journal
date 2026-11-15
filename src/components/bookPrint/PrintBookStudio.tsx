@@ -1,3 +1,4 @@
+import { storageGet, storageSet } from '../../lib/storage/appStorage';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   BookThemeId, 
@@ -5,6 +6,8 @@ import {
   BOOK_CHAPTERS 
 } from '../../types/bookPrint';
 import { UserProfile, PhotoMemory, JournalEntry } from '../../types';
+import { mediaGet, mediaSet } from '../../lib/mediaStore';
+import { getSpreadInfo } from '../../lib/bookPages';
 import { IntroPages } from './pages/IntroPages';
 import { Bab1AwalMula } from './pages/Bab1AwalMula';
 import { PembatasTrimester } from './pages/PembatasTrimester';
@@ -36,9 +39,6 @@ import {
   ExternalLink,
   BookMarked
 } from 'lucide-react';
-import { pdf } from '@react-pdf/renderer';
-import { JournalPdfDocument, PdfBookPageData } from '../../utils/JournalPdfDocument';
-import { generatePDF, exportPagesListToB5PDF, extractPagesFromContainer, PDFExportProgress } from '../../utils/pdfGenerator';
 import { UpgradeModal } from '../UpgradeModal';
 
 interface PrintBookStudioProps {
@@ -72,16 +72,28 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   onGoToJournal,
   onOpenUpgradeModal,
 }) => {
-  // Theme state
-  const [selectedThemeId, setSelectedThemeId] = useState<BookThemeId>('kinfolk-sage');
+  // Theme state — dipakai juga oleh halaman /print supaya hasil cetak sama.
+  const [selectedThemeId, setSelectedThemeId] = useState<BookThemeId>(() => {
+    try {
+      const saved = storageGet('bunda_book_theme') as BookThemeId | null;
+      if (saved && BOOK_THEMES[saved]) return saved;
+    } catch {}
+    return 'kinfolk-sage';
+  });
   const activeTheme = BOOK_THEMES[selectedThemeId];
+
+  useEffect(() => {
+    try {
+      storageSet('bunda_book_theme', selectedThemeId);
+    } catch {}
+  }, [selectedThemeId]);
 
   // Navigation / Scroll Tracking state (0 to 49 spreads = 100 pages)
   const [currentSpreadIndex, setCurrentSpreadIndex] = useState<number>(0);
 
   // Document Lock state (Mode Jurnal: Terkunci / Read-Only vs Mode Edit)
   const [isDocumentLocked, setIsDocumentLocked] = useState<boolean>(() => {
-    return localStorage.getItem('bunda_book_locked') === 'true';
+    return storageGet('bunda_book_locked') === 'true';
   });
   const [lockToast, setLockToast] = useState<{ message: string; isLocked: boolean } | null>(null);
   const lockToastTimeoutRef = useRef<number | null>(null);
@@ -112,7 +124,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('bunda_book_locked', String(isDocumentLocked));
+    storageSet('bunda_book_locked', String(isDocumentLocked));
   }, [isDocumentLocked]);
 
   const [isMobile, setIsMobile] = useState<boolean>(() => {
@@ -131,8 +143,8 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   };
 
   // Standard B5 Dimensions at 96 DPI (176mm x 250mm)
-  const B5_WIDTH_PX = 665.2;
-  const B5_HEIGHT_PX = 944.9;
+  const B5_WIDTH_PX = 793.7;   // A4 210mm @96dpi
+  const B5_HEIGHT_PX = 1122.5; // A4 297mm @96dpi
 
   const mainContainerRef = useRef<HTMLElement>(null);
   
@@ -187,106 +199,24 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
   const [pdfProgress, setPdfProgress] = useState<number>(0);
 
   const handleOpenPrintWindow = () => {
-    // Solusi Anti-Blank & Anti-Popup Blocker:
-    // Gunakan Hidden Iframe untuk mencetak dokumen B5 mandiri.
-    // Cara ini:
-    // 1. Tidak diblokir browser HP (bukan window.open pop-up).
-    // 2. Terisolasi total dari DOM utama PWA sehingga tidak akan pernah blank putih.
-    // 3. Merender seluruh 100 halaman lengkap dengan CSS Anti-Geser B5.
-    const existingIframe = document.getElementById('bunda-print-iframe');
-    if (existingIframe) {
-      existingIframe.remove();
-    }
+    // WYSIWYG + cepat: buka halaman /print di tab baru.
+    // Browser (engine print native) yang mengubah HTML jadi PDF vector —
+    // tidak ada raster 100 halaman, tidak ada render ulang di device.
+    try {
+      storageSet('bunda_book_theme', selectedThemeId);
+    } catch {}
 
-    const iframe = document.createElement('iframe');
-    iframe.id = 'bunda-print-iframe';
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    iframe.style.visibility = 'hidden';
-    document.body.appendChild(iframe);
+    const target = new URL(window.location.href);
+    target.hash = '/print';
 
-    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
-      .map((node) => node.outerHTML)
-      .join('\n');
-
-    const pagesHtml: string[] = [];
-    for (let i = 0; i < 50; i++) {
-      const spreadEl = document.getElementById(`spread-row-${i}`);
-      if (spreadEl) {
-        const pages = spreadEl.querySelectorAll('.b5-page-left, .b5-page-right, .b5-page');
-        pages.forEach((p) => {
-          pagesHtml.push(p.outerHTML);
-        });
-      }
-    }
-
-    const docContent = `<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <title>Bunda-Journal-100-Halaman</title>
-  ${styles}
-  <style>
-    @page {
-      size: A4 portrait;
-      margin: 0 !important;
-    }
-    html, body {
-      margin: 0 !important;
-      padding: 0 !important;
-      background: #ffffff !important;
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-      -webkit-text-size-adjust: 100% !important;
-      text-size-adjust: 100% !important;
-    }
-    .b5-page, .halaman-jurnal {
-      position: relative !important;
-      width: 210mm !important;
-      max-width: 210mm !important;
-      min-width: 210mm !important;
-      height: 297mm !important;
-      max-height: 297mm !important;
-      min-height: 297mm !important;
-      padding: 20mm !important;
-      box-sizing: border-box !important;
-      overflow: hidden !important;
-      page-break-after: always !important;
-      break-after: page !important;
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-      margin: 0 !important;
-      border: none !important;
-      box-shadow: none !important;
-    }
-    .bingkai-usg img, .aspect-\\[4\\/3\\] img {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important;
-      display: block !important;
-    }
-  </style>
-</head>
-<body>
-  ${pagesHtml.join('\n')}
-</body>
-</html>`;
-
-    const iframeDoc = iframe.contentWindow?.document;
-    if (iframeDoc) {
-      iframeDoc.open();
-      iframeDoc.write(docContent);
-      iframeDoc.close();
-
-      iframe.contentWindow?.focus();
-      // Tunggu font dan gambar ter-render sempurna
-      setTimeout(() => {
-        iframe.contentWindow?.print();
-      }, 500);
+    const win = window.open(target.toString(), '_blank');
+    if (!win) {
+      setLockToast({
+        message: 'Izinkan pop-up untuk membuka halaman cetak.',
+        isLocked: isDocumentLocked,
+      });
+      if (lockToastTimeoutRef.current) window.clearTimeout(lockToastTimeoutRef.current);
+      lockToastTimeoutRef.current = window.setTimeout(() => setLockToast(null), 3500);
     }
   };
 
@@ -332,158 +262,18 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
       onUpdatePhoto(w, newPhoto);
     }
     try {
-      const savedPhotosStr = localStorage.getItem('bunda_photos');
+      const savedPhotosStr = mediaGet('bunda_photos');
       let currentList: PhotoMemory[] = savedPhotosStr ? JSON.parse(savedPhotosStr) : [];
       currentList = currentList.filter(p => p.week !== w);
       currentList.push(newPhoto);
-      localStorage.setItem('bunda_photos', JSON.stringify(currentList));
+      mediaSet('bunda_photos', JSON.stringify(currentList));
       window.dispatchEvent(new Event('bunda_journal_updated'));
     } catch {}
   };
 
-  const getSpreadInfo = (spreadIdx: number) => {
-    const leftPage = spreadIdx * 2 + 1;
-    const rightPage = spreadIdx * 2 + 2;
-
-    if (spreadIdx === 0) {
-      return {
-        type: 'intro',
-        chapterTitle: 'Halaman Judul & Pengantar',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 1) {
-      return {
-        type: 'bab1-a',
-        chapterTitle: 'Bab 1: Awal Mula Kisah (Test Pack & Reaksi Ayah)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 2) {
-      return {
-        type: 'bab1-b',
-        chapterTitle: 'Bab 1: Awal Mula Kisah (USG Kantung Janin & Ngidam)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 3) {
-      return {
-        type: 'pembatas-1',
-        chapterTitle: 'Pembatas Trimester 1 (Minggu 1 - 13)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx >= 4 && spreadIdx <= 12) {
-      const weekNum = 5 + (spreadIdx - 4);
-      return {
-        type: 'weekly',
-        week: weekNum,
-        chapterTitle: `Bab 2: Jurnal Kehamilan (Week ${weekNum})`,
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 13) {
-      return {
-        type: 'pembatas-2',
-        chapterTitle: 'Pembatas Trimester 2 (Minggu 14 - 27)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx >= 14 && spreadIdx <= 27) {
-      const weekNum = 14 + (spreadIdx - 14);
-      return {
-        type: 'weekly',
-        week: weekNum,
-        chapterTitle: `Bab 2: Jurnal Kehamilan (Week ${weekNum})`,
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 28) {
-      return {
-        type: 'pembatas-3',
-        chapterTitle: 'Pembatas Trimester 3 (Minggu 28 - 40)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx >= 29 && spreadIdx <= 41) {
-      const weekNum = 28 + (spreadIdx - 29);
-      return {
-        type: 'weekly',
-        week: weekNum,
-        chapterTitle: `Bab 2: Jurnal Kehamilan (Week ${weekNum})`,
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 42) {
-      return {
-        type: 'bab3-a',
-        chapterTitle: 'Bab 3: Persiapan (Nama & Kamar)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 43) {
-      return {
-        type: 'bab3-b',
-        chapterTitle: 'Bab 3: Persiapan (Daftar Belanja Bayi)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 44) {
-      return {
-        type: 'bab3-c',
-        chapterTitle: 'Bab 3: Persiapan (Checklist Tas RS)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 45) {
-      return {
-        type: 'bab4-a',
-        chapterTitle: 'Bab 4: Kelahiran (Hari Persalinan)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 46) {
-      return {
-        type: 'bab4-b',
-        chapterTitle: 'Bab 4: Kelahiran (Biodata & Cap Kaki)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 47) {
-      return {
-        type: 'bab4-c',
-        chapterTitle: 'Bab 4: Kelahiran (Gelang RS & Foto)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    if (spreadIdx === 48) {
-      return {
-        type: 'bab5-a',
-        chapterTitle: 'Bab 5: Kapsul Waktu (Surat Bunda)',
-        pages: [leftPage, rightPage],
-      };
-    }
-    return {
-      type: 'bab5-b',
-      chapterTitle: 'Bab 5: Kapsul Waktu (Surat Ayah)',
-      pages: [leftPage, rightPage],
-    };
-  };
-
   // Memoized 50 spreads / 100 pages data for @react-pdf/renderer
-  const bookPages: PdfBookPageData[] = useMemo(() => {
-    return Array.from({ length: 50 }).map((_, sIdx) => {
-      const info = getSpreadInfo(sIdx);
-      return {
-        spreadIndex: sIdx,
-        leftPageNum: info.pages[0],
-        rightPageNum: info.pages[1],
-        type: info.type,
-        chapterTitle: info.chapterTitle,
-        week: info.week,
-      };
-    });
-  }, []);
+  // (dihapus: layout buku sekarang dirender oleh komponen halaman yang sama,
+  //  bukan dokumen @react-pdf terpisah)
 
   const renderSpreadContent = (spreadIdx: number) => {
     const info = getSpreadInfo(spreadIdx);
@@ -514,7 +304,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
       let matchedPhoto = customPhotos[w] || photos.find(p => p.week === w);
       if (!matchedPhoto) {
         try {
-          const savedStr = localStorage.getItem('bunda_photos');
+          const savedStr = mediaGet('bunda_photos');
           if (savedStr) {
             const list: PhotoMemory[] = JSON.parse(savedStr);
             const found = list.find(p => p.week === w);
@@ -575,7 +365,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
     // 2. Bab 1: Awal Mula Kisah (Pages 3-6)
     let bab1Data: any = null;
     try {
-      const s = localStorage.getItem('bunda_bab1');
+      const s = mediaGet('bunda_bab1');
       if (s) bab1Data = JSON.parse(s);
     } catch {}
 
@@ -607,7 +397,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
       // Check Left Page (Tracker / Journal notes)
       let hasDailyText = false;
       try {
-        const dailySaved = localStorage.getItem(`bunda_daily_w${weekNum}`);
+        const dailySaved = storageGet(`bunda_daily_w${weekNum}`);
         if (dailySaved) {
           const parsed = JSON.parse(dailySaved);
           if (Object.values(parsed).some(v => typeof v === 'string' && (v as string).trim().length > 0)) {
@@ -631,7 +421,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
       let hasPhoto = !!customPhotos[weekNum] || photos.some(p => p.week === weekNum && p.src);
       if (!hasPhoto) {
         try {
-          const savedStr = localStorage.getItem('bunda_photos');
+          const savedStr = mediaGet('bunda_photos');
           if (savedStr) {
             const list: PhotoMemory[] = JSON.parse(savedStr);
             if (list.some(p => p.week === weekNum && p.src)) hasPhoto = true;
@@ -652,7 +442,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
     // 4. Bab 3: Persiapan (Spreads 42 to 44, pages 85 to 90)
     let bab3Data: any = null;
     try {
-      const s = localStorage.getItem('bunda_bab3');
+      const s = mediaGet('bunda_bab3');
       if (s) bab3Data = JSON.parse(s);
     } catch {}
 
@@ -663,7 +453,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
     // 5. Bab 4: Kelahiran (Spreads 45 to 47, pages 91 to 96)
     let bab4Data: any = null;
     try {
-      const s = localStorage.getItem('bunda_bab4');
+      const s = mediaGet('bunda_bab4');
       if (s) bab4Data = JSON.parse(s);
     } catch {}
 
@@ -683,7 +473,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
     // 6. Bab 5: Kapsul Waktu (Spreads 48 to 49, pages 97 to 100)
     let bab5Data: any = null;
     try {
-      const s = localStorage.getItem('bunda_bab5');
+      const s = mediaGet('bunda_bab5');
       if (s) bab5Data = JSON.parse(s);
     } catch {}
 
@@ -762,7 +552,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
           <button
             onClick={() => { if (guardOutput('export_pdf')) handleOpenPrintWindow(); }}
             className="w-8 h-8 rounded-lg bg-[#556B2F] hover:bg-[#465926] text-white flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95 border border-[#465926]"
-            title="Download PDF (100 Halaman)"
+            title="Simpan buku (100 halaman)"
             aria-label="Download PDF"
           >
             <Download className="w-4 h-4" />
@@ -1107,7 +897,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
                 className="w-full py-2.5 bg-[#556B2F] hover:bg-[#465926] text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
-                <span>Opsi Download PDF Buku</span>
+                <span>Simpan buku</span>
               </button>
             </div>
 
@@ -1197,9 +987,9 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
               {emptyPagesList.length === 0 ? (
                 <div className="text-center py-8 text-stone-400 space-y-2">
                   <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
-                  <p className="text-sm font-serif font-bold text-stone-200">Buku Kenangan Siap Dicetak!</p>
+                  <p className="text-sm font-serif font-bold text-stone-200">Buku siap dicetak</p>
                   <p className="text-xs text-stone-400 max-w-xs mx-auto font-light">
-                    Semua foto, catatan medis dokter, dan curahan hati bunda telah tersimpan dengan sempurna.
+                    Semua foto dan catatan Bunda sudah siap dicetak.
                   </p>
                 </div>
               ) : (
@@ -1259,7 +1049,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-stone-800 mb-3">
               <div className="flex items-center gap-2">
                 <Download className="w-4 h-4 text-[#556B2F]" />
-                <h3 className="font-serif text-sm font-bold text-white">Download PDF Buku</h3>
+                <h3 className="font-serif text-sm font-bold text-white">Simpan buku</h3>
               </div>
               <button 
                 onClick={() => setIsDownloadModalOpen(false)}
@@ -1283,10 +1073,10 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
               >
                 <div>
                   <span className="font-semibold text-xs block">
-                    Download Buku Jurnal (100 Halaman)
+                    Simpan buku (100 halaman)
                   </span>
                   <span className="text-[10px] text-white/80 block font-light">
-                    Format Presisi Siap Cetak (Anti-Bocor & Anti-Geser)
+                    Ukuran A4, siap cetak
                   </span>
                 </div>
                 <Download className="w-4 h-4 text-white shrink-0 ml-2" />

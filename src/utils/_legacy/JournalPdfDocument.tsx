@@ -1,8 +1,14 @@
+// ARSIP — TIDAK DIPAKAI APLIKASI. Diganti oleh PrintBookView/PrintBookStudio
+// (buku A4). Disimpan hanya sebagai rujukan historis (dan dipakai skrip QA di
+// Testing/). JANGAN mengimpor file ini dari src/.
+// Catatan: pemetaan hari di file ini masih memakai konvensi lama Rab=0.
 import React from 'react';
 import { Document, Page, View, Text, StyleSheet, Image } from '@react-pdf/renderer';
 import { getWeekData } from '../data/pregnancyWeeks';
 import { UserProfile, PhotoMemory, JournalEntry } from '../types';
 import { BookThemeConfig } from '../types/bookPrint';
+import { loadAppointment, loadStatus, getActiveEmail, isAppointmentEmpty } from '../lib/appointmentStore';
+import { getWeekDatesMonday, fmtDayMonth, fmtWeekRange } from '../lib/pregnancyDate';
 
 // ============================================================================
 // STYLESHEET (Native B5: 176mm x 250mm / 498.9pt x 708.66pt)
@@ -24,6 +30,18 @@ const styles = StyleSheet.create({
     lineHeight: 1.4,
   },
   // Outer decorative book frame
+  // Watermark 'bunda.' tipis di belakang isi (repeat tiap halaman via `fixed`)
+  watermark: {
+    position: 'absolute',
+    top: 300,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontFamily: 'Times-Roman',
+    fontSize: 64,
+    color: '#1C1917',
+    opacity: 0.05,
+  },
   pageBorderFrame: {
     position: 'absolute',
     top: 12,
@@ -178,6 +196,12 @@ const styles = StyleSheet.create({
     color: '#78716C',
     textTransform: 'uppercase',
   },
+  dayBadgeDate: {
+    fontFamily: 'Helvetica',
+    fontSize: 4.6,
+    color: '#A8A29E',
+    marginTop: 0.5,
+  },
   dayBadgeTextSunday: {
     color: '#C87A64',
   },
@@ -188,6 +212,12 @@ const styles = StyleSheet.create({
     color: '#292524',
     paddingLeft: 4,
     lineHeight: 1.3,
+    // FIX fleksibel natural tidak kaku
+    wordBreak: 'normal' as any,
+    overflowWrap: 'break-word' as any,
+    whiteSpace: 'pre-wrap' as any,
+    flexWrap: 'wrap' as any,
+    hyphens: 'auto' as any,
   },
 
   // --------------------------------------------------------------------------
@@ -253,7 +283,7 @@ const styles = StyleSheet.create({
   },
   polaroidImageHolder: {
     width: '100%',
-    height: 98,
+    height: 72,
     backgroundColor: '#F5F5F4',
     borderWidth: 0.75,
     borderColor: '#E7E5E4',
@@ -422,6 +452,40 @@ export interface JournalPdfDocumentProps {
 }
 
 // Helper to safely load LocalStorage data (browser environment fallback)
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+// Urutan strip buku: index 0 = RAB ... 6 = SEL
+const STRIP_LABELS = ['RAB', 'KAM', 'JUM', 'SAB', 'MIN', 'SEN', 'SEL'];
+// Mapping label Sen..Min (urutan cetak) -> index storage RAB..SEL
+const PRINT_DAYS: Array<{ label: string; storageIndex: number }> = [
+  { label: 'Sen', storageIndex: 5 },
+  { label: 'Sel', storageIndex: 6 },
+  { label: 'Rab', storageIndex: 0 },
+  { label: 'Kam', storageIndex: 1 },
+  { label: 'Jum', storageIndex: 2 },
+  { label: 'Sab', storageIndex: 3 },
+  { label: 'Min', storageIndex: 4 },
+];
+
+/** Catatan harian asli user: bunda_{week}_{dayIndex}_catatan -> { text, savedAt, status } */
+function getDayNote(week: number, storageIndex: number): { text: string; savedAt: string; status: string } | null {
+  const raw = getSavedStorage(`bunda_${week}_${storageIndex}_catatan`);
+  if (!raw) return null;
+  const text = typeof raw === 'string' ? raw : (raw.text || '');
+  if (!text || !String(text).trim()) return null;
+  return {
+    text: String(text),
+    savedAt: raw.savedAt || '',
+    status: raw.status || '',
+  };
+}
+
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '-';
+  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 function getSavedStorage(key: string): any {
   if (typeof window === 'undefined') return null;
   try {
@@ -449,6 +513,79 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
   const ownerName = userProfile?.name || '';
   const hplDate = userProfile?.hplDate || '';
   const babyNickname = userProfile?.babyNickname || '';
+
+  // ---- Data jadwal dokter: PER-USER (by email), bukan dummy global ----
+  const userEmail = getActiveEmail();
+  const appt = loadAppointment(userEmail);
+  const apptEmpty = isAppointmentEmpty(appt);
+  const apptStatus = loadStatus(userEmail) || 'PERLU BOOK';
+  const usgPhotos: any[] = (() => {
+    const list: any[] = [];
+    Object.keys(customPhotos || {}).forEach((k) => {
+      const ph = (customPhotos as any)[k];
+      if (ph && (ph.src || ph.url)) list.push(ph);
+    });
+    (photos || []).forEach((ph: any) => {
+      if (ph && (ph.src || ph.url)) list.push(ph);
+    });
+    return list;
+  })();
+  const apptBookH7 = (() => {
+    if (!appt.date) return '';
+    const d = new Date(appt.date);
+    if (isNaN(d.getTime())) return '';
+    d.setDate(d.getDate() - 7);
+    return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+  })();
+
+  // ---- Ringkasan nyata dari storage user (kosong -> '-') ----
+  const userSummary = (() => {
+    let noteDays = 0;
+    let suppDays = 0;
+    let waterMl = 0;
+    let waterDays = 0;
+    let jasDays = 0;
+    let weeksWithStats = 0;
+    let lastWeight = '';
+    let lastWaist = '';
+    let lastBp = '';
+    for (let w = 5; w <= 40; w += 1) {
+      const st = getSavedStorage(`bunda_momstats_w${w}`);
+      if (st && (st.weight || st.waist || st.bloodPressure || st.doctorNote)) {
+        weeksWithStats += 1;
+        if (st.weight) lastWeight = String(st.weight);
+        if (st.waist) lastWaist = String(st.waist);
+        if (st.bloodPressure) lastBp = String(st.bloodPressure);
+      }
+      for (let d = 0; d < 7; d += 1) {
+        if (getDayNote(w, d)) noteDays += 1;
+        const supp = getSavedStorage(`bunda_${w}_${d}_suplemen`);
+        if (supp) suppDays += 1;
+        const water = getSavedStorage(`bunda_${w}_${d}_hidrasi`);
+        if (water && typeof water.current === 'number') {
+          waterMl += water.current;
+          waterDays += 1;
+        }
+        if (getSavedStorage(`bunda_${w}_${d}_jasmani`)) jasDays += 1;
+      }
+    }
+    return { noteDays, suppDays, waterMl, waterDays, jasDays, weeksWithStats, lastWeight, lastWaist, lastBp };
+  })();
+
+  /** Ringkasan ceklis mingguan dari data asli hari itu. */
+  const weekHabits = (w: number) => {
+    let supp = 0;
+    let waterMl = 0;
+    let waterDays = 0;
+    let jas = 0;
+    for (let d = 0; d < 7; d += 1) {
+      if (getSavedStorage(`bunda_${w}_${d}_suplemen`)) supp += 1;
+      const wa = getSavedStorage(`bunda_${w}_${d}_hidrasi`);
+      if (wa && typeof wa.current === 'number') { waterMl += wa.current; waterDays += 1; }
+      if (getSavedStorage(`bunda_${w}_${d}_jasmani`)) jas += 1;
+    }
+    return { supp, waterMl, waterDays, jas };
+  };
 
   // Standard 50 spreads = 100 pages
   const spreadsToRender = bookPages && bookPages.length > 0 
@@ -482,6 +619,7 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
               {/* HALAMAN 1: COVER UTAMA */}
               <Page size="B5" style={styles.page}>
                 <View style={styles.pageBorderFrame} />
+                <Text fixed style={styles.watermark}>bunda.</Text>
                 <View style={styles.coverDoubleBorder}>
                   <View style={{ alignItems: 'center' }}>
                     <Text style={[styles.topHeaderCategory, { fontSize: 7.5, letterSpacing: 2 }]}>
@@ -913,24 +1051,86 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
               <Page size="B5" style={styles.page}>
                 <View style={styles.pageBorderFrame} />
                 <View style={styles.innerPageContainer}>
-                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16 }}>
-                    <Text style={[styles.topHeaderCategory, { fontSize: 8, letterSpacing: 2 }]}>
-                      TRIMESTER PERTAMA
-                    </Text>
-                    <Text style={[styles.topHeaderTitle, { fontSize: 24, textAlign: 'center', marginVertical: 4 }]}>
-                      Minggu ke-1 hingga Minggu ke-13
-                    </Text>
-                    <View style={{ width: 42, height: 1.5, backgroundColor: '#556B2F', marginVertical: 8 }} />
-                    <View style={[styles.cardContainer, { width: '92%', padding: 12, backgroundColor: '#FFFFFF' }]}>
-                      <Text style={[styles.milestoneQuote, { fontSize: 10.5, lineHeight: 1.55 }]}>
-                        "Dari sebutir sel yang tak kasat mata, kini kau bertumbuh menjadi manusia kecil dengan detak jantung penuh cinta."
-                      </Text>
+                  <View style={{ flex: 1, justifyContent: 'flex-start' }}>
+                    <View style={styles.topHeaderBar}>
+                      <View>
+                        <Text style={styles.topHeaderCategory}>JADWAL PERTEMUAN DOKTER</Text>
+                        <Text style={styles.topHeaderTitle}>Jadwal Selanjutnya</Text>
+                      </View>
+                      <View style={styles.topHeaderBadge}>
+                        <Text style={styles.topHeaderBadgeAccent}>{apptStatus}</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.cardContainer}>
+                      <View style={styles.cardHeader}>
+                        <Text style={styles.cardHeaderText}>Dokter &amp; Lokasi</Text>
+                        <Text style={styles.cardHeaderSubtext}>{apptEmpty ? 'Belum ada jadwal' : 'Jadwal Aktif'}</Text>
+                      </View>
+                      <View style={[styles.cardBody, { paddingVertical: 4 }]}>
+                        <View style={styles.tableRow}>
+                          <Text style={styles.tableRowLabel}>Nama Dokter</Text>
+                          <Text style={styles.tableRowValue}>{appt.dokter || '-'}</Text>
+                        </View>
+                        <View style={styles.tableRow}>
+                          <Text style={styles.tableRowLabel}>RS / Klinik</Text>
+                          <Text style={styles.tableRowValue}>{appt.lokasi || '-'}</Text>
+                        </View>
+                        <View style={styles.tableRow}>
+                          <Text style={styles.tableRowLabel}>Jenis Pemeriksaan</Text>
+                          <Text style={styles.tableRowValue}>{appt.jenis || '-'}</Text>
+                        </View>
+                        <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
+                          <Text style={styles.tableRowLabel}>Ruang / Poli</Text>
+                          <Text style={styles.tableRowValue}>{appt.klinik || '-'}</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.cardContainer}>
+                      <View style={styles.cardHeader}>
+                        <Text style={styles.cardHeaderText}>Waktu Pertemuan</Text>
+                        <Text style={styles.cardHeaderSubtext}>Tanggal &amp; Jam</Text>
+                      </View>
+                      <View style={[styles.cardBody, { paddingVertical: 4 }]}>
+                        <View style={styles.tableRow}>
+                          <Text style={styles.tableRowLabel}>Tanggal</Text>
+                          <Text style={styles.tableRowValue}>{fmtDate(appt.date)}</Text>
+                        </View>
+                        <View style={styles.tableRow}>
+                          <Text style={styles.tableRowLabel}>Jam</Text>
+                          <Text style={styles.tableRowValue}>{appt.jam || '-'}</Text>
+                        </View>
+                        <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
+                          <Text style={styles.tableRowLabel}>Minggu Kehamilan</Text>
+                          <Text style={styles.tableRowValue}>
+                            {appt.minggu !== '' && appt.minggu !== null && appt.minggu !== undefined ? `Minggu ${appt.minggu}` : '-'}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.cardContainer}>
+                      <View style={styles.cardHeader}>
+                        <Text style={styles.cardHeaderText}>Pengingat Book H-7</Text>
+                        <Text style={styles.cardHeaderSubtext}>Booking 7 hari sebelumnya</Text>
+                      </View>
+                      <View style={[styles.cardBody, { paddingVertical: 4 }]}>
+                        <View style={styles.tableRow}>
+                          <Text style={styles.tableRowLabel}>Book H-7</Text>
+                          <Text style={styles.tableRowValue}>{apptBookH7 || '-'}</Text>
+                        </View>
+                        <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
+                          <Text style={styles.tableRowLabel}>Pesan untuk Ayah</Text>
+                          <Text style={styles.tableRowValue}>{appt.pesanAyah || '-'}</Text>
+                        </View>
+                      </View>
                     </View>
                   </View>
                   <View style={styles.footer}>
                     <Text style={styles.footerPageNum}>7</Text>
                     <Text style={styles.footerBookTitle}>bunda. — Jurnal Kehamilan</Text>
-                    <Text style={styles.footerChapter}>Pembatas Trimester 1</Text>
+                    <Text style={styles.footerChapter}>Jadwal Pertemuan</Text>
                   </View>
                 </View>
               </Page>
@@ -995,24 +1195,65 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
               <Page size="B5" style={styles.page}>
                 <View style={styles.pageBorderFrame} />
                 <View style={styles.innerPageContainer}>
-                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16 }}>
-                    <Text style={[styles.topHeaderCategory, { fontSize: 8, letterSpacing: 2 }]}>
-                      TRIMESTER KEDUA
-                    </Text>
-                    <Text style={[styles.topHeaderTitle, { fontSize: 24, textAlign: 'center', marginVertical: 4 }]}>
-                      Minggu ke-14 hingga Minggu ke-27
-                    </Text>
-                    <View style={{ width: 42, height: 1.5, backgroundColor: '#556B2F', marginVertical: 8 }} />
-                    <View style={[styles.cardContainer, { width: '92%', padding: 12, backgroundColor: '#FFFFFF' }]}>
-                      <Text style={[styles.milestoneQuote, { fontSize: 10.5, lineHeight: 1.55 }]}>
-                        "Saat kepakan lembut di dalam perut bunda itu nyata... itu adalah salam cinta pertamamu dari dalam rahim."
-                      </Text>
+                  <View style={{ flex: 1, justifyContent: 'flex-start' }}>
+                    <View style={styles.topHeaderBar}>
+                      <View>
+                        <Text style={styles.topHeaderCategory}>GALERI FOTO USG</Text>
+                        <Text style={styles.topHeaderTitle}>Kenangan Layar USG</Text>
+                      </View>
+                      <View style={styles.topHeaderBadge}>
+                        <Text style={styles.topHeaderBadgeAccent}>{usgPhotos.length} Foto</Text>
+                      </View>
+                    </View>
+
+                    {usgPhotos.length === 0 ? (
+                      <View style={styles.cardContainer}>
+                        <View style={styles.cardHeader}>
+                          <Text style={styles.cardHeaderText}>Galeri Foto USG</Text>
+                          <Text style={styles.cardHeaderSubtext}>Belum ada foto</Text>
+                        </View>
+                        <View style={styles.cardBody}>
+                          <Text style={{ fontFamily: 'Times-Roman', fontSize: 9.5, color: '#57534E', lineHeight: 1.55 }}>
+                            Belum ada foto USG. Bunda bisa mengunggah foto USG lewat menu Jurnal di aplikasi,
+                            dan foto akan otomatis tampil di halaman ini saat buku dicetak.
+                          </Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                        {usgPhotos.slice(0, 4).map((ph: any, i: number) => (
+                          <View key={i} style={[styles.polaroidContainer, { width: '47%', marginBottom: 8 }]}>
+                            <View style={styles.washiTape} />
+                            <View style={styles.polaroidImageHolder}>
+                              <Image src={ph.src || ph.url} style={styles.polaroidImage} />
+                            </View>
+                            <Text style={styles.polaroidCaption}>{ph.caption || `Foto USG ${i + 1}`}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    <View style={styles.cardContainer}>
+                      <View style={styles.cardHeader}>
+                        <Text style={styles.cardHeaderText}>Catatan Sesi USG</Text>
+                        <Text style={styles.cardHeaderSubtext}>Ringkasan</Text>
+                      </View>
+                      <View style={[styles.cardBody, { paddingVertical: 4 }]}>
+                        <View style={styles.tableRow}>
+                          <Text style={styles.tableRowLabel}>Jumlah foto tersimpan</Text>
+                          <Text style={styles.tableRowValue}>{usgPhotos.length > 0 ? `${usgPhotos.length} foto` : '-'}</Text>
+                        </View>
+                        <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
+                          <Text style={styles.tableRowLabel}>Dokter pemeriksa terakhir</Text>
+                          <Text style={styles.tableRowValue}>{appt.dokter || '-'}</Text>
+                        </View>
+                      </View>
                     </View>
                   </View>
                   <View style={styles.footer}>
                     <Text style={styles.footerPageNum}>27</Text>
                     <Text style={styles.footerBookTitle}>bunda. — Jurnal Kehamilan</Text>
-                    <Text style={styles.footerChapter}>Pembatas Trimester 2</Text>
+                    <Text style={styles.footerChapter}>Galeri Foto USG</Text>
                   </View>
                 </View>
               </Page>
@@ -1077,24 +1318,111 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
               <Page size="B5" style={styles.page}>
                 <View style={styles.pageBorderFrame} />
                 <View style={styles.innerPageContainer}>
-                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16 }}>
-                    <Text style={[styles.topHeaderCategory, { fontSize: 8, letterSpacing: 2 }]}>
-                      TRIMESTER KETIGA
-                    </Text>
-                    <Text style={[styles.topHeaderTitle, { fontSize: 24, textAlign: 'center', marginVertical: 4 }]}>
-                      Minggu ke-28 hingga Minggu ke-40
-                    </Text>
-                    <View style={{ width: 42, height: 1.5, backgroundColor: '#556B2F', marginVertical: 8 }} />
-                    <View style={[styles.cardContainer, { width: '92%', padding: 12, backgroundColor: '#FFFFFF' }]}>
-                      <Text style={[styles.milestoneQuote, { fontSize: 10.5, lineHeight: 1.55 }]}>
-                        "Setiap tarikan napas kini adalah doa, setiap tendangan kuatmu adalah kabar bahwa rumah cinta kita segera lengkap."
-                      </Text>
+                  <View style={{ flex: 1, justifyContent: 'flex-start' }}>
+                    <View style={styles.topHeaderBar}>
+                      <View>
+                        <Text style={styles.topHeaderCategory}>STATISTIK &amp; RINGKASAN</Text>
+                        <Text style={styles.topHeaderTitle}>Perjalanan Bunda</Text>
+                      </View>
+                      <View style={styles.topHeaderBadge}>
+                        <Text style={styles.topHeaderBadgeAccent}>W{currentWeek}</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.metricsGrid3}>
+                      <View style={styles.metricCard}>
+                        <View style={styles.metricHeader}>
+                          <Text style={styles.metricHeaderText}>HARI TERCATAT</Text>
+                        </View>
+                        <View style={styles.metricBody}>
+                          <Text style={styles.metricValue}>{userSummary.noteDays > 0 ? userSummary.noteDays : '-'}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.metricCard}>
+                        <View style={styles.metricHeader}>
+                          <Text style={styles.metricHeaderText}>CEK DOKTER</Text>
+                        </View>
+                        <View style={styles.metricBody}>
+                          <Text style={styles.metricValue}>{userSummary.weeksWithStats > 0 ? userSummary.weeksWithStats : '-'}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.metricCard}>
+                        <View style={styles.metricHeader}>
+                          <Text style={styles.metricHeaderText}>FOTO USG</Text>
+                        </View>
+                        <View style={styles.metricBody}>
+                          <Text style={styles.metricValue}>{usgPhotos.length > 0 ? usgPhotos.length : '-'}</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.cardContainer}>
+                      <View style={styles.cardHeader}>
+                        <Text style={styles.cardHeaderText}>Catatan Kesehatan Terakhir</Text>
+                        <Text style={styles.cardHeaderSubtext}>Dari data Bunda</Text>
+                      </View>
+                      <View style={[styles.cardBody, { paddingVertical: 4 }]}>
+                        <View style={styles.tableRow}>
+                          <Text style={styles.tableRowLabel}>Berat Badan</Text>
+                          <Text style={styles.tableRowValue}>{userSummary.lastWeight ? `${userSummary.lastWeight} kg` : '-'}</Text>
+                        </View>
+                        <View style={styles.tableRow}>
+                          <Text style={styles.tableRowLabel}>Lingkar Perut</Text>
+                          <Text style={styles.tableRowValue}>{userSummary.lastWaist ? `${userSummary.lastWaist} cm` : '-'}</Text>
+                        </View>
+                        <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
+                          <Text style={styles.tableRowLabel}>Tekanan Darah</Text>
+                          <Text style={styles.tableRowValue}>{userSummary.lastBp ? `${userSummary.lastBp} mmHg` : '-'}</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.cardContainer}>
+                      <View style={styles.cardHeader}>
+                        <Text style={styles.cardHeaderText}>Kebiasaan Sehat</Text>
+                        <Text style={styles.cardHeaderSubtext}>Akumulasi Buku</Text>
+                      </View>
+                      <View style={[styles.cardBody, { paddingVertical: 4 }]}>
+                        <View style={styles.tableRow}>
+                          <Text style={styles.tableRowLabel}>Hari dengan catatan suplemen</Text>
+                          <Text style={styles.tableRowValue}>{userSummary.suppDays > 0 ? `${userSummary.suppDays} hari` : '-'}</Text>
+                        </View>
+                        <View style={styles.tableRow}>
+                          <Text style={styles.tableRowLabel}>Total hidrasi tercatat</Text>
+                          <Text style={styles.tableRowValue}>{userSummary.waterDays > 0 ? `${(userSummary.waterMl / 1000).toFixed(1)} L` : '-'}</Text>
+                        </View>
+                        <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
+                          <Text style={styles.tableRowLabel}>Hari dengan aktivitas fisik</Text>
+                          <Text style={styles.tableRowValue}>{userSummary.jasDays > 0 ? `${userSummary.jasDays} hari` : '-'}</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.cardContainer}>
+                      <View style={styles.cardHeader}>
+                        <Text style={styles.cardHeaderText}>Jadwal Berikutnya</Text>
+                        <Text style={styles.cardHeaderSubtext}>{apptStatus}</Text>
+                      </View>
+                      <View style={[styles.cardBody, { paddingVertical: 4 }]}>
+                        <View style={styles.tableRow}>
+                          <Text style={styles.tableRowLabel}>Dokter</Text>
+                          <Text style={styles.tableRowValue}>{appt.dokter || '-'}</Text>
+                        </View>
+                        <View style={styles.tableRow}>
+                          <Text style={styles.tableRowLabel}>Tanggal</Text>
+                          <Text style={styles.tableRowValue}>{fmtDate(appt.date)}</Text>
+                        </View>
+                        <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
+                          <Text style={styles.tableRowLabel}>Book H-7</Text>
+                          <Text style={styles.tableRowValue}>{apptBookH7 || '-'}</Text>
+                        </View>
+                      </View>
                     </View>
                   </View>
                   <View style={styles.footer}>
                     <Text style={styles.footerPageNum}>57</Text>
                     <Text style={styles.footerBookTitle}>bunda. — Jurnal Kehamilan</Text>
-                    <Text style={styles.footerChapter}>Pembatas Trimester 3</Text>
+                    <Text style={styles.footerChapter}>Statistik Bunda</Text>
                   </View>
                 </View>
               </Page>
@@ -1171,20 +1499,22 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
           const savedDaily = getSavedStorage(`bunda_daily_w${weekNum}`);
           const savedMomStats = getSavedStorage(`bunda_momstats_w${weekNum}`);
 
-          const weightVal = savedMomStats?.weight || '';
-          const waistVal = savedMomStats?.waist || '';
-          const bpVal = savedMomStats?.bloodPressure || '';
-          const doctorNotes = savedMomStats?.doctorNote || '';
+          // JANGAN ngarang: kosong = '-' (bukan angka contoh)
+          const weightVal = savedMomStats?.weight ? String(savedMomStats.weight) : '';
+          const waistVal = savedMomStats?.waist ? String(savedMomStats.waist) : '';
+          const bpVal = savedMomStats?.bloodPressure ? String(savedMomStats.bloodPressure) : '';
+          const doctorNotes = savedMomStats?.doctorNote && String(savedMomStats.doctorNote).trim()
+            ? String(savedMomStats.doctorNote)
+            : '-';
 
-          const daysLabel = [
-            { key: 'Sen', label: 'Sen' },
-            { key: 'Sel', label: 'Sel' },
-            { key: 'Rab', label: 'Rab' },
-            { key: 'Kam', label: 'Kam' },
-            { key: 'Jum', label: 'Jum' },
-            { key: 'Sab', label: 'Sab' },
-            { key: 'Min', label: 'Min', isSunday: true },
-          ];
+          const daysLabel = PRINT_DAYS.map((d) => ({
+            key: d.label,
+            label: d.label,
+            storageIndex: d.storageIndex,
+            isSunday: d.label === 'Min',
+          }));
+          const weekDatesMon = getWeekDatesMonday(weekNum);
+          const habits = weekHabits(weekNum);
 
           return (
             <React.Fragment key={`spread-${sIdx}`}>
@@ -1203,7 +1533,7 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                       </View>
                       <View style={styles.topHeaderBadge}>
                         <Text style={styles.topHeaderBadgeText}>
-                          Tanggal: {matchedEntry?.date || `${weekNum * 7} Hari Perjalanan`}
+                          Tanggal: {matchedEntry?.date || fmtWeekRange(weekNum)}
                         </Text>
                         <Text style={styles.topHeaderBadgeAccent}>• T{weekData.trimester}</Text>
                       </View>
@@ -1217,12 +1547,18 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                       </View>
                       <View style={styles.dailyRowsContainer}>
                         {daysLabel.map((dayObj, idx) => {
-                          const note = savedDaily?.[dayObj.key] || (idx === 0 && matchedEntry?.text ? matchedEntry.text.slice(0, 75) : `Catatan dan rasa syukur hari ${dayObj.label}...`);
+                          // Data asli user (bunda_{week}_{idx}_catatan). Kalau kosong -> '-', JANGAN ngarang.
+                          const rec = getDayNote(weekNum, dayObj.storageIndex);
+                          const note = rec ? rec.text : '-';
                           return (
                             <View key={idx} style={[styles.dailyRow, idx === 6 && { borderBottomWidth: 0 }]}>
                               <View style={styles.dayBadge}>
                                 <Text style={[styles.dayBadgeText, dayObj.isSunday && styles.dayBadgeTextSunday]}>
                                   {dayObj.label}
+                                </Text>
+                                {/* Tanggal asli hari itu (Sen 23 Nov, ...), '-' kalau tak bisa dihitung */}
+                                <Text style={styles.dayBadgeDate}>
+                                  {fmtDayMonth(weekDatesMon[(dayObj.storageIndex + 2) % 7] || null)}
                                 </Text>
                               </View>
                               <Text style={styles.dailyText}>{note}</Text>
@@ -1240,21 +1576,27 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                       </View>
                       <View style={[styles.cardBody, { paddingVertical: 4 }]}>
                         <View style={styles.tableRow}>
-                          <Text style={styles.tableRowLabel}>Vitamin Asam Folat & Zat Besi</Text>
+                          <Text style={styles.tableRowLabel}>Vitamin & Suplemen</Text>
                           <View style={styles.checkPillActive}>
-                            <Text style={styles.checkPillText}>[v] 7 Hari Tercapai</Text>
+                            <Text style={styles.checkPillText}>
+                              {habits.supp > 0 ? `${habits.supp}/7 hari tercatat` : '-'}
+                            </Text>
                           </View>
                         </View>
                         <View style={styles.tableRow}>
-                          <Text style={styles.tableRowLabel}>Target Hidrasi Air 2–2.5 Liter</Text>
+                          <Text style={styles.tableRowLabel}>Hidrasi Air</Text>
                           <View style={styles.checkPillActive}>
-                            <Text style={styles.checkPillText}>[v] Tercukupi Baik</Text>
+                            <Text style={styles.checkPillText}>
+                              {habits.waterDays > 0 ? `${(habits.waterMl / 1000).toFixed(1)} L / ${habits.waterDays} hari` : '-'}
+                            </Text>
                           </View>
                         </View>
                         <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
-                          <Text style={styles.tableRowLabel}>Jalan Santai / Gerak Ringan 15 Menit</Text>
+                          <Text style={styles.tableRowLabel}>Gerak Ringan / Jalan Santai</Text>
                           <View style={styles.checkPillActive}>
-                            <Text style={styles.checkPillText}>[v] Rutin Aktif</Text>
+                            <Text style={styles.checkPillText}>
+                              {habits.jas > 0 ? `${habits.jas}/7 hari tercatat` : '-'}
+                            </Text>
                           </View>
                         </View>
                       </View>
@@ -1269,11 +1611,11 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                       <View style={[styles.cardBody, { paddingVertical: 4 }]}>
                         <View style={styles.tableRow}>
                           <Text style={styles.tableRowLabel}>Rata-rata Jam Tidur:</Text>
-                          <Text style={styles.tableRowValue}>7.5 – 8.5 Jam / malam (Berkualitas)</Text>
+                          <Text style={styles.tableRowValue}>-</Text>
                         </View>
                         <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
                           <Text style={styles.tableRowLabel}>Dominasi Mood:</Text>
-                          <Text style={[styles.tableRowValue, { color: '#556B2F' }]}>Bahagia, Rileks & Penuh Syukur</Text>
+                          <Text style={[styles.tableRowValue, { color: '#556B2F' }]}>-</Text>
                         </View>
                       </View>
                     </View>
@@ -1297,7 +1639,7 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                     {/* Milestone Card */}
                     <View style={styles.milestoneCard}>
                       <Text style={styles.milestoneTitle}>
-                        Milestone Minggu ke-{weekNum} • Sebesar {weekData.fruit}
+                        Milestone Minggu ke-{weekNum} • Sebesar {weekData.fruitName}
                       </Text>
                       <Text style={styles.milestoneQuote}>
                         "{weekData.quote}"
@@ -1313,13 +1655,16 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                         ) : matchedPhoto?.url ? (
                           <Image src={matchedPhoto.url} style={styles.polaroidImage} />
                         ) : (
-                          <Text style={{ fontFamily: 'Helvetica', fontSize: 7.5, color: '#78716C' }}>
-                            [ Foto USG / Baby Bump W{weekNum} ]
+                          <Text style={{ fontFamily: 'Helvetica', fontSize: 8, color: '#78716C' }}>
+                            Belum ada foto USG
                           </Text>
                         )}
                       </View>
                       <Text style={styles.polaroidCaption}>
-                        {matchedPhoto?.caption || `Momen Minggu ke-${weekNum} • ${weekData.title}`}
+                        {matchedPhoto?.caption
+                          || ((matchedPhoto?.src || matchedPhoto?.url)
+                            ? `Momen Minggu ke-${weekNum} • ${weekData.fruitName}`
+                            : 'Belum ada foto USG')}
                       </Text>
                     </View>
 
@@ -1330,7 +1675,7 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                           <Text style={styles.metricHeaderText}>BERAT BUNDA</Text>
                         </View>
                         <View style={styles.metricBody}>
-                          <Text style={styles.metricValue}>{weightVal} <Text style={{ fontSize: 7.5, color: '#78716C' }}>kg</Text></Text>
+                          <Text style={styles.metricValue}>{weightVal || '-'}{weightVal ? <Text style={{ fontSize: 7.5, color: '#78716C' }}> kg</Text> : null}</Text>
                         </View>
                       </View>
 
@@ -1339,7 +1684,7 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                           <Text style={styles.metricHeaderText}>LINGKAR PERUT</Text>
                         </View>
                         <View style={styles.metricBody}>
-                          <Text style={styles.metricValue}>{waistVal} <Text style={{ fontSize: 7.5, color: '#78716C' }}>cm</Text></Text>
+                          <Text style={styles.metricValue}>{waistVal || '-'}{waistVal ? <Text style={{ fontSize: 7.5, color: '#78716C' }}> cm</Text> : null}</Text>
                         </View>
                       </View>
 
@@ -1348,7 +1693,7 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                           <Text style={styles.metricHeaderText}>TEKANAN DARAH</Text>
                         </View>
                         <View style={styles.metricBody}>
-                          <Text style={styles.metricValue}>{bpVal} <Text style={{ fontSize: 6.8, color: '#78716C' }}>mmHg</Text></Text>
+                          <Text style={styles.metricValue}>{bpVal || '-'}{bpVal ? <Text style={{ fontSize: 6.8, color: '#78716C' }}> mmHg</Text> : null}</Text>
                         </View>
                       </View>
                     </View>
@@ -1365,7 +1710,7 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                         </Text>
                         <View style={{ marginTop: 4, paddingTop: 3, borderTopWidth: 0.5, borderTopColor: '#E7E5E4' }}>
                           <Text style={{ fontFamily: 'Helvetica', fontSize: 7.5, color: '#57534E' }}>
-                            Perkembangan Janin: {weekData.babyDevelopment}
+                            Perkembangan Janin: {weekData.highlights?.[0] || weekData.quote}
                           </Text>
                         </View>
                       </View>
@@ -1470,7 +1815,7 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                     {/* Polaroid Photo Box */}
                     <View style={styles.polaroidContainer}>
                       <View style={styles.washiTape} />
-                      <View style={[styles.polaroidImageHolder, { height: 110 }]}>
+                      <View style={[styles.polaroidImageHolder, { height: 75 }]}>
                         {bab3Data?.nurseryPhoto ? (
                           <Image src={bab3Data.nurseryPhoto} style={styles.polaroidImage} />
                         ) : (
@@ -1713,7 +2058,7 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
 
                     <View style={styles.polaroidContainer}>
                       <View style={styles.washiTape} />
-                      <View style={[styles.polaroidImageHolder, { height: 110 }]}>
+                      <View style={[styles.polaroidImageHolder, { height: 75 }]}>
                         {bab4Data?.birthPhoto ? (
                           <Image src={bab4Data.birthPhoto} style={styles.polaroidImage} />
                         ) : (
@@ -1834,9 +2179,9 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
 
                     <View style={styles.trackerGrid}>
                       <View style={styles.trackerCol}>
-                        <View style={[styles.polaroidContainer, { height: 185 }]}>
+                        <View style={[styles.polaroidContainer, { height: 90 }]}>
                           <View style={styles.washiTape} />
-                          <View style={[styles.polaroidImageHolder, { height: 145 }]}>
+                          <View style={[styles.polaroidImageHolder, { height: 75 }]}>
                             {bab4Data?.leftFootprint ? (
                               <Image src={bab4Data.leftFootprint} style={styles.polaroidImage} />
                             ) : (
@@ -1850,9 +2195,9 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                       </View>
 
                       <View style={styles.trackerCol}>
-                        <View style={[styles.polaroidContainer, { height: 185 }]}>
+                        <View style={[styles.polaroidContainer, { height: 90 }]}>
                           <View style={styles.washiTape} />
-                          <View style={[styles.polaroidImageHolder, { height: 145 }]}>
+                          <View style={[styles.polaroidImageHolder, { height: 75 }]}>
                             {bab4Data?.rightFootprint ? (
                               <Image src={bab4Data.rightFootprint} style={styles.polaroidImage} />
                             ) : (
@@ -1958,7 +2303,7 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
 
                     <View style={styles.polaroidContainer}>
                       <View style={styles.washiTape} />
-                      <View style={[styles.polaroidImageHolder, { height: 165 }]}>
+                      <View style={[styles.polaroidImageHolder, { height: 75 }]}>
                         {bab4Data?.familyPhoto ? (
                           <Image src={bab4Data.familyPhoto} style={styles.polaroidImage} />
                         ) : (
@@ -2153,6 +2498,28 @@ export const JournalPdfDocument: React.FC<JournalPdfDocumentProps> = ({
                       <Text style={{ fontFamily: 'Times-Italic', fontSize: 9.5, color: '#78716C' }}>Dengan rasa bangga dan pelukan hangat,</Text>
                       <Text style={{ fontFamily: 'Times-Bold', fontSize: 13, color: '#1C1917', marginTop: 3 }}>{ayahSign}</Text>
                       <View style={{ width: 90, height: 0.75, backgroundColor: '#D6D3D1', marginTop: 2 }} />
+                    </View>
+                  </View>
+
+                  <View style={styles.cardContainer}>
+                    <View style={styles.cardHeader}>
+                      <Text style={styles.cardHeaderText}>Penutup</Text>
+                      <Text style={styles.cardHeaderSubtext}>Terima kasih, Bunda</Text>
+                    </View>
+                    <View style={styles.cardBody}>
+                      <Text style={{ fontFamily: 'Times-Roman', fontSize: 9, color: '#292524', lineHeight: 1.55 }}>
+                        Seratus halaman ini adalah saksi perjalanan Bunda — dari garis dua yang mengubah segalanya,
+                        hingga doa-doa yang Bunda titipkan untuk buah hati. Simpan buku ini baik-baik, dan buka kembali
+                        saat si kecil sudah bisa membaca betapa besar cinta yang menyambut kehadirannya.
+                      </Text>
+                      <View style={{ marginTop: 6, paddingTop: 5, borderTopWidth: 0.5, borderTopColor: '#E7E5E4' }}>
+                        <Text style={{ fontFamily: 'Helvetica', fontSize: 8, color: '#57534E' }}>
+                          Bantuan &amp; pertanyaan: support@bundajournal.my.id
+                        </Text>
+                        <Text style={{ fontFamily: 'Helvetica', fontSize: 8, color: '#57534E', marginTop: 2 }}>
+                          bunda. — Jurnal Kehamilan &amp; Buku Kenangan
+                        </Text>
+                      </View>
                     </View>
                   </View>
 

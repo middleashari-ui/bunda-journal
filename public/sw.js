@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bunda-journal-v4';
+const CACHE_NAME = 'bunda-journal-v21';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -33,6 +33,9 @@ self.addEventListener('fetch', (event) => {
   // Skip cross-origin or non-GET requests
   if (req.method !== 'GET') return;
 
+  // API: selalu network, jangan pernah di-cache (auth & data user)
+  if (url.pathname.startsWith('/api/')) return;
+
   // Navigation requests: Cache First / Stale-While-Revalidate with offline fallback
   if (req.mode === 'navigate') {
     event.respondWith(
@@ -55,18 +58,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets (JS, CSS, fonts, images)
+  // Static assets: NETWORK FIRST supaya bundle baru langsung kepakai di tablet/HP.
+  // Cache hanya dipakai kalau jaringan gagal (offline).
   event.respondWith(
-    caches.match(req).then((cached) => {
-      const fetchPromise = fetch(req).then((networkRes) => {
+    fetch(req)
+      .then((networkRes) => {
         if (networkRes && networkRes.status === 200 && url.origin === location.origin) {
           const resClone = networkRes.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
         }
         return networkRes;
-      }).catch(() => cached);
-
-      return cached || fetchPromise;
-    })
+      })
+      .catch(async () => {
+        const cached = await caches.match(req);
+        if (cached) return cached;
+        return caches.match('/offline.html');
+      })
   );
 });

@@ -8,9 +8,20 @@ interface IntroPagesProps {
   isFillMode?: boolean;
 }
 
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+/** 2027-04-16 -> 16 Apr 2027 (sama seperti benchmark) */
+function formatHpl(raw: string): string {
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(raw || '').trim());
+  if (!iso) return String(raw || '');
+  const month = Number(iso[2]) - 1;
+  if (month < 0 || month > 11) return String(raw);
+  return `${Number(iso[3])} ${MONTHS_SHORT[month]} ${iso[1]}`;
+}
+
 export const IntroPages: React.FC<IntroPagesProps> = ({ theme, userProfile, isFillMode = true }) => {
   const [ownerName, setOwnerName] = useState(userProfile.name || '');
-  const [hplText, setHplText] = useState(userProfile.hplDate || '');
+  const [hplText, setHplText] = useState(formatHpl(userProfile.hplDate || ''));
 
   return (
     <div className="flex flex-row items-center justify-center gap-0 w-full print:gap-0 print:block">
@@ -25,9 +36,9 @@ export const IntroPages: React.FC<IntroPagesProps> = ({ theme, userProfile, isFi
           borderColor: theme.borderColor,
         }}
       >
-        <div className="flex flex-col h-full justify-between items-center text-center py-4 sm:py-6 border-4 border-double" style={{ borderColor: theme.borderColor }}>
+        <div className="flex flex-col h-full justify-between items-center text-center py-4 py-6 border-4 border-double" style={{ borderColor: theme.borderColor }}>
           {/* Top Label */}
-          <div className="pt-4 sm:pt-6">
+          <div className="pt-4 pt-6">
             <span className="text-[9.5px] uppercase tracking-[0.25em] font-sans text-stone-500 block mb-2">
               Jurnal Kehamilan & Buku Kenangan 100 Halaman
             </span>
@@ -35,11 +46,11 @@ export const IntroPages: React.FC<IntroPagesProps> = ({ theme, userProfile, isFi
           </div>
 
           {/* Main Title Lockup */}
-          <div className="my-auto px-4 sm:px-6">
-            <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-normal tracking-tight mb-2 sm:mb-3" style={{ color: theme.textColor }}>
+          <div className="my-auto px-4 px-6">
+            <h1 className="font-serif text-4xl text-5xl text-6xl font-normal tracking-tight mb-2 mb-3" style={{ color: theme.textColor }}>
               bunda.
             </h1>
-            <p className="font-serif italic text-base sm:text-lg md:text-xl font-light mb-3 sm:mb-4" style={{ color: theme.secondaryColor }}>
+            <p className="font-serif italic text-base text-lg text-xl font-light mb-3 mb-4" style={{ color: theme.secondaryColor }}>
               Abadikan Perjalanan 9 Bulan yang Magis
             </p>
             <p className="text-xs text-stone-600 max-w-xs mx-auto leading-relaxed font-light">
@@ -48,7 +59,7 @@ export const IntroPages: React.FC<IntroPagesProps> = ({ theme, userProfile, isFi
           </div>
 
           {/* Dedicated To / Mother Info - Editable */}
-          <div className="w-full max-w-xs px-4 pb-4 sm:pb-6 space-y-2">
+          <div className="w-full max-w-xs px-4 pb-4 pb-6 space-y-2">
             <div className="border-t border-stone-300 pt-2 text-[9.5px] text-stone-500 uppercase tracking-widest font-sans">
               Buku Milik:
             </div>
@@ -58,7 +69,7 @@ export const IntroPages: React.FC<IntroPagesProps> = ({ theme, userProfile, isFi
                 placeholder="Nama Bunda"
                 value={ownerName}
                 onChange={(e) => setOwnerName(e.target.value)}
-                className="w-full text-center font-serif text-base sm:text-lg font-bold bg-transparent focus:outline-hidden"
+                className="w-full text-center font-serif text-base text-lg font-bold bg-transparent focus:outline-hidden"
                 style={{ color: theme.textColor }}
               />
             </div>
@@ -92,18 +103,18 @@ export const IntroPages: React.FC<IntroPagesProps> = ({ theme, userProfile, isFi
       >
         <div className="flex flex-col h-full justify-between">
           <div>
-            <div className="border-b-2 pb-2 mb-3 sm:mb-4" style={{ borderColor: theme.textColor }}>
+            <div className="border-b-2 pb-2 mb-3 mb-4" style={{ borderColor: theme.textColor }}>
               <span className="text-[8.5px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">
                 Prakata
               </span>
-              <h2 className="font-serif text-xl sm:text-2xl font-bold" style={{ color: theme.textColor }}>
+              <h2 className="font-serif text-xl text-2xl font-bold" style={{ color: theme.textColor }}>
                 Surat Pembuka untuk Malaikat Kecilku
               </h2>
             </div>
 
             {/* Letter Body */}
             <div 
-              className="p-3 sm:p-4 bg-white/70 border rounded-xs text-[10.5px] sm:text-[11px] font-serif leading-relaxed italic text-stone-700 space-y-2 mb-3 sm:mb-4"
+              className="p-3 p-4 bg-white/70 border rounded-xs text-[10.5px] text-[11px] font-serif leading-relaxed italic text-stone-700 space-y-2 mb-3 mb-4"
               style={{ borderColor: theme.borderColor }}
             >
               <p>
@@ -125,13 +136,13 @@ export const IntroPages: React.FC<IntroPagesProps> = ({ theme, userProfile, isFi
 
             {/* Guide */}
             <div 
-              className="border p-2.5 sm:p-3 rounded-xs"
+              className="border p-2.5 p-3 rounded-xs"
               style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor }}
             >
-              <h4 className="text-[9.5px] sm:text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: theme.primaryColor }}>
+              <h4 className="text-[9.5px] text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: theme.primaryColor }}>
                 Panduan Pengisian Buku Jurnal:
               </h4>
-              <ul className="text-[8.5px] sm:text-[9px] text-stone-600 space-y-1 font-light">
+              <ul className="text-[8.5px] text-[9px] text-stone-600 space-y-1 font-light">
                 <li>• <strong>Bab 1 (Hal 3-6)</strong>: Foto test pack perdana, reaksi ayah, & USG awal.</li>
                 <li>• <strong>Bab 2 (Hal 9-84)</strong>: 36 minggu x 2 halaman (Halaman kiri tracker, mood, tidur; Halaman kanan foto perut / USG).</li>
                 <li>• <strong>Bab 3 (Hal 85-90)</strong>: Ide nama anak, belanja bayi, & tas bersalin RS.</li>

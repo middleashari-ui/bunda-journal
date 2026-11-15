@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookThemeConfig } from '../../../types/bookPrint';
 import { UserProfile } from '../../../types';
+import { mediaGet, mediaSet } from '../../../lib/mediaStore';
 
 interface Bab5KapsulWaktuProps {
   theme: BookThemeConfig;
@@ -21,7 +22,7 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
 }) => {
   const getSavedBab5 = () => {
     try {
-      const s = localStorage.getItem('bunda_bab5');
+      const s = mediaGet('bunda_bab5');
       if (s) return JSON.parse(s);
     } catch {}
     return null;
@@ -29,8 +30,9 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
   const savedBab5 = getSavedBab5();
 
   // Bunda's letters with localStorage persistence
+  // P0.3: baca legacy bundaLetter/ayahLetter (Jurnal) ke Part1 tanpa hapus original.
   const [bundaLetterPart1, setBundaLetterPart1] = useState(
-    savedBab5?.bundaLetterPart1 || ''
+    savedBab5?.bundaLetterPart1 || savedBab5?.bundaLetter || ''
   );
   const [bundaLetterPart2, setBundaLetterPart2] = useState(
     savedBab5?.bundaLetterPart2 || ''
@@ -39,14 +41,14 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
 
   // Ayah's letters with localStorage persistence
   const [ayahLetterPart1, setAyahLetterPart1] = useState(
-    savedBab5?.ayahLetterPart1 || ''
+    savedBab5?.ayahLetterPart1 || savedBab5?.ayahLetter || ''
   );
   const [ayahLetterPart2, setAyahLetterPart2] = useState(
     savedBab5?.ayahLetterPart2 || ''
   );
   const [ayahSignName, setAyahSignName] = useState(savedBab5?.ayahSignName || '');
 
-  // Persist back to bunda_bab5 automatically
+  // Persist back to bunda_bab5 automatically (P0.3: merge, pertahankan field legacy)
   useEffect(() => {
     try {
       const data = {
@@ -57,7 +59,12 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
         ayahLetterPart2,
         ayahSignName,
       };
-      localStorage.setItem('bunda_bab5', JSON.stringify(data));
+      let existing: Record<string, unknown> = {};
+      try {
+        const s = mediaGet('bunda_bab5');
+        if (s) existing = JSON.parse(s) as Record<string, unknown>;
+      } catch {}
+      mediaSet('bunda_bab5', JSON.stringify({ ...existing, ...data }));
     } catch {}
   }, [bundaLetterPart1, bundaLetterPart2, bundaSignName, ayahLetterPart1, ayahLetterPart2, ayahSignName]);
 
@@ -74,7 +81,7 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
             <div>
               <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
                 <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 5: Surat Kapsul Waktu</span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Surat dari Bunda (1)</h2>
+                <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Surat dari Bunda (1)</h2>
                 <span className="text-[9px] text-[#C87A64] font-sans italic">"Buka saat usiamu genap 17 tahun atau di hari pernikahanmu kelak..."</span>
               </div>
 
@@ -111,7 +118,7 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
             <div>
               <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
                 <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 5: Surat Kapsul Waktu</span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Surat dari Bunda (2)</h2>
+                <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Surat dari Bunda (2)</h2>
               </div>
 
               <div>
@@ -173,7 +180,7 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
           <div>
             <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
               <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 5: Surat Kapsul Waktu</span>
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Surat dari Ayah (1)</h2>
+              <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Surat dari Ayah (1)</h2>
               <span className="text-[9px] text-[#556B2F] font-sans italic">"Pesan seorang pria yang pertama kali mengumandangkan adzan di telingamu..."</span>
             </div>
 
@@ -210,7 +217,7 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
           <div>
             <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
               <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 5: Surat Kapsul Waktu</span>
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Surat dari Ayah (2)</h2>
+              <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Surat dari Ayah (2)</h2>
             </div>
 
             <div>
@@ -253,7 +260,7 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
             {/* Final Book Seal */}
             <div className="mt-3 p-2.5 bg-white border text-center shadow-xs rounded-xs" style={{ borderColor: theme.primaryColor }}>
               <div className="w-8 h-8 mx-auto rounded-full border-2 flex items-center justify-center mb-1 text-xs font-serif font-bold" style={{ borderColor: theme.primaryColor, color: theme.primaryColor }}>
-                ❦
+                â¦
               </div>
               <span className="font-serif text-[11px] font-bold block tracking-wider uppercase" style={{ color: theme.textColor }}>
                 Jurnal 100 Halaman Selesai

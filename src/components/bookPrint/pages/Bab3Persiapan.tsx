@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BookThemeConfig } from '../../../types/bookPrint';
+import { mediaGet, mediaSet } from '../../../lib/mediaStore';
 import { Camera, CheckSquare, Square, ShoppingBag } from 'lucide-react';
 
 interface Bab3PersiapanProps {
@@ -19,7 +20,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
 }) => {
   const getSavedBab3 = () => {
     try {
-      const s = localStorage.getItem('bunda_bab3');
+      const s = mediaGet('bunda_bab3');
       if (s) return JSON.parse(s);
     } catch {}
     return null;
@@ -39,6 +40,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
   );
 
   // Nursery photo & checklist state with localStorage persistence
+  // P0.3: dukung alias lama nurseryThermoChecked (Jurnal) vs nurseryThermometerChecked (Studio).
   const [nurseryPhoto, setNurseryPhoto] = useState<string | null>(savedBab3?.nurseryPhoto || null);
   const [nurseryItems, setNurseryItems] = useState([
     { label: 'Box Tidur Bayi & Matras Empuk', checked: savedBab3?.nurseryBoxChecked ?? false },
@@ -46,10 +48,10 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
     { label: 'Lampu Tidur Redup Hangat', checked: savedBab3?.nurseryLampChecked ?? false },
     { label: 'Kursi Menyusui Nyaman Bunda', checked: savedBab3?.nurseryChairChecked ?? false },
     { label: 'Lemari Pakaian & Laci Popok', checked: savedBab3?.nurseryWardrobeChecked ?? false },
-    { label: 'Termometer & Pengatur Suhu', checked: savedBab3?.nurseryThermometerChecked ?? false },
+    { label: 'Termometer & Pengatur Suhu', checked: savedBab3?.nurseryThermometerChecked ?? savedBab3?.nurseryThermoChecked ?? false },
   ]);
 
-  // Persist back to bunda_bab3 automatically
+  // Persist back to bunda_bab3 automatically (P0.3: merge, jangan hapus field tak dikenal)
   useEffect(() => {
     try {
       const data = {
@@ -67,7 +69,12 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
         nurseryWardrobeChecked: nurseryItems[4]?.checked ?? true,
         nurseryThermometerChecked: nurseryItems[5]?.checked ?? true,
       };
-      localStorage.setItem('bunda_bab3', JSON.stringify(data));
+      let existing: Record<string, unknown> = {};
+      try {
+        const s = mediaGet('bunda_bab3');
+        if (s) existing = JSON.parse(s) as Record<string, unknown>;
+      } catch {}
+      mediaSet('bunda_bab3', JSON.stringify({ ...existing, ...data }));
     } catch {}
   }, [candidates, chosenName, chosenMeaning, nurseryPhoto, nurseryItems]);
 
@@ -155,7 +162,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
             <div>
               <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
                 <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 3: Persiapan</span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Inspirasi Nama Buah Hati</h2>
+                <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Inspirasi Nama Buah Hati</h2>
               </div>
 
               <div className="space-y-3 mb-3">
@@ -211,7 +218,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                         type="text"
                         value={chosenName}
                         onChange={(e) => setChosenName(e.target.value)}
-                        className="font-serif text-xl sm:text-2xl font-bold py-0.5 text-center w-full bg-transparent outline-none" 
+                        className="font-serif text-xl text-2xl font-bold py-0.5 text-center w-full bg-transparent outline-none" 
                         style={{ color: theme.textColor }}
                       />
                       <input 
@@ -244,11 +251,11 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
             <div>
               <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
                 <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 3: Persiapan</span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Kamar Si Kecil</h2>
+                <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Kamar Si Kecil</h2>
               </div>
 
               {/* Photo placeholder for Nursery */}
-              <div className="relative w-full max-w-[280px] sm:max-w-[320px] mx-auto bg-white p-2.5 shadow-md border border-stone-200 mb-3">
+              <div className="relative w-full max-w-[280px] max-w-[320px] mx-auto bg-white p-2.5 shadow-md border border-stone-200 mb-3">
                 <div className="washi-tape" style={{ position: 'absolute', width: '32mm', height: '8mm', backgroundColor: theme.washiBg, transform: 'rotate(2deg)', top: '-4mm', left: '50%', marginLeft: '-16mm', zIndex: 10 }} />
                 
                 <label className="block cursor-pointer group">
@@ -262,10 +269,10 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                     <img 
                       src={nurseryPhoto} 
                       alt="Kamar Bayi" 
-                      className="w-full h-36 sm:h-44 object-cover border border-stone-200" 
+                      className="w-full h-36 h-44 object-cover border border-stone-200" 
                     />
                   ) : (
-                    <div className="w-full h-36 sm:h-44 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
+                    <div className="w-full h-36 h-44 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
                       <Camera className="w-6 h-6 text-stone-400 mb-1 group-hover:scale-110 transition-transform" />
                       <span className="text-[10px] font-semibold text-stone-600 block">
                         Tempel Foto Box Bayi / Sudut Kamar
@@ -283,7 +290,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
               {/* Nursery Checklist (Interactive) */}
               <div>
                 <div className="border py-0.5 text-center text-[9px] font-semibold uppercase tracking-widest mb-1.5" style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor }}>Checklist Penataan Kamar</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[9.5px] bg-white p-2 border rounded-xs" style={{ borderColor: theme.borderColor }}>
+                <div className="grid grid-cols-1 grid-cols-2 gap-1.5 text-[9.5px] bg-white p-2 border rounded-xs" style={{ borderColor: theme.borderColor }}>
                   {nurseryItems.map((item, idx) => (
                     <button 
                       key={idx} 
@@ -326,7 +333,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
             <div>
               <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
                 <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 3: Persiapan</span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Belanja Bayi (1)</h2>
+                <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Belanja Bayi (1)</h2>
               </div>
 
               <div className="space-y-3">
@@ -396,7 +403,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
             <div>
               <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
                 <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 3: Persiapan</span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Belanja Bayi (2)</h2>
+                <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Belanja Bayi (2)</h2>
               </div>
 
               <div className="space-y-3">
@@ -472,7 +479,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
           <div>
             <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
               <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 3: Persiapan</span>
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Tas RS: Bunda & Ayah</h2>
+              <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Tas RS: Bunda & Ayah</h2>
             </div>
 
             <div className="space-y-3">
@@ -542,7 +549,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
           <div>
             <div className="border-b-2 pb-2 mb-3" style={{ borderColor: theme.textColor }}>
               <span className="text-[9px] uppercase tracking-widest font-sans text-stone-500 block mb-0.5">Bab 3: Persiapan</span>
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: theme.textColor }}>Tas RS: Buah Hati</h2>
+              <h2 className="font-serif text-2xl text-3xl font-bold" style={{ color: theme.textColor }}>Tas RS: Buah Hati</h2>
             </div>
 
             <div className="space-y-3">

@@ -61,8 +61,56 @@ alter table public.bunda_journal_entries enable row level security;
 alter table public.bunda_photos enable row level security;
 alter table public.bunda_health_trackers enable row level security;
 
--- Policy sederhana untuk public/anon access sementara
-create policy "Allow all actions for anon users" on public.bunda_profiles for all using (true) with check (true);
-create policy "Allow all actions for anon users" on public.bunda_journal_entries for all using (true) with check (true);
-create policy "Allow all actions for anon users" on public.bunda_photos for all using (true) with check (true);
-create policy "Allow all actions for anon users" on public.bunda_health_trackers for all using (true) with check (true);
+-- Kolom pemilik baris (bila belum ada). Tidak ada yang di-drop -> aman untuk
+-- skema lama; jalankan sekali, idempoten (IF NOT EXISTS).
+alter table public.bunda_profiles add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.bunda_journal_entries add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.bunda_photos add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.bunda_health_trackers add column if not exists user_id uuid references auth.users(id) on delete cascade;
+
+-- Ganti policy lama "using (true)" (terbuka untuk semua anon) -> hanya pemilik
+-- baris via auth.uid(). Dijalankan per operasi: SELECT / INSERT / UPDATE / DELETE.
+-- Catatan: baris lama yang user_id-nya NULL jadi tidak terlihat siapa pun;
+-- backfill manual bila perlu, contoh:
+--   update public.bunda_profiles set user_id = '<auth-uid>' where user_id is null;
+
+drop policy if exists "Allow all actions for anon users" on public.bunda_profiles;
+drop policy if exists "Allow all actions for anon users" on public.bunda_journal_entries;
+drop policy if exists "Allow all actions for anon users" on public.bunda_photos;
+drop policy if exists "Allow all actions for anon users" on public.bunda_health_trackers;
+
+create policy "profiles_select_own" on public.bunda_profiles
+  for select using (auth.uid() = user_id);
+create policy "profiles_insert_own" on public.bunda_profiles
+  for insert with check (auth.uid() = user_id);
+create policy "profiles_update_own" on public.bunda_profiles
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "profiles_delete_own" on public.bunda_profiles
+  for delete using (auth.uid() = user_id);
+
+create policy "journal_select_own" on public.bunda_journal_entries
+  for select using (auth.uid() = user_id);
+create policy "journal_insert_own" on public.bunda_journal_entries
+  for insert with check (auth.uid() = user_id);
+create policy "journal_update_own" on public.bunda_journal_entries
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "journal_delete_own" on public.bunda_journal_entries
+  for delete using (auth.uid() = user_id);
+
+create policy "photos_select_own" on public.bunda_photos
+  for select using (auth.uid() = user_id);
+create policy "photos_insert_own" on public.bunda_photos
+  for insert with check (auth.uid() = user_id);
+create policy "photos_update_own" on public.bunda_photos
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "photos_delete_own" on public.bunda_photos
+  for delete using (auth.uid() = user_id);
+
+create policy "trackers_select_own" on public.bunda_health_trackers
+  for select using (auth.uid() = user_id);
+create policy "trackers_insert_own" on public.bunda_health_trackers
+  for insert with check (auth.uid() = user_id);
+create policy "trackers_update_own" on public.bunda_health_trackers
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "trackers_delete_own" on public.bunda_health_trackers
+  for delete using (auth.uid() = user_id);

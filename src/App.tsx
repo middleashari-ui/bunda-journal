@@ -1,3 +1,4 @@
+import { storageGet, storageSet, storageRemove, storageClear } from './lib/storage/appStorage';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   TabType, 
@@ -9,10 +10,15 @@ import {
   ReminderSettings
 } from './types';
 import { playGentleChime, sendSystemNotification } from './utils/notifications';
+import { STORAGE_FULL_EVENT } from './lib/storageQuota';
+import { mediaGet, mediaSet } from './lib/mediaStore';
 import { applyAppColorTheme, getSavedAppColorTheme } from './utils/themeManager';
 import { LandingPage } from './components/LandingPage';
 import { TabHome } from './components/TabHome';
-import { TabJurnal } from './components/TabJurnal';
+// Tab besar diunduh saat dibuka, bukan di bundle awal.
+const TabJurnal = lazyWithRetry(() =>
+  import('./components/TabJurnal').then((m) => ({ default: m.TabJurnal }))
+);
 import { notifyUserChanged } from './lib/appointmentStore';
 import { LoginModal } from './components/LoginModal';
 import {
@@ -39,15 +45,23 @@ import {
 } from './lib/authClient';
 import { getTodayPosition } from './lib/pregnancyDate';
 import { TabKatalog } from './components/TabKatalog';
-import { TabProfil } from './components/TabProfil';
+const TabProfil = lazyWithRetry(() =>
+  import('./components/TabProfil').then((m) => ({ default: m.TabProfil }))
+);
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { PrintBookStudio } from './components/bookPrint/PrintBookStudio';
+import { lazyWithRetry } from './lib/lazyWithRetry';
+// Code-split: buku/cetak hanya diunduh saat Studio atau /print dibuka.
+const PrintBookStudio = lazyWithRetry(() =>
+  import('./components/bookPrint/PrintBookStudio').then((m) => ({ default: m.PrintBookStudio }))
+);
+const PrintBookView = lazyWithRetry(() => import('./components/bookPrint/PrintBookView'));
+import { isJournalLocalOnly } from './config/storage';
+import { maybeAutoBackup } from './lib/driveBackup';
 import { OnboardingModal } from './components/OnboardingModal';
 import { PicModal } from './components/PicModal';
 import { CheckoutModal } from './components/CheckoutModal';
 import { PAYMENT_PAUSED } from './config/payments';
-import { SuccessPage } from './components/SuccessPage';
-import {
+import { SuccessPage } from './components/SuccessPage';import {
   syncSubscriptionToSupabase,
   syncProfileToSupabase,
   fetchUserTierFromSupabase,
@@ -69,25 +83,34 @@ const INITIAL_ENTRIES: JournalEntry[] = [];
 export default function App() {
   // App navigation & layout state
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    const paid = localStorage.getItem('bunda_is_paid') === 'true';
-    const onboarded = localStorage.getItem('bunda_is_onboarded') === 'true';
-    const logged = localStorage.getItem('bunda_isLoggedIn') !== 'false';
+    const paid = storageGet('bunda_is_paid') === 'true';
+    const onboarded = storageGet('bunda_is_onboarded') === 'true';
+    const logged = storageGet('bunda_isLoggedIn') !== 'false';
     // Sudah login dengan email+password (sesi D1) => boleh masuk.
     // Pembayaran hanya mengunci fitur OUTPUT (export PDF/hardcover), bukan pintu masuk.
-    const hasSession = !!localStorage.getItem('bunda_session_token');
+    const hasSession = !!storageGet('bunda_session_token');
     if (logged && hasSession) return true;
     return paid && onboarded && logged;
   });
   const [activeTab, setActiveTab] = useState<TabType>('home');
 
+  // Route /print — halaman cetak A4 (dibuka di tab baru dari Studio).
+  const [isPrintRoute] = useState<boolean>(() => {
+    try {
+      return window.location.pathname === '/print' || window.location.hash === '#/print';
+    } catch {
+      return false;
+    }
+  });
+
   // TC03 / TC08: Paid status
   const [isPaid, setIsPaid] = useState<boolean>(() => {
-    return localStorage.getItem('bunda_is_paid') === 'true';
+    return storageGet('bunda_is_paid') === 'true';
   });
 
   // User Membership Tier: 'essential' | 'vip' (Diambil dari Supabase & fallback lokal)
   const [userTier, setUserTier] = useState<'essential' | 'vip'>(() => {
-    const saved = localStorage.getItem('bunda_user_tier');
+    const saved = storageGet('bunda_user_tier');
     return (saved === 'vip') ? 'vip' : 'essential';
   });
 
@@ -96,13 +119,13 @@ export default function App() {
 
   // TC05: Mandatory Onboarding state
   const [isOnboarded, setIsOnboarded] = useState<boolean>(() => {
-    return localStorage.getItem('bunda_is_onboarded') === 'true';
+    return storageGet('bunda_is_onboarded') === 'true';
   });
 
   // Checkout gate modal state
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string>(() => {
-    return localStorage.getItem('bunda_user_email') || '';
+    return storageGet('bunda_user_email') || '';
   });
 
   // Modal login (email + password) — auth beneran, bukan flag localStorage
@@ -132,8 +155,15 @@ export default function App() {
         setSyncReady(true);
         return;
       }
-      localStorage.setItem('bunda_user_email', me.email);
-      localStorage.setItem('bunda_user_tier', me.tier === 'vip' ? 'vip' : 'essential');
+      storageSet('bunda_user_email', me.email);
+      storageSet('bunda_user_tier', me.tier === 'vip' ? 'vip' : 'essential');
+
+      // MODE LOKAL (USP): jurnal tidak pernah ditarik atau didorong ke D1.
+      // Server hanya dipakai untuk validasi sesi + tier akun.
+      if (isJournalLocalOnly()) {
+        setSyncReady(true);
+        return;
+      }
 
       // SELALU tarik dari API tiap boot (bukan sekali per sesi).
       const { ok, exists, payload, updatedAt } = await pullUserData(token);
@@ -154,14 +184,14 @@ export default function App() {
         return;
       }
       // Server masih kosong tapi device ini punya data -> dorong ke D1 (jangan hilang)
-      if (ok && !exists && localStorage.getItem('bunda_profile')) {
+      if (ok && !exists && storageGet('bunda_profile')) {
         await pushUserData(token, collectUserPayload());
       }
       // Kalau profil sudah ada (dari cache / dari D1), jangan minta isi ulang.
       try {
-        const prof = JSON.parse(localStorage.getItem('bunda_profile') || '{}');
+        const prof = JSON.parse(storageGet('bunda_profile') || '{}');
         if (prof && prof.name) {
-          localStorage.setItem('bunda_is_onboarded', 'true');
+          storageSet('bunda_is_onboarded', 'true');
           setIsOnboarded(true);
         }
       } catch {}
@@ -177,6 +207,9 @@ export default function App() {
   useEffect(() => {
     let flushing = false;
 
+    // MODE LOKAL: tidak ada antrean sync ke server.
+    if (isJournalLocalOnly()) return;
+
     const onOffline = () => markOfflineSnapshot();
 
     const tryFlush = async () => {
@@ -185,7 +218,7 @@ export default function App() {
       if (!tk) return;
       if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
       // antrean offline = snapshot ada
-      if (!localStorage.getItem('bunda_offline_snapshot')) return;
+      if (!storageGet('bunda_offline_snapshot')) return;
       flushing = true;
       try {
         const ok = await flushOfflineEdits(tk);
@@ -219,6 +252,8 @@ export default function App() {
 
   // Dorong data ke D1 tiap ada perubahan jurnal (debounce) + saat app disembunyikan
   useEffect(() => {
+    // MODE LOKAL: jangan pernah push jurnal ke server.
+    if (isJournalLocalOnly()) return;
     const onUpdated = () => scheduleUserDataPush();
     const onHide = () => { if (document.visibilityState === 'hidden') pushUserDataNow(); };
     window.addEventListener('bunda_journal_updated', onUpdated);
@@ -229,21 +264,46 @@ export default function App() {
     };
   }, []);
 
+  // Auto-backup harian ke Google Drive milik user (mode lokal).
+  // Tidak ada upload ke server Bunda; kalau izin belum ada, diam saja.
+  useEffect(() => {
+    const run = () => { void maybeAutoBackup(); };
+    const onHide = () => { if (document.visibilityState === 'hidden') run(); };
+    const onOnline = () => run();
+    window.addEventListener('online', onOnline);
+    document.addEventListener('visibilitychange', onHide);
+    const first = window.setTimeout(run, 15000);
+    return () => {
+      window.clearTimeout(first);
+      window.removeEventListener('online', onOnline);
+      document.removeEventListener('visibilitychange', onHide);
+    };
+  }, []);
+
   // Login sukses -> simpan sesi + ambil data milik email itu (bukan data device)
   const handleLoginSuccess = async (user: AuthUser) => {
-    const prevEmail = (localStorage.getItem('bunda_user_email') || '').trim().toLowerCase();
+    const prevEmail = (storageGet('bunda_user_email') || '').trim().toLowerCase();
     saveAuthUser(user);
     try {
-      const { exists, payload } = await pullUserData(user.token);
-      if (exists && payload) {
-        applyUserPayload(payload, user.email);
-      } else if (prevEmail && prevEmail === user.email) {
-        // device ini memang milik email yang sama -> adopsi datanya ke server
-        await pushUserData(user.token, collectUserPayload());
+      if (isJournalLocalOnly()) {
+        // MODE LOKAL: jangan tarik jurnal dari server. Hanya cegah data akun lama
+        // terbawa ke akun baru di device yang sama.
+        if (prevEmail && prevEmail !== (user.email || '').trim().toLowerCase()) {
+          wipeLocalJournalData();
+          storageRemove('bunda_is_onboarded');
+        }
       } else {
-        // akun lain di device bekas -> mulai bersih, JANGAN warisin data orang lain
-        wipeLocalJournalData();
-        localStorage.removeItem('bunda_is_onboarded');
+        const { exists, payload } = await pullUserData(user.token);
+        if (exists && payload) {
+          applyUserPayload(payload, user.email);
+        } else if (prevEmail && prevEmail === user.email) {
+          // device ini memang milik email yang sama -> adopsi datanya ke server
+          await pushUserData(user.token, collectUserPayload());
+        } else {
+          // akun lain di device bekas -> mulai bersih, JANGAN warisin data orang lain
+          wipeLocalJournalData();
+          storageRemove('bunda_is_onboarded');
+        }
       }
     } catch {}
     setIsLoginOpen(false);
@@ -252,19 +312,19 @@ export default function App() {
 
   // Core Pregnancy Data State
   const [week, setWeek] = useState<number>(() => {
-    const saved = localStorage.getItem('bunda_week');
+    const saved = storageGet('bunda_week');
     // Default = minggu kehamilan HARI INI (dinamis), bukan 32 hardcode
     return saved ? parseInt(saved, 10) : getTodayPosition().week;
   });
 
   const [journalText, setJournalText] = useState<string>(() => {
-    return localStorage.getItem('bunda_journal_text') || '';
+    return storageGet('bunda_journal_text') || '';
   });
   const [journalSaved, setJournalSaved] = useState<boolean>(true);
 
   const [habits, setHabits] = useState<HabitState>(() => {
     try {
-      const saved = localStorage.getItem('bunda_habits');
+      const saved = storageGet('bunda_habits');
       return saved ? JSON.parse(saved) : {
         water: false,
         vitamins: false,
@@ -285,7 +345,7 @@ export default function App() {
 
   const [selectedMood, setSelectedMood] = useState<number>(() => {
     try {
-      const saved = localStorage.getItem('bunda_mood');
+      const saved = storageGet('bunda_mood');
       return saved ? parseInt(saved, 10) : 0;
     } catch {
       return 0;
@@ -294,7 +354,7 @@ export default function App() {
 
   const [photos, setPhotos] = useState<PhotoMemory[]>(() => {
     try {
-      const saved = localStorage.getItem('bunda_photos');
+      const saved = mediaGet('bunda_photos');
       return saved ? JSON.parse(saved) : INITIAL_PHOTOS;
     } catch {
       return INITIAL_PHOTOS;
@@ -303,7 +363,7 @@ export default function App() {
 
   const [pastEntries, setPastEntries] = useState<JournalEntry[]>(() => {
     try {
-      const saved = localStorage.getItem('bunda_entries');
+      const saved = storageGet('bunda_entries');
       return saved ? JSON.parse(saved) : INITIAL_ENTRIES;
     } catch {
       return INITIAL_ENTRIES;
@@ -312,7 +372,7 @@ export default function App() {
 
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
-      const saved = localStorage.getItem('bunda_profile');
+      const saved = storageGet('bunda_profile');
       return saved ? JSON.parse(saved) : {
         name: '',
         babyNickname: '',
@@ -340,10 +400,10 @@ export default function App() {
     if (!hpl) return;
     const d = new Date(hpl);
     if (Number.isNaN(d.getTime())) return;
-    if (localStorage.getItem('bunda_week_hpl') === hpl) return;
+    if (storageGet('bunda_week_hpl') === hpl) return;
     const pos = getTodayPosition(new Date(), d);
-    localStorage.setItem('bunda_week_hpl', hpl);
-    localStorage.setItem('bunda_week', String(pos.week));
+    storageSet('bunda_week_hpl', hpl);
+    storageSet('bunda_week', String(pos.week));
     setWeek(pos.week);
   }, [userProfile.hplDate]);
 
@@ -404,7 +464,7 @@ export default function App() {
     };
   }, []);
   const [reminderSettings, setReminderSettings] = useState<ReminderSettings>(() => {
-    const saved = localStorage.getItem('bunda_reminder_settings');
+    const saved = storageGet('bunda_reminder_settings');
     return saved ? JSON.parse(saved) : {
       enabled: true,
       vitaminTime: '08:00',
@@ -453,14 +513,21 @@ export default function App() {
 
       if (path === '/jurnal' || hash === '#/jurnal') {
         setIsSuccessPage(false);
-        setIsLoggedIn(true);
-        setActiveTab('jurnal');
+        // Jangan buka app tanpa dasar: wajib sesi valid, atau sudah bayar + isi form.
+        const hasSession = !!storageGet('bunda_session_token');
+        const paidNow = storageGet('bunda_is_paid') === 'true';
+        const onboardedNow = storageGet('bunda_is_onboarded') === 'true';
+        const loggedNow = storageGet('bunda_isLoggedIn') !== 'false';
+        if ((loggedNow && hasSession) || (paidNow && onboardedNow && loggedNow)) {
+          setIsLoggedIn(true);
+          setActiveTab('jurnal');
+        }
       }
 
       // Intercept direct access to /app or #/app
       if (path === '/app' || hash === '#/app') {
-        const paid = localStorage.getItem('bunda_is_paid') === 'true';
-        const onboarded = localStorage.getItem('bunda_is_onboarded') === 'true';
+        const paid = storageGet('bunda_is_paid') === 'true';
+        const onboarded = storageGet('bunda_is_onboarded') === 'true';
 
         if (!paid && !PAYMENT_PAUSED) {
           // Cecegat akses /app ke checkout modal
@@ -490,12 +557,12 @@ export default function App() {
   // Intercept direct access to /app or #/app and sync Tier from Supabase
   useEffect(() => {
     // Sinkronisasi status tier dari Supabase jika user punya email
-    const email = localStorage.getItem('bunda_user_email');
+    const email = storageGet('bunda_user_email');
     if (email) {
       fetchUserTierFromSupabase(email).then((tierFromDb) => {
         if (tierFromDb === 'vip' || tierFromDb === 'essential') {
           setUserTier(tierFromDb);
-          localStorage.setItem('bunda_user_tier', tierFromDb);
+          storageSet('bunda_user_tier', tierFromDb);
         }
       });
     }
@@ -503,39 +570,41 @@ export default function App() {
 
   // Save changes to localStorage
   useEffect(() => {
-    localStorage.setItem('bunda_isLoggedIn', String(isLoggedIn));
+    storageSet('bunda_isLoggedIn', String(isLoggedIn));
   }, [isLoggedIn]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_week', String(week));
+    storageSet('bunda_week', String(week));
   }, [week]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_journal_text', journalText);
+    storageSet('bunda_journal_text', journalText);
   }, [journalText]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_habits', JSON.stringify(habits));
+    storageSet('bunda_habits', JSON.stringify(habits));
   }, [habits]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_reminder_settings', JSON.stringify(reminderSettings));
+    storageSet('bunda_reminder_settings', JSON.stringify(reminderSettings));
   }, [reminderSettings]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_mood', String(selectedMood));
+    storageSet('bunda_mood', String(selectedMood));
   }, [selectedMood]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_photos', JSON.stringify(photos));
+    // Foto base64 disimpan di IndexedDB (bukan localStorage) supaya kuota ~5 MB
+    // tidak penuh. `mediaSet` punya fallback ke localStorage bila IDB gagal.
+    mediaSet('bunda_photos', JSON.stringify(photos));
   }, [photos]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_entries', JSON.stringify(pastEntries));
+    storageSet('bunda_entries', JSON.stringify(pastEntries));
   }, [pastEntries]);
 
   useEffect(() => {
-    localStorage.setItem('bunda_profile', JSON.stringify(userProfile));
+    storageSet('bunda_profile', JSON.stringify(userProfile));
   }, [userProfile]);
 
   // Periodic Reminder Checker (every 30s)
@@ -550,9 +619,9 @@ export default function App() {
       const todayDateStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
 
       // Check Vitamin Reminder
-      const lastVitaminAlert = localStorage.getItem('bunda_last_vitamin_date');
+      const lastVitaminAlert = storageGet('bunda_last_vitamin_date');
       if (currentTimeStr === reminderSettings.vitaminTime && lastVitaminAlert !== todayDateStr) {
-        localStorage.setItem('bunda_last_vitamin_date', todayDateStr);
+        storageSet('bunda_last_vitamin_date', todayDateStr);
         if (!habits.vitamins) {
           if (reminderSettings.soundEnabled) playGentleChime();
           sendSystemNotification(
@@ -564,9 +633,9 @@ export default function App() {
       }
 
       // Check Journal & Night Reflection Reminder
-      const lastJournalAlert = localStorage.getItem('bunda_last_journal_date');
+      const lastJournalAlert = storageGet('bunda_last_journal_date');
       if (currentTimeStr === reminderSettings.journalTime && lastJournalAlert !== todayDateStr) {
-        localStorage.setItem('bunda_last_journal_date', todayDateStr);
+        storageSet('bunda_last_journal_date', todayDateStr);
         if (reminderSettings.soundEnabled) playGentleChime();
         sendSystemNotification(
           'Waktunya Jurnal Bunda',
@@ -598,13 +667,13 @@ export default function App() {
     };
 
     const handleUserInteraction = () => {
-      localStorage.setItem('bunda_lastActive', Date.now().toString());
+      storageSet('bunda_lastActive', Date.now().toString());
       clearTimeout(idleTimer);
       idleTimer = setTimeout(resetToToday, IDLE_TIMEOUT);
     };
 
     // Cek durasi saat mount: jika ditinggal >5 menit, langsung arahkan ke hari ini
-    const lastActive = localStorage.getItem('bunda_lastActive');
+    const lastActive = storageGet('bunda_lastActive');
     if (lastActive && Date.now() - parseInt(lastActive, 10) > IDLE_TIMEOUT) {
       resetToToday();
     }
@@ -615,7 +684,7 @@ export default function App() {
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        const last = localStorage.getItem('bunda_lastActive');
+        const last = storageGet('bunda_lastActive');
         if (last && Date.now() - parseInt(last, 10) > IDLE_TIMEOUT) {
           resetToToday();
         }
@@ -654,10 +723,10 @@ export default function App() {
             // plan di URL cuma penanda. Saat payment paused, jangan kasih tier/paid.
             if (plan && !PAYMENT_PAUSED) {
               const tier = plan === 'essential' ? 'essential' : 'vip';
-              localStorage.setItem('bunda_is_paid', 'true');
-              localStorage.setItem('bunda_user_tier', tier);
+              storageSet('bunda_is_paid', 'true');
+              storageSet('bunda_user_tier', tier);
             }
-            localStorage.setItem('bunda_isLoggedIn', 'true');
+            storageSet('bunda_isLoggedIn', 'true');
           }
           try { window.history.replaceState({}, '', window.location.pathname); } catch {}
           window.location.reload();
@@ -692,7 +761,32 @@ export default function App() {
     }, 3500);
   };
 
-  // Mode perbaikan: checkout tidak dibuka lewat modal sama sekali, cuma toast.
+  // P0: beri tahu user kalau penyimpanan lokal penuh (foto base64).
+  useEffect(() => {
+    const onStorageFull = () => {
+      showToast('Penyimpanan HP penuh. Hapus beberapa foto lama atau ekspor data dulu.');
+    };
+    window.addEventListener(STORAGE_FULL_EVENT, onStorageFull);
+    return () => window.removeEventListener(STORAGE_FULL_EVENT, onStorageFull);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // P2: prefetch tab besar setelah idle, supaya navigasi pertama tetap instan
+  // walau bundle-nya di-code-split.
+  useEffect(() => {
+    const preload = () => {
+      void import('./components/TabJurnal');
+      void import('./components/TabProfil');
+      // Chunk /print kecil (±7 KB): prefetch supaya dialog print cepat siap.
+      void import('./components/bookPrint/PrintBookView');
+    };
+    const idle = (window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    }).requestIdleCallback;
+    if (typeof idle === 'function') idle(preload, { timeout: 4000 });
+    else setTimeout(preload, 1500);
+  }, []);
+
   const openCheckout = (plan: 'essential' | 'vip' | 'hardcover' | 'upgrade_vip' = 'essential') => {
     if (PAYMENT_PAUSED) {
       showToast('Pembayaran sedang diperbaiki. VIP segera hadir.');
@@ -705,7 +799,7 @@ export default function App() {
   const handleSaveCurrentEntry = () => {
     // 1. Sync daily notes of the current week to main journalText if needed
     try {
-      const savedDaily = localStorage.getItem(`bunda_daily_w${week}`);
+      const savedDaily = storageGet(`bunda_daily_w${week}`);
       let compiledText = journalText;
       if (savedDaily) {
         const parsed = JSON.parse(savedDaily);
@@ -756,6 +850,16 @@ export default function App() {
     showToast('Pesanan Buku Cetak sedang dipersiapkan!', 'Rp 249.000');
   };
 
+  // Halaman /print: render buku saja (tanpa shell aplikasi, tanpa gate login).
+  // Data dibaca langsung dari localStorage/IndexedDB oleh PrintBookView.
+  if (isPrintRoute) {
+    return (
+      <React.Suspense fallback={<div style={{ padding: 24, fontFamily: 'sans-serif' }}>Memuat buku…</div>}>
+        <PrintBookView />
+      </React.Suspense>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#ECE8E1] flex flex-col items-center justify-start sm:p-4 md:p-6 text-[#292524]">
       {/* Main Screen Container (Smartphone Frame or Responsive Card) */}
@@ -801,9 +905,17 @@ export default function App() {
             userTier={userTier}
             onOpenJurnal={() => {
               setIsSuccessPage(false);
-              setIsPaid(true);
-              setIsLoggedIn(true);
-              setIsOnboarded(true);
+              // Paid hanya kalau SuccessPage sudah membuktikannya ke server.
+              if (storageGet('bunda_is_paid') === 'true') setIsPaid(true);
+              // Login hanya kalau ada sesi valid ATAU sudah bayar + sudah isi form.
+              const hasSession = !!storageGet('bunda_session_token');
+              const paidNow = storageGet('bunda_is_paid') === 'true';
+              const onboardedNow = storageGet('bunda_is_onboarded') === 'true';
+              const loggedNow = storageGet('bunda_isLoggedIn') !== 'false';
+              if ((loggedNow && hasSession) || (paidNow && onboardedNow && loggedNow)) {
+                setIsLoggedIn(true);
+              }
+              // isOnboarded TIDAK di-set di sini: wajib lewat form OnboardingModal.
               setActiveTab('jurnal');
               window.history.pushState({}, '', '#/jurnal');
             }}
@@ -827,7 +939,7 @@ export default function App() {
               }
               setIsLoggedIn(true);
               setActiveTab('home');
-              localStorage.setItem('bunda_isLoggedIn', 'true');
+              storageSet('bunda_isLoggedIn', 'true');
             }} 
           />
         ) : (
@@ -861,32 +973,39 @@ export default function App() {
                     onGoToJournal={() => setActiveTab('jurnal')}
                     onGoToKatalog={() => setActiveTab('studio')}
                     onGoToStudio={() => setActiveTab('studio')}
+                    photos={photos}
+                    onUpdatePhoto={(w, newPhoto) => {
+                      setPhotos((prev) => [...prev.filter((p) => p.week !== w), newPhoto]);
+                      window.dispatchEvent(new Event('bunda_journal_updated'));
+                    }}
                   />
                 </ErrorBoundary>
               )}
 
               {activeTab === 'jurnal' && (
                 <ErrorBoundary fallbackTitle="Kendala pada Jurnal">
-                  <TabJurnal 
-                    week={week}
-                    setWeek={setWeek}
-                    journalText={journalText}
-                    setJournalText={setJournalText}
-                    journalSaved={journalSaved}
-                    setJournalSaved={setJournalSaved}
-                    habits={habits}
-                    toggleHabit={toggleHabit}
-                    selectedMood={selectedMood}
-                    setSelectedMood={setSelectedMood}
-                    photos={photos}
-                    setPhotos={setPhotos}
-                    pastEntries={pastEntries}
-                    userProfile={userProfile}
-                    onOpenBookPreview={() => setIsBookPreviewOpen(true)}
-                    onSaveCurrentEntry={handleSaveCurrentEntry}
-                    onDeleteEntry={handleDeleteEntry}
-                    onShowToast={showToast}
-                  />
+                  <React.Suspense fallback={null}>
+                    <TabJurnal 
+                      week={week}
+                      setWeek={setWeek}
+                      journalText={journalText}
+                      setJournalText={setJournalText}
+                      journalSaved={journalSaved}
+                      setJournalSaved={setJournalSaved}
+                      habits={habits}
+                      toggleHabit={toggleHabit}
+                      selectedMood={selectedMood}
+                      setSelectedMood={setSelectedMood}
+                      photos={photos}
+                      setPhotos={setPhotos}
+                      pastEntries={pastEntries}
+                      userProfile={userProfile}
+                      onOpenBookPreview={() => setIsBookPreviewOpen(true)}
+                      onSaveCurrentEntry={handleSaveCurrentEntry}
+                      onDeleteEntry={handleDeleteEntry}
+                      onShowToast={showToast}
+                    />
+                  </React.Suspense>
                 </ErrorBoundary>
               )}
 
@@ -908,6 +1027,7 @@ export default function App() {
 
               {activeTab === 'profil' && (
                 <ErrorBoundary fallbackTitle="Kendala pada Tab Profil">
+                  <React.Suspense fallback={null}>
                   <TabProfil 
                     userProfile={userProfile}
                     setUserProfile={setUserProfile}
@@ -923,7 +1043,7 @@ export default function App() {
                     onOpenUpgradeModal={() => openCheckout('upgrade_vip')}
                     onLogout={async () => {
                       try {
-                        await pushUserDataNow();
+                        if (!isJournalLocalOnly()) await pushUserDataNow();
                         const tk = getToken();
                         if (tk) await apiLogout(tk);
                       } catch {}
@@ -933,16 +1053,16 @@ export default function App() {
                       setIsLoggedIn(false);
                       setIsPaid(false);
                       setUserTier('essential');
-                      localStorage.removeItem('bunda_is_paid');
-                      localStorage.removeItem('bunda_user_email');
+                      storageRemove('bunda_is_paid');
+                      storageRemove('bunda_user_email');
                       notifyUserChanged('');
-                      localStorage.removeItem('bunda_user_tier');
-                      localStorage.setItem('bunda_isLoggedIn', 'false');
+                      storageRemove('bunda_user_tier');
+                      storageSet('bunda_isLoggedIn', 'false');
                       setIsLoginOpen(false);
                       showToast('Berhasil keluar akun. Data Bunda tetap tersimpan.');
                     }}
                     onResetAll={() => {
-                      localStorage.clear();
+                      storageClear();
                       setUserProfile({
                         name: '',
                         babyNickname: '',
@@ -974,6 +1094,7 @@ export default function App() {
                     photos={photos}
                     habits={habits}
                   />
+                  </React.Suspense>
                 </ErrorBoundary>
               )}
             </main>
@@ -1059,28 +1180,30 @@ export default function App() {
 
         {/* Master 100-Page B5 Print Studio & Album Engine */}
         {isBookPreviewOpen && (
-          <PrintBookStudio 
-            userProfile={userProfile}
-            photos={photos}
-            pastEntries={pastEntries}
-            currentWeek={week}
-            userTier={userTier}
-            onUpdatePhoto={(w, newPhoto) => {
-              setPhotos(prev => {
-                const filtered = prev.filter(p => p.week !== w);
-                return [...filtered, newPhoto];
-              });
-            }}
-            onClose={() => setIsBookPreviewOpen(false)}
-            onGoToJournal={() => {
-              setIsBookPreviewOpen(false);
-              setActiveTab('jurnal');
-            }}
-            onOpenUpgradeModal={() => {
-              setIsBookPreviewOpen(false);
-              openCheckout('upgrade_vip');
-            }}
-          />
+          <React.Suspense fallback={null}>
+            <PrintBookStudio 
+              userProfile={userProfile}
+              photos={photos}
+              pastEntries={pastEntries}
+              currentWeek={week}
+              userTier={userTier}
+              onUpdatePhoto={(w, newPhoto) => {
+                setPhotos(prev => {
+                  const filtered = prev.filter(p => p.week !== w);
+                  return [...filtered, newPhoto];
+                });
+              }}
+              onClose={() => setIsBookPreviewOpen(false)}
+              onGoToJournal={() => {
+                setIsBookPreviewOpen(false);
+                setActiveTab('jurnal');
+              }}
+              onOpenUpgradeModal={() => {
+                setIsBookPreviewOpen(false);
+                openCheckout('upgrade_vip');
+              }}
+            />
+          </React.Suspense>
         )}
 
         {/* Login / Daftar (email + password) */}
@@ -1102,12 +1225,12 @@ export default function App() {
             setIsPaid(true);
             setUserEmail(email);
             setUserTier(tier);
-            localStorage.setItem('bunda_is_paid', 'true');
-            localStorage.setItem('bunda_user_email', email);
+            storageSet('bunda_is_paid', 'true');
+            storageSet('bunda_user_email', email);
             notifyUserChanged(email);
-            localStorage.setItem('bunda_user_tier', tier);
+            storageSet('bunda_user_tier', tier);
             if (typeof consent === 'boolean') {
-              localStorage.setItem('bunda_promo_consent', consent ? 'true' : 'false');
+              storageSet('bunda_promo_consent', consent ? 'true' : 'false');
             }
 
             // Sinkronisasi background ke Supabase
@@ -1145,10 +1268,10 @@ export default function App() {
             setIsOnboarded(true);
             setIsLoggedIn(true);
             setActiveTab('home');
-            localStorage.setItem('bunda_is_onboarded', 'true');
-            localStorage.setItem('bunda_isLoggedIn', 'true');
-            localStorage.setItem('bunda_week', String(data.week));
-            localStorage.setItem('bunda_profile', JSON.stringify(updatedProfile));
+            storageSet('bunda_is_onboarded', 'true');
+            storageSet('bunda_isLoggedIn', 'true');
+            storageSet('bunda_week', String(data.week));
+            storageSet('bunda_profile', JSON.stringify(updatedProfile));
 
             // Simpan profil ke Supabase
             syncProfileToSupabase({

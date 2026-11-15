@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { X, CheckCircle2, QrCode, Mail, ArrowRight, ShieldCheck, CreditCard, Sparkles } from 'lucide-react';
 import { PRICING_CONFIG, PlanConfig } from '../config/pricing';
+import { getToken } from '../lib/authClient';
+
+import { PAYMENT_PAUSED } from '../config/payments';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -20,7 +23,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [step, setStep] = useState<'plan' | 'payment' | 'gmail'>('plan');
   const [selectedPlan, setSelectedPlan] = useState<'essential' | 'vip' | 'hardcover' | 'upgrade_vip'>(defaultPlan);
   const [paymentMethod, setPaymentMethod] = useState<'qris' | 'midtrans'>('qris');
-  const [isProcessing, setIsProcessing] = useState(false);
   const [gmailInput, setGmailInput] = useState('');
   // Consent promo MPASI 0-1th: default centang, user bisa cabut.
   const [promoConsent, setPromoConsent] = useState(true);
@@ -36,7 +38,31 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Mode perbaikan: checkout tidak dirender sama sekali (tanpa modal).
+  if (PAYMENT_PAUSED) return null;
+
   const currentPlanConfig: PlanConfig = PRICING_CONFIG[selectedPlan] || PRICING_CONFIG.vip;
+
+  // Verifikasi ke server (/api/subscription) sebelum dianggap lunas.
+  // Snap onSuccess hanya indikasi di client — status bayar asli dari server (D1),
+  // jadi tidak ada jalan pintas "confirm" palsu tanpa bukti server.
+  const verifyPaymentOnServer = async (email: string, attempts = 4): Promise<boolean> => {
+    const target = (email || '').trim().toLowerCase();
+    if (!target) return false;
+    for (let i = 0; i < attempts; i += 1) {
+      try {
+        const res = await fetch(`/api/subscription?email=${encodeURIComponent(target)}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.ok && data.is_paid) return true;
+        }
+      } catch {
+        // jaringan berisik — ulangi pada iterasi berikutnya
+      }
+      if (i < attempts - 1) await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+    return false;
+  };
 
   const handleOpenRealSnap = async () => {
     setRealSnapLoading(true);
@@ -44,14 +70,21 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     try {
       // Upgrade starter->lengkap charge selisih 80rb via endpoint khusus.
       const isUpgrade = currentTier === 'essential' && selectedPlan === 'upgrade_vip';
+      const chargeFor = (localStorage.getItem('bunda_user_email') || 'bunda@bundajournal.my.id').trim().toLowerCase();
       const res = await fetch(isUpgrade ? '/api/upgrade' : '/api/midtrans/charge', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: (() => {
+          const h: Record<string, string> = { 'Content-Type': 'application/json' };
+          const tk = getToken();
+          if (tk) h['Authorization'] = `Bearer ${tk}`; // sesi D1: divalidasi server
+          return h;
+        })(),
         body: JSON.stringify({
           amount: currentPlanConfig.price,
+          plan: selectedPlan,
           customer_name: 'Bunda',
-          customer_email: localStorage.getItem('bunda_user_email') || 'bunda@bundajournal.my.id',
-          user_id: localStorage.getItem('bunda_user_email') || ''
+          customer_email: chargeFor,
+          user_id: chargeFor
         })
       });
 
@@ -73,11 +106,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       }
 
       snap.pay(snapToken, {
-        onSuccess: function (result: any) {
+        onSuccess: async function (result: any) {
           console.log('Midtrans Snap Success:', result);
+          // WAJIB: konfirmasi ke server dulu. Tanpa is_paid dari server, tidak lanjut.
+          const verified = await verifyPaymentOnServer(chargeFor);
+          if (!verified) {
+            setSnapError('Pembayaran diterima, tetapi status belum terverifikasi server. Coba lagi beberapa saat lagi.');
+            return;
+          }
           if (currentTier === 'essential' && selectedPlan === 'upgrade_vip') {
-            const email = localStorage.getItem('bunda_user_email') || 'bunda.user@gmail.com';
-            onSuccess(email, 'vip', currentPlanConfig.price);
+            onSuccess(chargeFor, 'vip', currentPlanConfig.price);
           } else {
             setStep('gmail');
           }
@@ -101,19 +139,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
   };
 
-  const handlePay = () => {
-    setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
-      if (currentTier === 'essential' && selectedPlan === 'upgrade_vip') {
-        // Upgrade langsung sukses untuk user yang sudah login
-        const email = localStorage.getItem('bunda_user_email') || 'bunda.user@gmail.com';
-        onSuccess(email, 'vip', 80000);
-      } else {
-        setStep('gmail');
-      }
-    }, 1200);
-  };
+  // Catatan: konfirmasi bayar TIDAK lagi lewat timer palsu.
+  // Tombol "Konfirmasi Bayar" selalu membuka Snap asli, dan hanya Snap onSuccess
+  // yang lolos verifikasi server yang boleh lanjut ke langkah berikutnya.
 
   const handleGmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,11 +153,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     onSuccess(gmailInput.trim().toLowerCase(), resolvedTier, currentPlanConfig.price, promoConsent);
   };
 
+  // Login Google beneran: simpan rencana checkout lalu lempar ke OAuth Google.
   const handleSimulateGoogleAuth = () => {
-    // Simulasi respons OAuth Google dengan scope: email only
-    const demoEmail = gmailInput.trim() || 'bunda.ashari@gmail.com';
-    const resolvedTier = (selectedPlan === 'vip' || selectedPlan === 'upgrade_vip' || selectedPlan === 'hardcover') ? 'vip' : 'essential';
-    onSuccess(demoEmail.toLowerCase(), resolvedTier, currentPlanConfig.price, promoConsent);
+    try {
+      sessionStorage.setItem('bunda_pending_plan', JSON.stringify({
+        plan: selectedPlan,
+        price: currentPlanConfig.price,
+        consent: promoConsent,
+      }));
+    } catch {}
+    const params = new URLSearchParams({ plan: selectedPlan });
+    window.location.href = `/api/auth/google?${params.toString()}`;
   };
 
   return (
@@ -294,11 +328,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <button
                 type="button"
                 id="btn-confirm-pay"
-                disabled={isProcessing}
-                onClick={handlePay}
+                disabled={realSnapLoading}
+                onClick={handleOpenRealSnap}
                 className="w-2/3 py-2.5 bg-[#556B2F] text-white rounded-xl text-xs font-bold hover:bg-[#465926] flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
               >
-                {isProcessing ? (
+                {realSnapLoading ? (
                   <span>Memverifikasi Pembayaran...</span>
                 ) : (
                   <>

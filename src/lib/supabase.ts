@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getToken } from './authClient';
 
 // Ambil credential dari environment variables Vite
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://wjxpbacoidyhavrfwgfu.supabase.co';
@@ -26,10 +27,12 @@ export async function syncProfileToSupabase(profile: any) {
         updated_at: new Date().toISOString(),
       })
       .select()
-      .then(({ data, error }) => {
-        if (error) console.warn('Supabase sync error:', error);
-      })
-      .catch((err) => console.warn('Supabase profile sync catch:', err));
+      .then(
+        ({ data, error }) => {
+          if (error) console.warn('Supabase sync error:', error);
+        },
+        (err) => console.warn('Supabase profile sync catch:', err)
+      );
     
     return { status: 'dispatched' };
   } catch (err) {
@@ -80,22 +83,58 @@ export async function signInWithGoogleOAuth() {
 
 // Helper sinkronisasi tier langganan & status pembayaran (Essential / VIP)
 export async function syncSubscriptionToSupabase(email: string, tier: 'essential' | 'vip', amount: number) {
-  if (!supabase) return { error: 'Supabase not configured' };
+  // VERIFIKASI DULU: tier/amount tidak boleh ditulis ke mana pun sebelum server
+  // (D1 /api/subscription) mengonfirmasi is_paid. Gagal verify = tidak sync apa pun.
+  let verifiedTier: 'essential' | 'vip' | null = null;
+  let verifiedAmount = amount;
+  try {
+    const check = await fetch(`/api/subscription?email=${encodeURIComponent(email)}`, { cache: 'no-store' });
+    const data: any = await check.json();
+    if (check.ok && data && data.ok && data.is_paid && (data.tier === 'vip' || data.tier === 'essential')) {
+      verifiedTier = data.tier;
+      verifiedAmount = Number(data.amount) || amount;
+    }
+  } catch (verifyErr) {
+    console.warn('D1 subscription verify catch:', verifyErr);
+  }
+  if (!verifiedTier) {
+    console.warn('Subscription sync dilewati: pembayaran belum terverifikasi server.', email);
+    return { status: 'skipped_unverified' };
+  }
+
+  const token = getToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`; // sesi D1: divalidasi server
+
+  // 1. Sync ke Cloudflare D1 via /api/subscription (Edge native, non-paused)
+  try {
+    fetch('/api/subscription', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ email, tier: verifiedTier, amount: verifiedAmount, is_paid: true }),
+    }).catch((e) => console.warn('D1 syncSubscription catch:', e));
+  } catch (err) {
+    console.warn('D1 sync error:', err);
+  }
+
+  if (!supabase) return { status: 'dispatched_d1' };
   try {
     supabase
       .from('bunda_subscriptions')
       .upsert({
         user_email: email,
-        tier: tier,
-        amount_paid: amount,
+        tier: verifiedTier, // hasil verifikasi server, bukan input client
+        amount_paid: verifiedAmount,
         is_paid: true,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_email' })
       .select()
-      .then(({ data, error }) => {
-        if (error) console.warn('Supabase subscription sync error:', error);
-      })
-      .catch((err) => console.warn('Supabase subscription sync catch:', err));
+      .then(
+        ({ data, error }) => {
+          if (error) console.warn('Supabase subscription sync error:', error);
+        },
+        (err) => console.warn('Supabase subscription sync catch:', err)
+      );
 
     return { status: 'dispatched' };
   } catch (err) {
@@ -104,9 +143,27 @@ export async function syncSubscriptionToSupabase(email: string, tier: 'essential
   }
 }
 
-// Helper pengecekan tier dari Supabase
+// Helper pengecekan tier dari Cloudflare D1 (dengan fallback Supabase)
 export async function fetchUserTierFromSupabase(email: string): Promise<'essential' | 'vip' | 'none'> {
-  if (!supabase || !email) return 'none';
+  if (!email) return 'none';
+  // 1. Coba dari Cloudflare D1 (/api/subscription) — bebas pause
+  try {
+    const res = await fetch(`/api/subscription?email=${encodeURIComponent(email)}`);
+    if (res.ok) {
+      const data: any = await res.json();
+      if (data && data.is_paid) {
+        return data.tier === 'vip' ? 'vip' : 'essential';
+      }
+      if (data && data.exists && !data.is_paid) {
+        return 'none';
+      }
+    }
+  } catch (d1Err) {
+    console.warn('Gagal fetch tier dari D1, fallback ke Supabase:', d1Err);
+  }
+
+  // 2. Fallback Supabase jika D1 belum terjangkau
+  if (!supabase) return 'none';
   try {
     const { data, error } = await supabase
       .from('bunda_subscriptions')

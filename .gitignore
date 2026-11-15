@@ -6,3 +6,30 @@ coverage/
 *.log
 .env*
 !.env.example
+.dev-db.json
+
+test-results/
+playwright-report/
+blob-report/
+
+dev/diag-results/
+
+# Artefak QA/screenshot lokal (tidak ikut repo)
+/*.png
+/test-screenshots/
+/tmp-pdf/
+/Testing/
+/app source code/
+/Basic Dokumen/
+/Bunda Journal/
+/Logo & icon/
+/.commandcode/
+/docs/*.pdf
+/scripts/*
+!/scripts/audit-storage.mjs
+/convert_lp.py
+/setup_email_rule.py
+/paymentAdapter.js
+/pu_component.js
+/server.js
+/test_syntax.tsx

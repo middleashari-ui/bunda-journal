@@ -1,3 +1,4 @@
+import { storageGet, storageSet } from './storage/appStorage';
 // Kuota Voice Note per tier. Starter 3x, lengkap/vip 10x.
 // Key localStorage tunggal, additive — tidak ganggu key jurnal existing.
 // ponytail: pindah ke Supabase voice_notes count saat auth user_id stabil,
@@ -9,7 +10,7 @@ const VOICE_KEY = 'bunda_voice_count';
 
 export function getVoiceCount(): number {
   try {
-    return parseInt(localStorage.getItem(VOICE_KEY) || '0', 10) || 0;
+    return parseInt(storageGet(VOICE_KEY) || '0', 10) || 0;
   } catch {
     return 0;
   }
@@ -26,7 +27,7 @@ export function canRecordVoice(tier: JournalTier): boolean {
 export function bumpVoiceCount(): number {
   const next = getVoiceCount() + 1;
   try {
-    localStorage.setItem(VOICE_KEY, String(next));
+    storageSet(VOICE_KEY, String(next));
   } catch {}
   return next;
 }

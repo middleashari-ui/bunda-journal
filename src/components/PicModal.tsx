@@ -1,3 +1,4 @@
+import { storageSet } from '../lib/storage/appStorage';
 import React, { useState } from 'react';
 import { X, ShieldCheck, UserCheck, DollarSign, ListOrdered, CheckCircle2 } from 'lucide-react';
 
@@ -38,9 +39,9 @@ export const PicModal: React.FC<PicModalProps> = ({ isOpen, onClose, onShowToast
   };
 
   const handleSavePricing = () => {
-    localStorage.setItem('bunda_pricing_digital', priceDigital);
-    localStorage.setItem('bunda_pricing_softcover', priceSoftcover);
-    localStorage.setItem('bunda_pricing_hardcover', priceHardcover);
+    storageSet('bunda_pricing_digital', priceDigital);
+    storageSet('bunda_pricing_softcover', priceSoftcover);
+    storageSet('bunda_pricing_hardcover', priceHardcover);
     if (onShowToast) onShowToast('Harga berhasil diperbarui tanpa deploy!');
   };
 
