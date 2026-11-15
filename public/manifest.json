@@ -1,13 +1,13 @@
 {
   "id": "/",
-  "name": "Bunda Journal - UnaChaaan",
-  "short_name": "BundaJournal",
-  "description": "Jurnal kehamilan digital estetik offline-first dengan daily habit tracker, galeri USG lokal, dan buku kenangan cetak hardcover linen.",
+  "name": "Bunda Journal",
+  "short_name": "Bunda Journal",
+  "description": "Jurnal kehamilan mindful 100 halaman + 72 hal harian W16-W40",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#FAF6EE",
-  "theme_color": "#5A6E3A",
+  "background_color": "#F9F6F0",
+  "theme_color": "#5A6E4A",
   "orientation": "portrait",
   "icons": [
     {

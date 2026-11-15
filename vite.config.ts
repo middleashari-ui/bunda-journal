@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
 import {devApiPlugin} from './dev/devApiPlugin';
+import {diagPlugin} from './dev/diagPlugin';
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, process.cwd(), '');
 
@@ -70,7 +71,7 @@ export default defineConfig(({mode}) => {
   };
 
   return {
-    plugins: [react(), tailwindcss(), devApiPlugin(env), midtransDevPlugin],
+    plugins: [react(), tailwindcss(), devApiPlugin(env), midtransDevPlugin, diagPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

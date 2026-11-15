@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Isi Jurnal Penuh — Bunda Journal</title>
+<style>
+ body{font:16px/1.5 -apple-system,Segoe UI,sans-serif;background:#faf9f7;color:#1c1917;margin:0;padding:24px}
+ h1{font-size:22px;margin:0 0 6px} p{color:#57534e} pre{background:#1f1d1b;color:#f5f2eb;padding:14px;border-radius:10px;white-space:pre-wrap;font-size:13px}
+ a{display:inline-block;margin-top:14px;padding:12px 18px;background:#556b2f;color:#fff;border-radius:12px;text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+<h1>Mengisi jurnal lengkap…</h1>
+<p>Data demo: profil, minggu 5–40 (7 hari × catatan, mood, suplemen, air, gerak, tidur), foto, jadwal kontrol, Bab 1–5.</p>
+<pre id="log">bekerja…</pre>
+<a id="go" href="/" style="display:none">Buka aplikasi</a>
+<script>
+(function () {
+  var log = document.getElementById('log');
+  function out(s) { log.textContent += '\n' + s; }
+  var WEEK_FROM = 1, WEEK_TO = 40;
+  var SUMMARY_W = 28;
+
+  // ---------- teks catatan (maks 160 karakter) ----------
+  var T1 = [
+    'Pagi ini mual lagi, tapi aku coba sarapan roti gandum pelan-pelan. Suami bikinin teh jahe, lumayan mendingan. {w} minggu, terus kuat ya nak.',
+    'Akhirnya bisa makan nasi ayam sedikit. Tadi sempat pusing, langsung aku tidur siang 30 menit. Badan terasa lebih ringan setelah bangun.',
+    'Perut makin sering kembung, tapi aku jalan santai 15 menit di komplek. Udara pagi bikin mood naik. Terima kasih ya nak sudah menemani.',
+    'Hari ini kontrol ke bidan. Kata bidan semua normal, tensi bagus. Aku dengar detak jantungmu, cepat sekali, langsung menangis haru.',
+    'Ngidam mangga muda lagi, suami beliin sepuluh. Aku makan dua sambil duduk di teras. Nikmat banget, sampai ketawa sendiri.',
+    'Malam ini aku baca buku kehamilan trimester satu. Banyak yang bikin takut, tapi aku pilih fokus ke hal baik saja. Kita sehat terus ya.',
+    'Minggu {w}: aku mulai minum asam folat rutin tiap malam sebelum tidur. Catatan ini biar nanti kamu tahu Bunda juga belajar dari nol.'
+  ];
+  var T2 = [
+    'Hari ini perut terasa lebih besar. Aku pakai baju hamil baru, suami bilang Bunda makin cantik. Malu-malu tapi senang.',
+    'Si kecil aktif banget malam ini, tendangannya sampai bikin aku geli. Aku elus perut, dia diam sebentar, lalu gerak lagi.',
+    'Jalan pagi 25 menit sambil dengar murottal. Kaki agak pegal, jadi pulang langsung rendam air hangat. Tidur jadi lebih nyenyak.',
+    'USG lagi hari ini. Dokter bilang pertumbuhan sesuai usia {w} minggu. Aku lihat tangan kecilnya bergerak, rasanya pengen peluk.',
+    'Masak sup ayam buat keluarga. Aku cuma makan kuahnya, tapi suami habis dua piring. Bahagia lihat dia makan lahap.',
+    'Malam ini aku tulis surat kecil untukmu di buku. Isinya doa supaya kamu lahir sehat, cukup bulan, dan jadi anak yang baik hati.',
+    'Berat badanku naik, kadang aku insecure. Tapi aku ingat semua ini untuk kamu. Nanti kita lihat foto ini dan ketawa bareng ya nak.'
+  ];
+  var T3 = [
+    'Sekarang {w} minggu. Perut sudah besar sekali, tidur harus miring ke kiri. Bangun malam dua kali untuk ke kamar mandi, tapi tidak apa-apa.',
+    'Hari ini aku cuci baju bayi yang kemarin dibeli. Kecil-kecil lucu, aku lipat sambil membayangkan kamu memakainya nanti.',
+    'Kontraksi palsu datang tiga kali malam ini. Aku catat durasinya, masih tidak teratur. Suami mijitin punggung sampai aku tidur.',
+    'Kontrol dokter: detak jantung normal, air ketuban cukup. Dokter bilang siap-siap ya, tinggal beberapa minggu lagi. Deg-degan.',
+    'Aku siapkan tas rumah sakit hari ini. Baju Bunda, baju bayi, popok, bedong, dokumen, semuanya sudah masuk. Lega rasanya.',
+    'Jalan pelan di halaman 10 menit saja sudah ngos-ngosan. Aku duduk di kursi goyang, mengelus perut, ngobrol sama kamu.',
+    'Malam ini aku susah tidur, kepikiran persalinan. Tapi aku tarik napas, baca doa, dan percaya semuanya akan lancar. Kita bertemu segera, nak.'
+  ];
+
+  function graphemes(s) { return Array.from(s); }
+  function fit160(s) {
+    s = String(s).trim();
+    var a = graphemes(s);
+    if (a.length > 160) {
+      s = a.slice(0, 160).join('');
+      var cut = s.lastIndexOf(' ');
+      if (cut > 140) s = s.slice(0, cut);
+    }
+    return s;
+  }
+  var PAD = [
+    ' Semoga sehat terus ya nak.',
+    ' Bunda sayang kamu.',
+    ' Kita kuat sama-sama.',
+    ' Doa Bunda menyertaimu selalu.',
+    ' Nanti kita cerita lagi.'
+  ];
+  var EMOJI = ['😊', '💛', '🌸', '🙏', '✨'];
+  // Isi setiap catatan sampai mendekati 160 karakter (batas maksimal app).
+  function fullNote(base, w, d) {
+    var s = base;
+    var i = 0;
+    while (graphemes(s).length < 152 && i < 12) {
+      s += PAD[i % PAD.length];
+      i++;
+    }
+    if (d === 5) {
+      var e = 0;
+      while (graphemes(s).length < 158 && e < 6) {
+        s += ' ' + EMOJI[(w + e) % EMOJI.length];
+        e++;
+      }
+    }
+    s = fit160(s);
+    if (d === 6 && w % 10 === 0) {
+      // Uji kata sangat panjang: CSS harus memotong kata, bukan meluber.
+      var longWord = 'panjang'.repeat(7) + 'sekali';
+      s = graphemes(s).slice(0, 96).join('') + ' ' + longWord;
+      s = fit160(s);
+    }
+    var len = graphemes(s).length;
+    if (len < 160) s += ' '.repeat(160 - len); // tepat 160 untuk uji kapasitas
+    return s;
+  }
+
+  function noteFor(w, d) {
+    var pool = w < 14 ? T1 : w < 28 ? T2 : T3;
+    return fullNote(pool[d % 7].replace(/\{w\}/g, String(w)), w, d);
+  }
+
+  var DAYS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+
+  // ---------- foto ----------
+  function makeImage(label, c1, c2) {
+    var c = document.createElement('canvas');
+    c.width = 640; c.height = 480;
+    var x = c.getContext('2d');
+    var g = x.createLinearGradient(0, 0, 640, 480);
+    g.addColorStop(0, c1); g.addColorStop(1, c2);
+    x.fillStyle = g; x.fillRect(0, 0, 640, 480);
+    x.fillStyle = 'rgba(255,255,255,0.18)';
+    for (var i = 0; i < 26; i++) x.fillRect(Math.random() * 640, Math.random() * 480, 40, 3);
+    x.fillStyle = 'rgba(255,255,255,0.92)';
+    x.font = 'bold 34px Georgia, serif'; x.textAlign = 'center';
+    x.fillText(label, 320, 236);
+    x.font = '16px sans-serif'; x.fillStyle = 'rgba(255,255,255,0.75)';
+    x.fillText('Data demo Bunda Journal', 320, 274);
+    return c.toDataURL('image/jpeg', 0.72);
+  }
+
+  try {
+    localStorage.clear();
+
+    // ---------- akun & profil ----------
+    var email = 'demo@bundajournal.my.id';
+    var profile = {
+      name: 'Ashri Rahmadani',
+      babyNickname: 'Aisyah',
+      hplDate: '2027-01-20',
+      doctorName: 'dr. Ayu Prameswari, Sp.OG',
+      hospitalName: 'RS Bunda Sehat',
+      bloodType: 'O+'
+    };
+    localStorage.setItem('bunda_is_paid', 'true');
+    localStorage.setItem('bunda_is_onboarded', 'true');
+    localStorage.setItem('bunda_isLoggedIn', 'true');
+    localStorage.setItem('bunda_user_email', email);
+    localStorage.setItem('bunda_user_tier', 'vip');
+    localStorage.setItem('bunda_profile', JSON.stringify(profile));
+    localStorage.setItem('bunda_user_profile', JSON.stringify(profile));
+    localStorage.setItem('bunda_week', String(WEEK_TO));
+    localStorage.setItem('bunda_onboarding_done', 'true');
+    localStorage.setItem('bunda_pwa_tutorial_dismissed', 'true');
+    localStorage.setItem('bunda_schema_version', '1');
+    localStorage.setItem('bunda_mood', '0');
+    localStorage.setItem('bunda_reminder_settings', JSON.stringify({ enabled: true, time: '20:00', water: true, vitamin: true }));
+    localStorage.setItem('bunda_demo_seed_v1', new Date().toISOString());
+    out('Profil & sesi: OK');
+
+    // ---------- foto ----------
+    var photoSpecs = [
+      { week: 8,  caption: 'USG kantung janin pertama', label: 'USG 8 Minggu', c1: '#3f3f46', c2: '#18181b' },
+      { week: 12, caption: 'USG NT — tangan kecil melambai', label: 'USG 12 Minggu', c1: '#3f3f46', c2: '#18181b' },
+      { week: 20, caption: 'USG anatomi lengkap', label: 'USG 20 Minggu', c1: '#27272a', c2: '#0f172a' },
+      { week: 28, caption: 'USG pertumbuhan trimester 3', label: 'USG 28 Minggu', c1: '#27272a', c2: '#111827' },
+      { week: 30, caption: 'Foto perut Bunda minggu 30', label: 'Bump 30 Minggu', c1: '#c87a64', c2: '#8a4b3a' },
+      { week: 34, caption: 'Kamar bayi sudah siap', label: 'Kamar Bayi', c1: '#a3b18a', c2: '#556b2f' }
+    ];
+    var photos = photoSpecs.map(function (p, i) {
+      return { id: 'demo-photo-' + i, week: p.week, src: makeImage(p.label, p.c1, p.c2), caption: p.caption, date: 'Minggu ' + p.week, isCustom: true };
+    });
+    localStorage.setItem('bunda_photos', JSON.stringify(photos));
+    photoSpecs.forEach(function (p) {
+      localStorage.setItem('bunda_' + p.week + '_foto_0', JSON.stringify({ url: photos[photoSpecs.indexOf(p)].src, label: p.caption, date: 'Minggu ' + p.week }));
+    });
+    out('Foto: ' + photos.length + ' gambar');
+
+    // ---------- minggu 5–40 ----------
+    var weeks = 0, notes = 0, habits = 0;
+    for (var w = WEEK_FROM; w <= WEEK_TO; w++) {
+      var daily = {};
+      for (var d = 0; d < 7; d++) {
+        var text = noteFor(w, d);
+        daily[DAYS[d]] = text;
+        localStorage.setItem('bunda_' + w + '_' + d + '_catatan', JSON.stringify({ text: text, savedAt: '20:1' + d, status: 'Selesai' }));
+        notes++;
+        var vit = !(d === 3 && w % 2 === 0);
+        localStorage.setItem('bunda_' + w + '_' + d + '_suplemen', JSON.stringify({ vitamin: vit, asamFolat: vit, dha: vit, kalsium: d !== 6, zatBesi: d !== 5, count: vit ? 3 : 0 }));
+        localStorage.setItem('bunda_' + w + '_' + d + '_hidrasi', JSON.stringify({ current: 1200 + ((w + d) % 5) * 200, target: 2000 }));
+        localStorage.setItem('bunda_' + w + '_' + d + '_jasmani', JSON.stringify({ jalan: 10 + ((w * 3 + d * 2) % 30), senam: d % 3 === 0 ? 15 : 0, tidur: 6 + (d % 3), percent: 70 }));
+        habits++;
+      }
+      localStorage.setItem('bunda_daily_w' + w, JSON.stringify(daily));
+      localStorage.setItem('bunda_daily_moods_w' + w, JSON.stringify([0, 1, 0, 2, 1, 0, 3]));
+      var weight = (51.5 + (w - WEEK_FROM) * 0.42).toFixed(1);
+      localStorage.setItem('bunda_momstats_w' + w, JSON.stringify({
+        weight: weight,
+        waist: String(78 + Math.round((w - WEEK_FROM) * 0.55)),
+        bloodPressure: '11' + (w % 2 ? '8' : '7') + '/7' + (5 + (w % 4)),
+        doctorNote: 'Minggu ' + w + ': pertumbuhan sesuai usia, air ketuban cukup, detak jantung janin normal. Lanjutkan asam folat, istirahat cukup, dan jalan pagi 20 menit.',
+        sleepHourIndex: w < 14 ? 1 : w < 28 ? 0 : 2
+      }));
+      weeks++;
+    }
+    out('Minggu ' + WEEK_FROM + '–' + WEEK_TO + ': ' + notes + ' catatan harian, ' + habits + ' set kebiasaan');
+
+    // ---------- Bab 1 ----------
+    var bab1 = {
+      testPackPhoto: makeImage('Test Pack', '#c87a64', '#8a4b3a'),
+      testPackDate: '2026-05-18',
+      testPackTimePlace: '05.12 pagi, kamar mandi rumah',
+      motherFeelings: 'Tangan gemetar waktu lihat dua garis. Aku duduk di lantai kamar mandi, nangis, lalu langsung doa. Setelah menunggu hampir dua tahun, akhirnya.',
+      fatherReaction: 'Suami terbangun karena dengar aku nangis. Dia lihat test pack, diam sebentar, lalu memelukku erat sambil bilang terima kasih.',
+      familyReaction: 'Mama langsung menangis bahagia. Papa diam tapi matanya berkaca-kaca. Semua keluarga ikut doa lewat video call.',
+      usgKantungPhoto: photos[0].src,
+      hospital: 'RS Bunda Sehat',
+      doctor: 'dr. Ayu Prameswari, Sp.OG',
+      heartRate: '148 bpm',
+      heartbeatImpression: 'Detak jantung pertama yang aku dengar. Cepat, teratur, seperti kuda kecil berlari. Rasanya seperti dengar lagu paling indah.',
+      cravings: 'Mangga muda, rujak, asem-asem, dan es jeruk peras.',
+      avoidedFoods: 'Kopi, makanan mentah, soda, dan makanan terlalu pedas.',
+      partnerSupport: 'Suami selalu bangun malam kalau aku mual, bikinin teh jahe, dan menemani kontrol tiap bulan tanpa pernah mengeluh.'
+    };
+    localStorage.setItem('bunda_bab1', JSON.stringify(bab1));
+    out('Bab 1: OK');
+
+    // ---------- Bab 3 ----------
+    var bab3 = {
+      candidate1: 'Aisyah Rahmadani',
+      candidate2: 'Khadijah Rahmadani',
+      candidate3: 'Maryam Rahmadani',
+      candidate4: 'Hafizah Rahmadani',
+      chosenName: 'Aisyah Rahmadani',
+      chosenMeaning: 'Aisyah berarti yang hidup dan bersemangat. Kami berharap dia tumbuh jadi perempuan yang hidup hatinya, ceria, dan membawa manfaat.',
+      nurseryPhoto: photos[5].src,
+      nurseryBoxChecked: true,
+      nurseryNetChecked: true,
+      nurseryLampChecked: true,
+      nurseryChairChecked: true,
+      nurseryWardrobeChecked: true,
+      nurseryThermometerChecked: true
+    };
+    localStorage.setItem('bunda_bab3', JSON.stringify(bab3));
+    out('Bab 3: OK');
+
+    // ---------- Bab 4 ----------
+    var bab4 = {
+      contractionTime: '02.40',
+      arrivalTime: '03.25',
+      laborStory: 'Kontraksi mulai teratur jam 02.40, tiap 7 menit. Kami ke RS jam 03.25. Buka 4 cm, lalu 8 jam kemudian lengkap. Aku mengejan 35 menit, dan jam 11.52 kamu lahir dengan tangis keras. Suami memotong tali pusat sambil menangis.',
+      birthPhoto: makeImage('Aisyah Lahir', '#c87a64', '#556b2f'),
+      holdingBabyFeeling: 'Waktu kamu diletakkan di dadaku, berat dan hangat. Aku lupa semua sakit. Kamu menatapku, dan aku tahu hidupku berubah selamanya.',
+      babyName: 'Aisyah Rahmadani',
+      birthDate: '2027-01-14',
+      birthTime: '11.52',
+      birthWeight: '3.150 kg',
+      birthLength: '49 cm',
+      headCircumference: '34 cm',
+      bloodType: 'O+',
+      leftFootprint: makeImage('Kaki Kiri', '#8a4b3a', '#3f3f46'),
+      rightFootprint: makeImage('Kaki Kanan', '#8a4b3a', '#3f3f46'),
+      babyWristbandPhoto: makeImage('Gelang Bayi', '#a3b18a', '#556b2f'),
+      momWristbandPhoto: makeImage('Gelang Bunda', '#d6d3d1', '#78716c'),
+      familyPhoto: makeImage('Keluarga Kami', '#c87a64', '#a3b18a')
+    };
+    localStorage.setItem('bunda_bab4', JSON.stringify(bab4));
+    out('Bab 4: OK');
+
+    // ---------- Bab 5 ----------
+    localStorage.setItem('bunda_bab5', JSON.stringify({
+      bundaLetterPart1: 'Aisyah sayang, kalau kamu membaca ini saat sudah besar, Bunda ingin kamu tahu: kamu adalah doa yang dijawab setelah penantian panjang. Setiap malam Bunda cerita ke perut, setiap pagi Bunda doakan kamu.',
+      bundaLetterPart2: 'Jangan takut jadi diri sendiri. Jadi perempuan yang baik hati, tapi juga berani bilang tidak. Kalau dunia terasa berat, pulanglah. Bunda selalu ada, dan pintu rumah ini selalu terbuka.',
+      bundaSignName: 'Ashri Rahmadani',
+      ayahLetterPart1: 'Aisyah, Ayah bukan orang yang pandai bicara. Tapi Ayah janji akan belajar jadi ayah yang sabar, yang hadir, dan yang tidak pernah membuatmu merasa sendirian.',
+      ayahLetterPart2: 'Ayah akan mengantar sekolah, mengajarkan sepeda, dan mungkin banyak salah. Kalau nanti Ayah salah, tegurlah. Ayah akan mendengarkan.',
+      ayahSignName: 'Ayah'
+    }));
+    out('Bab 5: OK');
+
+    // ---------- pemantauan tambahan (sub-bab 1–4) ----------
+    localStorage.setItem('bunda_fetal_usg_records', JSON.stringify([
+      { id: 'usg-8', week: 8, lengthCm: 1.6, weightGrams: 2, date: '2026-06-15', note: 'Kantung janin terlihat, detak jantung mulai terdeteksi.' },
+      { id: 'usg-12', week: 12, lengthCm: 5.4, weightGrams: 14, date: '2026-07-13', note: 'NT normal, tangan aktif bergerak.' },
+      { id: 'usg-20', week: 20, lengthCm: 25.6, weightGrams: 300, date: '2026-09-07', note: 'Anatomi lengkap, jenis kelamin perempuan.' },
+      { id: 'usg-28', week: 28, lengthCm: 37.6, weightGrams: 1100, date: '2026-11-02', note: 'Pertumbuhan sesuai, air ketuban cukup.' },
+      { id: 'usg-32', week: 32, lengthCm: 42.4, weightGrams: 1700, date: '2026-11-30', note: 'Kepala di bawah, plasenta baik.' },
+      { id: 'usg-36', week: 36, lengthCm: 47.4, weightGrams: 2600, date: '2026-12-28', note: 'Siap lahir, taksiran 3,1 kg.' }
+    ]));
+    localStorage.setItem('bunda_kick_history', JSON.stringify([
+      { date: '2026-11-10T19:30:00.000Z', count: 12 },
+      { date: '2026-11-12T20:10:00.000Z', count: 10 },
+      { date: '2026-11-14T21:05:00.000Z', count: 14 }
+    ]));
+    localStorage.setItem('bunda_contraction_history', JSON.stringify([
+      { date: '2026-12-30T02:40:00.000Z', durationSeconds: 45 },
+      { date: '2026-12-30T02:52:00.000Z', durationSeconds: 50 },
+      { date: '2026-12-30T03:05:00.000Z', durationSeconds: 55 }
+    ]));
+    localStorage.setItem('bunda_catatan_ayah::' + email, 'Ayah, tolong bawa jaket dan powerbank ya. Kita kontrol jam 10.30, jangan lupa bawa buku catatan dokter.');
+    localStorage.setItem('bunda_jadwal_usg', JSON.stringify([
+      { minggu: '12', tanggal: '2026-07-13', catatan: 'USG NT' },
+      { minggu: '20', tanggal: '2026-09-07', catatan: 'USG anatomi' }
+    ]));
+    out('Pemantauan: USG, tendangan, kontraksi, catatan ayah');
+
+    // ---------- jadwal kontrol ----------
+    localStorage.setItem('bunda_appointment::' + email, JSON.stringify({
+      dokter: 'dr. Ayu Prameswari, Sp.OG',
+      jenis: 'USG pertumbuhan trimester 3',
+      lokasi: 'RS Bunda Sehat',
+      klinik: 'Poli Obgyn',
+      date: '2026-12-18',
+      jam: '10.30',
+      minggu: String(SUMMARY_W),
+      pesanAyah: 'Ayah, tolong kosongkan jadwal ya. Kita kontrol jam 10.30, sekalian tanya soal persiapan persalinan.'
+    }));
+    localStorage.setItem('bunda_appointment_status::' + email, 'BOOKED');
+    out('Jadwal kontrol: OK');
+
+    // ---------- entri lama (riwayat) ----------
+    var entries = [8, 12, 20, 28, 30].map(function (w, i) {
+      return { id: 'demo-entry-' + i, date: 'Minggu ' + w, text: noteFor(w, i), mood: i % 4 };
+    });
+    localStorage.setItem('bunda_entries', JSON.stringify(entries));
+    out('Riwayat entri: ' + entries.length);
+
+    log.textContent += '\n\nSELESAI. Total: ' + weeks + ' minggu, ' + notes + ' catatan.';
+    document.getElementById('go').style.display = 'inline-block';
+    setTimeout(function () { location.replace('/'); }, 1800);
+  } catch (e) {
+    out('GAGAL: ' + e.message);
+  }
+})();
+</script>
+</body>
+</html>

@@ -49,9 +49,9 @@ export const BookPreviewModal: React.FC<BookPreviewModalProps> = ({
   if (!isOpen) return null;
 
   const currentPhoto = photos[0] || {
-    caption: 'USG Trimester 1 (12W)',
-    date: '12 Okt 2024',
-    src: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=600&q=80',
+    caption: '',
+    date: '',
+    src: '',
   };
 
   return (
@@ -207,16 +207,22 @@ export const BookPreviewModal: React.FC<BookPreviewModalProps> = ({
                 </div>
 
                 <div className="my-auto rounded-xl overflow-hidden border-2 border-stone-300 shadow-md aspect-[4/3] bg-black flex items-center justify-center">
-                  <img 
-                    src={currentPhoto.src} 
-                    alt={currentPhoto.caption} 
-                    className="w-full h-full object-cover"
-                  />
+                  {currentPhoto.src ? (
+                    <img
+                      src={currentPhoto.src}
+                      alt={currentPhoto.caption}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-stone-500 text-xs font-light">Belum ada foto USG</span>
+                  )}
                 </div>
 
                 <div className="text-center pt-2">
                   <p className="font-serif italic text-xs text-stone-500">
-                    Diabadikan pada {currentPhoto.date} bersama {userProfile.doctorName}
+                    {currentPhoto.date || currentPhoto.caption
+                      ? `Diabadikan pada ${currentPhoto.date} bersama ${userProfile.doctorName}`
+                      : 'Belum ada dokumentasi foto'}
                   </p>
                 </div>
               </div>

@@ -31,5 +31,9 @@ export default defineConfig({
       name: 'webkit',
       use: { ...devices['Desktop Safari'], viewport: { width: 430, height: 900 } },
     },
+    {
+      name: 'tablet',
+      use: { ...devices['iPad Pro 11'], browserName: 'webkit' },
+    },
   ],
 });

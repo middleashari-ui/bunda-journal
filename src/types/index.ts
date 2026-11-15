@@ -15,6 +15,7 @@ export interface PhotoMemory {
   caption: string;
   date: string;
   src: string;
+  url?: string;
   week?: number;
   isCustom?: boolean;
 }
