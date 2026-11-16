@@ -33,7 +33,9 @@ Environment yang harus ada di Pages (Settings → Environment variables):
 |---|---|
 | `GOOGLE_CLIENT_ID` | login Google + `/api/google-config` (Drive) |
 | `GOOGLE_REDIRECT_URI` | callback login |
-| `MIDTRANS_SERVER_KEY` / `VITE_MIDTRANS_CLIENT_ID` | pembayaran |
+| `MIDTRANS_SERVER_KEY` | pembayaran (secret; jangan di file build) |
+| `MIDTRANS_ENV` | `production` (default) atau `sandbox` |
+| `PAYMENT_PAUSED` | `true` = kill switch pembayaran tanpa deploy |
 | `BUNDA_JOURNAL_DB` (D1 binding) | akun, order, arsip |
 
 ## 4. Setelah deploy
@@ -42,6 +44,11 @@ Environment yang harus ada di Pages (Settings → Environment variables):
    `v21` (cek DevTools → Application → Service Workers).
 2. Buka `https://www.bundajournal.my.id/ads` → harus 200 dan tampil Ruang Iklan
    (bukan redirect ke `/`).
+3. Cek `https://www.bundajournal.my.id/api/payments/health` → `ok: true`,
+   `mode: production`, `serverKey: production`, `warnings: []`.
+4. Pastikan Payment Notification URL Midtrans =
+   `https://www.bundajournal.my.id/api/midtrans-callback` dan lakukan 1 transaksi
+   kecil (QRIS) sebelum mengumumkan pembayaran aktif.
 2. Buka `/#/print` di Chrome HP → harus muncul halaman cetak A4, bukan 404.
 3. Tes alur: Jurnal → Download → dialog print → Save as PDF.
 4. Tes kartu jadwal → **Kirim ke Ayah** → share sheet WhatsApp.

@@ -1,11 +1,7 @@
 /*
-  Cloudflare Pages redirects:
-  Redirect root domain bundajournal.my.id to www.bundajournal.my.id
+  Cloudflare Pages redirects.
+  Catatan: file ini hanya menerima path relatif + komentar dengan tanda #.
+  Route SPA (/ads, /print, /jurnal, ...) sudah ditangani fallback otomatis
+  Cloudflare Pages. Jangan rewrite ke /index.html: Pages mengkanonikalisasi
+  /index.html menjadi "/" (308).
 */
-https://bundajournal.my.id/* https://www.bundajournal.my.id/:splat 301
-http://bundajournal.my.id/* https://www.bundajournal.my.id/:splat 301
-
-# Catatan: route SPA (/ads, /print, /jurnal, ...) sudah ditangani fallback
-# otomatis Cloudflare Pages (index.html). Jangan tambahkan
-# "/ads /index.html 200" di sini: Pages mengkanonikalisasi /index.html
-# menjadi "/" sehingga /ads berubah jadi 308 ke /.

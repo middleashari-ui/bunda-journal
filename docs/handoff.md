@@ -18,21 +18,22 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `1c73a170`,
 
 - Production berjalan dari `main`; commit terakhir sebelum sesi 16 Nov: `d01c325`
   (rate limit API sensitif + gerbang ekspor diverifikasi server).
-- Test: `npm run test:unit` → **71 tes / 10 file**; E2E utama **15/15**;
+- Test: `npm run test:unit` → **81 tes / 11 file**; E2E utama + checkout **23**;
   E2E Ruang Iklan **12/12** (6 Chromium + 6 WebKit).
 - Bundle awal tetap di-code-split: `index` ±625 KB, `AdsApp` 212 KB dimuat hanya di `/ads`.
 - `npm run audit:storage` → **58 pemanggilan** di satu file arsip
   `src/utils/_legacy/JournalPdfDocument.tsx`; **0 di kode aktif**. Kode aktif lewat
   `src/lib/storage/appStorage.ts` (termasuk tema `/ads`).
 - Gate tier Essential sudah berkode tapi **mati**: `ESSENTIAL_GATE_ENABLED = false`.
-- `PAYMENT_PAUSED = true` di `src/config/payments.ts` (Midtrans belum pernah aktif).
+- **Pembayaran aktif**: `PAYMENT_PAUSED = false`; kill switch server lewat env
+  `PAYMENT_PAUSED=true`. Detail: `docs/payment-setup.md`.
 - Skema data **v1** (`bunda_schema_version`), index hari **Sen=0 … Min=6**.
 - Foto & isi bab 1–5 di **IndexedDB** (`src/lib/mediaStore.ts`); localStorage hanya
   `bunda_media_index`. Guard kuota `src/lib/storageQuota.ts`.
 - Service worker source `v21` (`public/sw.js`).
 - **Ruang Iklan `/ads`** (demo, terpisah dari PWA): 5 tab, 14 kalkulator, CSV,
   approval lokal. Data demo deterministik; **tidak ada request ke Meta** dan token
-  tidak disimpan. Route `/ads*` sudah ada SPA fallback di `public/_redirects`.
+  tidak disimpan. Route `/ads*` memakai fallback SPA otomatis Cloudflare Pages.
 
 ## Yang sudah selesai
 
@@ -47,6 +48,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `1c73a170`,
 | Rate limit login/register/charge (D1) + gerbang ekspor `/api/entitlement` | commit `d01c325` (gate dormant) |
 | Ruang Iklan demo `/ads` | `src/ads/`, `docs/meta-ads-command-center/` |
 | Audit aksesibilitas (axe WCAG A/AA) | `docs/accessibility-audit.md`; Lighthouse landing 1.00; semua layar utama 0 violation |
+| Payment gateway Midtrans Snap | `functions/_lib/payments.ts`, charge/callback/upgrade, health; uji sandbox 15/15 di `docs/payment-setup.md` |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)
 
@@ -67,8 +69,8 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `1c73a170`,
 2. **Aksesibilitas lanjutan** — audit axe selesai, focus trap + Escape dan roving
    tabindex sudah ada. Sisa satu keputusan desain: kontras palet tema buku di
    `/print` (703 node; lihat `docs/accessibility-audit.md`).
-3. **Retest payment sandbox** — hanya setelah keputusan user; jangan aktifkan
-   `PAYMENT_PAUSED`/tier tanpa izin.
+3. **Uji bayar sandbox di UI** — API sudah diuji 15/15, tetapi popup QRIS Snap
+   perlu dipindai manual sekali di HP (sandbox), lalu cek tier berubah.
 4. **Ads backend** (menunggu key): D1 `meta_*`, `functions/api/ads/*`, token vault
    AES-GCM, Cloudflare Access, scheduler. Lihat IMPLEMENTATION-STATUS §7.
 
@@ -76,7 +78,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `1c73a170`,
 
 | Hal | Kondisi sekarang |
 |---|---|
-| `PAYMENT_PAUSED` | masih `true`; kode Midtrans ada tapi belum pernah aktif |
+| `PAYMENT_PAUSED` | **aktif** (`false`); kill switch server via env `PAYMENT_PAUSED=true` |
 | Gate tier Essential (30 halaman) | `ESSENTIAL_GATE_ENABLED = false` di `src/lib/bookPages.ts` |
 | Voice QR | terblokir R2 (error 10042) |
 | Integrasi Meta/AI/OpenCode di `/ads` | butuh System User token + backend; sekarang demo |

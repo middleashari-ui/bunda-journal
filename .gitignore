@@ -33,3 +33,8 @@ dev/diag-results/
 /pu_component.js
 /server.js
 /test_syntax.tsx
+
+# Wrangler state lokal (D1 simulasi, cache)
+.wrangler/
+.dev.vars
+

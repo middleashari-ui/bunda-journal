@@ -5,7 +5,7 @@ import { PRICING_CONFIG, PlanConfig } from '../config/pricing';
 import { getToken } from '../lib/authClient';
 import { useModalA11y } from '../hooks/useModalA11y';
 
-import { PAYMENT_PAUSED } from '../config/payments';
+import { PAYMENT_PAUSED, PAYMENT_MODE } from '../config/payments';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -25,7 +25,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [step, setStep] = useState<'plan' | 'payment' | 'gmail'>('plan');
   const [selectedPlan, setSelectedPlan] = useState<'essential' | 'vip' | 'hardcover' | 'upgrade_vip'>(defaultPlan);
   const [paymentMethod, setPaymentMethod] = useState<'qris' | 'midtrans'>('qris');
-  const [gmailInput, setGmailInput] = useState('');
+  // Email pembayaran: dipakai untuk transaksi, verifikasi server, dan aktivasi.
+  const [payerEmail, setPayerEmail] = useState<string>(() =>
+    (storageGet('bunda_user_email') || '').trim().toLowerCase()
+  );
+  const [chargedEmail, setChargedEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   // Consent promo MPASI 0-1th: default centang, user bisa cabut.
   const [promoConsent, setPromoConsent] = useState(true);
   const [realSnapLoading, setRealSnapLoading] = useState(false);
@@ -36,7 +41,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setSelectedPlan(defaultPlan);
     setStep('plan');
     setSnapError(null);
+    setEmailError('');
+    setChargedEmail('');
+    const savedEmail = (storageGet('bunda_user_email') || '').trim().toLowerCase();
+    if (savedEmail) setPayerEmail(savedEmail);
   }, [defaultPlan, isOpen]);
+
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
   const dialogRef = useModalA11y(isOpen && !PAYMENT_PAUSED, onClose);
 
@@ -50,12 +61,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   // Verifikasi ke server (/api/subscription) sebelum dianggap lunas.
   // Snap onSuccess hanya indikasi di client — status bayar asli dari server (D1),
   // jadi tidak ada jalan pintas "confirm" palsu tanpa bukti server.
-  const verifyPaymentOnServer = async (email: string, attempts = 4): Promise<boolean> => {
+  const verifyPaymentOnServer = async (email: string, attempts = 5): Promise<boolean> => {
     const target = (email || '').trim().toLowerCase();
     if (!target) return false;
+    const token = getToken();
     for (let i = 0; i < attempts; i += 1) {
       try {
-        const res = await fetch(`/api/subscription?email=${encodeURIComponent(target)}`, { cache: 'no-store' });
+        const res = await fetch(`/api/subscription?email=${encodeURIComponent(target)}`, {
+          cache: 'no-store',
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
         if (res.ok) {
           const data = await res.json();
           if (data && data.ok && data.is_paid) return true;
@@ -69,12 +84,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   };
 
   const handleOpenRealSnap = async () => {
+    const chargeFor = (payerEmail || '').trim().toLowerCase();
+    if (!isValidEmail(chargeFor)) {
+      setEmailError('Isi email yang valid dulu — dipakai untuk akses dan bukti bayar.');
+      setStep('plan');
+      return;
+    }
+    setChargedEmail(chargeFor);
     setRealSnapLoading(true);
     setSnapError(null);
     try {
       // Upgrade starter->lengkap charge selisih 80rb via endpoint khusus.
       const isUpgrade = currentTier === 'essential' && selectedPlan === 'upgrade_vip';
-      const chargeFor = (storageGet('bunda_user_email') || 'bunda@bundajournal.my.id').trim().toLowerCase();
       const res = await fetch(isUpgrade ? '/api/upgrade' : '/api/midtrans/charge', {
         method: 'POST',
         headers: (() => {
@@ -149,12 +170,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const handleGmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!gmailInput.trim() || !gmailInput.includes('@')) {
-      alert('Masukkan email Google yang valid.');
+    const email = (chargedEmail || payerEmail || '').trim().toLowerCase();
+    if (!isValidEmail(email)) {
+      alert('Email pembayaran tidak valid.');
       return;
     }
     const resolvedTier = (selectedPlan === 'vip' || selectedPlan === 'upgrade_vip' || selectedPlan === 'hardcover') ? 'vip' : 'essential';
-    onSuccess(gmailInput.trim().toLowerCase(), resolvedTier, currentPlanConfig.price, promoConsent);
+    onSuccess(email, resolvedTier, currentPlanConfig.price, promoConsent);
   };
 
   // Login Google beneran: simpan rencana checkout lalu lempar ke OAuth Google.
@@ -241,8 +263,37 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               })}
             </div>
 
+            <div>
+              <label htmlFor="checkout-email" className="block text-[11px] font-semibold text-stone-700 mb-1">
+                Email untuk akses &amp; bukti bayar
+              </label>
+              <input
+                id="checkout-email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                required
+                value={payerEmail}
+                onChange={(e) => { setPayerEmail(e.target.value); setEmailError(''); }}
+                placeholder="nama.bunda@gmail.com"
+                className="w-full px-3 py-2.5 text-xs bg-white border border-stone-300 rounded-xl focus:border-[#556B2F] outline-none"
+              />
+              <p className="text-[10px] text-stone-600 mt-1">
+                Pakai email yang sama dengan akun Bunda Journal. Akses VIP menempel ke email ini.
+              </p>
+              {emailError && <p className="text-[11px] text-rose-600 mt-1 font-medium">{emailError}</p>}
+            </div>
+
             <button
-              onClick={() => setStep('payment')}
+              onClick={() => {
+                const email = payerEmail.trim().toLowerCase();
+                if (!isValidEmail(email)) {
+                  setEmailError('Format email belum benar.');
+                  return;
+                }
+                setPayerEmail(email);
+                setStep('payment');
+              }}
               className="w-full py-3 bg-[#556B2F] text-white rounded-xl text-xs font-bold hover:bg-[#465926] flex items-center justify-center gap-1.5 cursor-pointer mt-4"
             >
               <span>Lanjut Pembayaran ({currentPlanConfig.label})</span>
@@ -261,13 +312,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </p>
             </div>
 
-            {/* Tombol Snap Popup Real */}
+            {/* Tombol Snap Popup */}
             <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3.5 text-center">
               <p className="text-xs font-bold text-emerald-950 mb-1">
-                Buka Popup QRIS Real Midtrans Snap
+                Bayar lewat Midtrans Snap
               </p>
               <p className="text-[11px] text-emerald-800 mb-3">
-                Membuat transaksi resmi QRIS Midtrans Snap ke Production Server Key.
+                Transaksi resmi QRIS/GoPay lewat Midtrans {PAYMENT_MODE === 'sandbox' ? 'Sandbox (uang uji)' : 'Production'}.
               </p>
               <button
                 type="button"
@@ -300,24 +351,28 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </button>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-stone-200 text-center flex flex-col items-center justify-center">
-              <div className="w-44 h-44 bg-stone-50 border border-stone-300 rounded-lg flex flex-col items-center justify-center p-2 mb-2 relative shadow-inner">
-                <QrCode className="w-28 h-28 text-stone-800" />
-                <span className="text-[10px] font-mono font-bold text-stone-700 tracking-wider mt-1">
-                  NMID: ID102459982390
-                </span>
-                <span className="text-[9px] text-[#556B2F] font-bold">Midtrans Snap QRIS 0%</span>
+            <div className="bg-white p-4 rounded-xl border border-stone-200 text-left space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <span className="text-[11px] text-stone-600">Email aktif</span>
+                <span className="text-[11px] font-semibold text-stone-900 break-all text-right">{payerEmail}</span>
               </div>
-              <div className="bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-md text-[11px] font-semibold mb-2">
-                ✓ Gratis biaya admin (0%)
+              <div className="flex items-start justify-between gap-3">
+                <span className="text-[11px] text-stone-600">Paket</span>
+                <span className="text-[11px] font-semibold text-stone-900 text-right">{currentPlanConfig.name}</span>
               </div>
-              <p className="text-[11px] text-stone-600">
-                Pindai QRIS memakai GoPay, OVO, DANA, ShopeePay, BCA, Mandiri Livin, atau BRImo.
+              <div className="flex items-start justify-between gap-3">
+                <span className="text-[11px] text-stone-600">Total</span>
+                <span className="text-[11px] font-bold text-stone-900 text-right">{currentPlanConfig.label}</span>
+              </div>
+              <p className="text-[11px] text-stone-600 pt-2 border-t border-stone-200">
+                Metode QRIS, GoPay, dan channel lain muncul di popup Midtrans. Akses aktif
+                otomatis setelah pembayaran terverifikasi server.
               </p>
-
-              <div className="flex items-center gap-1 text-[10px] text-stone-400 mt-3">
+              <div className="flex items-center gap-1 text-[10px] text-stone-600">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#556B2F]" />
-                <span>Midtrans Snap Production • Standar Enkripsi BI QRIS</span>
+                <span>
+                  Midtrans Snap {PAYMENT_MODE === 'sandbox' ? 'Sandbox' : 'Production'} • standar QRIS
+                </span>
               </div>
             </div>
 
@@ -365,10 +420,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <div className="bg-white p-3.5 rounded-xl border border-stone-200 text-[11px] text-stone-600 space-y-1.5">
               <p className="font-semibold text-stone-800 flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5 text-[#556B2F]" />
-                <span>Izin Akun Google (Email Saja):</span>
+                <span>Email aktif dari pembayaran:</span>
               </p>
+              <p className="text-stone-900 font-semibold break-all">{chargedEmail || payerEmail}</p>
               <p className="text-stone-700 leading-relaxed">
-                Kami hanya meminta alamat email untuk verifikasi status akses dan simpan data. Kami tidak membaca isi Gmail, kontak, atau Google Drive Bunda.
+                Akses VIP menempel ke email ini. Sambungkan Google Drive (opsional) untuk
+                backup; kami tidak membaca isi Gmail, kontak, atau Drive Bunda.
               </p>
             </div>
 
@@ -400,10 +457,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <input
                     type="email"
                     id="input-gmail"
-                    value={gmailInput}
-                    onChange={(e) => setGmailInput(e.target.value)}
-                    placeholder="nama.bunda@gmail.com"
-                    className="w-full pl-9 pr-3.5 py-2.5 text-xs bg-white border border-stone-300 rounded-xl focus:border-[#556B2F] outline-none"
+                    value={chargedEmail || payerEmail}
+                    readOnly
+                    aria-readonly="true"
+                    className="w-full pl-9 pr-3.5 py-2.5 text-xs bg-stone-100 border border-stone-300 rounded-xl outline-none text-stone-700"
                   />
                 </div>
               </div>

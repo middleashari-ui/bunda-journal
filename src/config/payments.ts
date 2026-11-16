@@ -13,8 +13,16 @@ const readFlag = () => {
   }
 };
 
-// Payment paused total (Mode Perbaikan): baik Dev maupun Production.
-export const PAYMENT_PAUSED = true;
+// Mode pembayaran: aktif. Kill switch darurat ada di server
+// (env PAYMENT_PAUSED="true" di Cloudflare Pages) tanpa perlu deploy ulang.
+export const PAYMENT_PAUSED = false;
+
+// Diturunkan dari URL Snap yang di-inject saat build (.env vs .env.production).
+export const PAYMENT_MODE: 'sandbox' | 'production' = String(
+  import.meta.env.VITE_MIDTRANS_SNAP_URL || ''
+).includes('sandbox')
+  ? 'sandbox'
+  : 'production';
 
 export const isDevPaymentEnabled = () => IS_LOCAL_DEV && readFlag();
 
