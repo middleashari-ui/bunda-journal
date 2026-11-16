@@ -1,10 +1,12 @@
 # Ruang Iklan — Meta Ads Command Center untuk Bunda Journal
 
-**Status:** Draft untuk review · **Tanggal:** 16 Nov 2026 · **Versi:** 0.1  
+**Status:** Demo app berjalan · **Tanggal:** 16 Nov 2026 · **Versi:** 0.2  
 **PIC:** Ashr · **Diskusi model:** Muse Spark 1.3 Contributor (product, architecture, metrics)
 
-> Belum ada kode produksi yang diubah. Paket ini adalah rencana kerja untuk direview
-> besok. Eksekusi dimulai setelah keputusan di bagian **“Yang saya butuhkan”** dijawab.
+> **Implementasi awal sudah ada di `/ads`** dengan data demo deterministik. Integrasi
+> Meta/AI/OpenCode backend menunggu key. Lihat
+> [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md) untuk yang sudah jalan,
+> yang masih mock, dan hasil test. Token tidak disimpan di browser.
 
 ---
 
@@ -32,6 +34,24 @@ mengusulkan; manusia yang menekan tombol eksekusi.
 | [CALCULATOR-SPEC.md](./CALCULATOR-SPEC.md) | 14 kalkulator, formula, default, guardrail, contoh hitung | Review logika & angka |
 | [META-PARAMETERS.md](./META-PARAMETERS.md) | Katalog 180+ parameter Meta per objek, mana yang disinkronkan | Review kelengkapan data |
 | [MUSE-SPARK-DISCUSSION.md](./MUSE-SPARK-DISCUSSION.md) | Ringkasan diskusi 3 sesi Muse Spark, titik setuju/tidak setuju | Konteks keputusan |
+| [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md) | Apa yang sudah jalan, yang masih mock, cara test, langkah saat key masuk | Status eksekusi |
+
+---
+
+## 2b. Cara buka app (demo)
+
+```bash
+npm run dev
+# http://127.0.0.1:5173/ads
+```
+
+Route lain: `/ads/iklan`, `/ads/uang`, `/ads/rencana`, `/ads/pengaturan`.
+Data demo deterministik; tidak ada request ke Meta. Token Meta hanya divalidasi
+formatnya dan **tidak disimpan** sampai backend siap.
+
+Test yang sudah lulus: `npm run lint`, `npm run test:unit` (71 test),
+`npm run test:e2e:chromium` (21 test), WebKit ads (6 test), `npm run build`.
+Detail ada di [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md).
 
 ---
 
@@ -59,7 +79,7 @@ Centang yang setuju; tulis koreksi di komentar:
 3. **Hero metric** tiap tab sudah yang paling kamu butuhkan tiap pagi?
 4. **Kalkulator**: 14 kalkulator di CALCULATOR-SPEC — mana yang tidak akan pernah kamu pakai? Mana yang kurang?
 5. **Definisi uang**: COGS hardcover, fee, refund, pajak, ongkir — default-nya sudah masuk akal? (Ini paling penting; semua angka turun dari sini.)
-6. **AI**: 10 pertanyaan contoh di PRD §8 sudah mewakili pertanyaanmu? Ada yang terlalu berbahaya untuk diotomatiskan?
+6. **AI**: 10 pertanyaan contoh di PRD §7.7 sudah mewakili pertanyaanmu? Ada yang terlalu berbahaya untuk diotomatiskan?
 7. **OpenCode**: cukup panel “Studio” + tombol “Buka di OpenCode”, atau kamu mau lebih dalam (edit kode dari dashboard)?
 8. **Keamanan**: Cloudflare Access (OTP email) + System User token read-only bisa diterima?
 
@@ -70,13 +90,13 @@ Centang yang setuju; tulis koreksi di komentar:
 | # | Pertanyaan | Default yang saya usulkan | Kenapa penting |
 |---|---|---|---|
 | Q1 | COGS hardcover riil: cetak + packing + ongkir rata-rata? | **Rp120.000 cetak + Rp20.000 ongkir Jawa = Rp140.000**, badge “asumsi” | Menentukan break-even ROAS hardcover (2,43x) vs VIP (1,03x) |
-| Q2 | VIP yang sudah beli digital, upgrade hardcover bayar berapa? | **Jangan jual +Rp120.000 dulu.** Dengan COGS Rp140.000, upgrade itu rugi Rp23.000/order. Validasi COGS atau jual di Rp249.000 | Ini temuan dari model kalkulator; bisa mengubah strategi upsell |
+| Q2 | VIP yang sudah beli digital, upgrade hardcover bayar berapa? | **Jangan jual +Rp120.000 dulu.** Dengan COGS Rp140.000, upgrade itu rugi Rp23.240/order. Validasi COGS atau jual di Rp249.000 | Ini temuan dari model kalkulator; bisa mengubah strategi upsell |
 | Q3 | Punya akses **Business Manager + System User**? Atau baru punya Page? | **BM + System User token** (read-only dulu). Kalau hanya Page, kita bangun mode Page-only dan pandu setup 3 menit | Page token **tidak bisa** membaca Ads Insights |
 | Q4 | Aksi tulis (pause/scale) di MVP atau setelah 2 minggu? | **Bangun flow-nya, default OFF.** Aktif setelah data bank cocok ≥95% | Menghindari salah eksekusi saat data masih kotor |
 | Q5 | Sumber order: CSV Midtrans/bank, atau kasih API key Midtrans? | **CSV/manual dulu**, API per-order menyusul. Server key tidak pernah masuk browser | Reconciliation butuh order-level, bukan hanya total |
 | Q6 | Prioritas AI: cloud atau OpenCode lokal? | **Cloud dulu** (bisa dari HP), OpenCode Studio setelahnya | OpenCode tidak bisa jalan di Cloudflare Pages |
 
-Pertanyaan lengkap ada di PRD §14 dan CALCULATOR-SPEC §9.
+Pertanyaan lengkap ada di PRD §14 dan CALCULATOR-SPEC §8.
 
 ---
 

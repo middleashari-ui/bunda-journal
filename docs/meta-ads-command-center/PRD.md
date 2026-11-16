@@ -167,7 +167,8 @@ bukan tab harian.
 | Uang: import order CSV + rekonsiliasi | ✅ | | |
 | Rencana: 6 kalkulator inti | ✅ | | |
 | Rencana: 14 kalkulator + skenario compare | | ✅ | |
-| Analis AI: ringkasan + 10 pertanyaan golden + sitasi | ✅ (read-only) | | |
+| Analis AI: ringkasan + 3 pertanyaan inti + sitasi | ✅ (read-only) | | |
+| Analis AI: 10 pertanyaan golden + tool lengkap | | ✅ | |
 | Alert in-app + Telegram digest | ✅ (3 aturan) | ✅ (12 aturan) | |
 | Approval pause/scale + audit | | ✅ | |
 | Breakdown age/gender/placement/region | | ✅ | |
@@ -265,7 +266,9 @@ jika roas_bank_7d ≥ be_roas×1.2
 selain itu                   → "Tahan"
 ```
 
-Ambang bisa diubah di Pengaturan → Guardrail. AI tidak boleh mengubah ambang sendiri.
+Ambang bisa diubah di Pengaturan → Guardrail. `max_cpa` memakai **per produk** jika
+campaign hanya menjual satu produk, dan **blended** jika campaign campuran. AI tidak
+boleh mengubah ambang sendiri.
 
 **Acceptance criteria:**
 
@@ -751,13 +754,14 @@ Data: <query_id>, <jumlah order>, <catatan>
 
 ## 13. Rencana rilis
 
-### MVP — “Data masuk & keputusan terlihat” (target 7–9 hari kerja)
+### MVP — “Data masuk & keputusan terlihat” (target 8–10 hari kerja)
 
 - Phase 0: keputusan, Meta app + System User, Cloudflare Access (0,5 hari).
 - Phase 1: route `/ads`, auth, D1 migration, token vault, onboarding, sync 30/90 hari,
   Hari Ini, tabel campaign, parameter catalog (3–4 hari).
 - Phase 2: Uang (produk, order CSV, rekonsiliasi), 6 kalkulator inti, skenario (2–3 hari).
-- Phase 3a: 3 alert + digest, export CSV, QA/perf (1 hari).
+- Phase 3a: 3 alert + digest, export CSV, **Analis ringkasan read-only** (3 pertanyaan
+  inti: ringkasan harian, kenapa CPA naik, campaign boncos), QA/perf (2 hari).
 
 **Demo:** buka dari HP → lihat laba bersih, CPA bank vs max, gap Meta vs bank, dan
 satu kalkulator break-even. Tidak ada aksi tulis.

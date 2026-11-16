@@ -4,3 +4,7 @@
 */
 https://bundajournal.my.id/* https://www.bundajournal.my.id/:splat 301
 http://bundajournal.my.id/* https://www.bundajournal.my.id/:splat 301
+
+# SPA fallback untuk Ruang Iklan (/ads)
+/ads /index.html 200
+/ads/* /index.html 200

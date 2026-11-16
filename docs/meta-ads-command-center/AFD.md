@@ -1,4 +1,4 @@
-# AFD — App Flow Document (Ruang Iklan)
+# AFD — App & Architecture Flow Document (Ruang Iklan)
 
 **Produk:** Ruang Iklan untuk Bunda Journal  
 **Versi:** 0.1 (draft review) · **Tanggal:** 16 Nov 2026  

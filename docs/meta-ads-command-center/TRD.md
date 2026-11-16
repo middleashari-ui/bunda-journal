@@ -1182,6 +1182,21 @@ KEK = Worker secret META_KEK (base64 32 bytes)
 **Query rules:** selalu `WHERE account_id = ? AND date BETWEEN ? AND ?`; pakai index;
 jangan `SELECT *`; agregat di SQL; `LIMIT`; hindari `LIKE '%...'` pada tabel besar.
 
+### 13.1 Perkiraan biaya operasional (di luar ad spend)
+
+| Komponen | Estimasi | Catatan |
+|---|---|---|
+| Cloudflare Pages + Functions | Rp0 | Free tier; paid $5/bln jika perlu |
+| Cloudflare Worker scheduler | Rp0 | Free tier cukup untuk 48 cron/hari |
+| D1 | Rp0–$5/bln | Volume <1 GB; free tier cukup |
+| Cloudflare Access | Rp0 | Free sampai 50 user |
+| AI (Analis) | Rp150–400rb/bln | Cap default Rp25rb/hari; biasanya lebih rendah |
+| Meta Graph API | Rp0 | Tidak ada biaya API |
+| Domain/email | sudah ada | Tidak ada biaya baru |
+| **Total** | **±Rp0–500rb/bln** | Belum termasuk iklan dan Midtrans |
+
+Batasan free tier bisa berubah; cek dashboard Cloudflare sebelum production.
+
 ---
 
 ## 14. Observability
