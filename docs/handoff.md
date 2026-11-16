@@ -2,8 +2,8 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `7d08adc6`,
-17 Nov 2026; `/ads`, apex→www, `/api/payments/health` diverifikasi)
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `1264d0b6`,
+17 Nov 2026; health `keyCheck: invalid` — server key production perlu diganti)
 
 ## Baca dulu
 

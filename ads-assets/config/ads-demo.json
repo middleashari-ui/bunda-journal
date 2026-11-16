@@ -1,0 +1,29 @@
+{
+  "output": { "width": 1080, "height": 1920, "fps": 30, "crf": 24 },
+  "scrim": true,
+  "logo": "public/bunda_journal_FINAL_BIG_CROPPED.png",
+  "fonts": {
+    "serifBold": "ads-assets/fonts/georgiab.ttf",
+    "sansBold": "ads-assets/fonts/segoeuib.ttf"
+  },
+  "ads": [
+    {
+      "id": "DEMO",
+      "angle": "test",
+      "clips": [
+        { "file": "ads-assets/raw/_demo/a.mp4", "start": 0, "duration": 5 },
+        { "file": "ads-assets/raw/_demo/b.mp4", "start": 0, "duration": 5 },
+        { "file": "ads-assets/raw/_demo/c.mp4", "start": 0, "duration": 5 }
+      ],
+      "hook": { "text": "Buku jurnal bayi di toko Rp150 ribu.", "start": 0.3, "end": 3.4, "size": 58 },
+      "lines": [
+        { "text": "Yang ini Rp129 ribu,\nsekali bayar.", "start": 3.6, "end": 7.0, "size": 56 },
+        { "text": "100 halaman + 10 voice detak jantung.\nAkses seumur hidup, tanpa langganan.", "start": 7.2, "end": 11.6, "size": 46 }
+      ],
+      "cta": "Miliki VIP — Rp129rb",
+      "music": "ads-assets/audio/bgm.mp3",
+      "musicVolume": 0.16,
+      "sourceVolume": 0.55
+    }
+  ]
+}

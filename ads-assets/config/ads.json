@@ -1,0 +1,167 @@
+{
+  "output": { "width": 1080, "height": 1920, "fps": 30, "crf": 20 },
+  "scrim": true,
+  "logo": "public/bunda_journal_FINAL_BIG_CROPPED.png",
+  "fonts": {
+    "serifBold": "ads-assets/fonts/georgiab.ttf",
+    "sansBold": "ads-assets/fonts/segoeuib.ttf"
+  },
+  "ads": [
+    {
+      "id": "HS1",
+      "angle": "hardsell",
+      "note": "Offer-led. Butuh: 1 shot USG/buku, 1 shot menulis jurnal, 1 screen record app.",
+      "clips": [
+        { "file": "ads-assets/raw/usg-01.mp4", "start": 0, "duration": 3 },
+        { "file": "ads-assets/raw/journal-01.mp4", "start": 0, "duration": 6 },
+        { "file": "ads-assets/raw/app-studio-01.mp4", "start": 0, "duration": 7, "volume": 0.25 }
+      ],
+      "hook": { "text": "Buku jurnal bayi di toko Rp150 ribu.", "start": 0.3, "end": 3.4, "size": 58 },
+      "lines": [
+        {
+          "text": "Yang ini Rp129 ribu,\nsekali bayar.",
+          "start": 3.6,
+          "end": 7.0,
+          "size": 56
+        },
+        {
+          "text": "100 halaman + 10 voice detak jantung.\nAkses seumur hidup, tanpa langganan.",
+          "start": 7.2,
+          "end": 12.4,
+          "size": 46
+        }
+      ],
+      "cta": "Miliki VIP — Rp129rb",
+      "music": "ads-assets/audio/bgm.mp3",
+      "musicVolume": 0.16,
+      "sourceVolume": 0.55
+    },
+    {
+      "id": "HS2",
+      "angle": "hardsell",
+      "note": "Price anchoring. Butuh: galeri HP penuh foto, buku hardcover asli, screen record jurnal.",
+      "clips": [
+        { "file": "ads-assets/raw/hp-galeri-01.mp4", "start": 0, "duration": 5 },
+        { "file": "ads-assets/raw/buku-cetak-01.mp4", "start": 0, "duration": 5 },
+        { "file": "ads-assets/raw/app-jurnal-01.mp4", "start": 0, "duration": 6, "volume": 0.2 }
+      ],
+      "hook": { "text": "Photobook custom bisa Rp800 ribu.", "start": 0.3, "end": 3.4, "size": 58 },
+      "lines": [
+        {
+          "text": "Ini Rp129 ribu —\ndan bisa dicetak jadi buku.",
+          "start": 3.6,
+          "end": 8.0,
+          "size": 50
+        },
+        {
+          "text": "Bukan langganan, sekali bayar.\nSetara satu kali USG.",
+          "start": 8.2,
+          "end": 12.4,
+          "size": 50
+        }
+      ],
+      "cta": "Cek paketnya",
+      "music": "ads-assets/audio/bgm.mp3",
+      "musicVolume": 0.16,
+      "sourceVolume": 0.5
+    },
+    {
+      "id": "PAIN1",
+      "angle": "pain",
+      "note": "Memori pudar. Butuh: scroll galeri foto USG, foto USG fisik, screen record jurnal.",
+      "clips": [
+        { "file": "ads-assets/raw/galeri-usg-01.mp4", "start": 0, "duration": 3 },
+        { "file": "ads-assets/raw/usg-02.mp4", "start": 0, "duration": 7 },
+        { "file": "ads-assets/raw/app-jurnal-02.mp4", "start": 0, "duration": 6, "volume": 0.2 }
+      ],
+      "hook": {
+        "text": "Coba ingat — minggu berapa\nkamu dengar detak jantung bayi?",
+        "start": 0.3,
+        "end": 4.2,
+        "size": 52,
+        "y": 0.13
+      },
+      "lines": [
+        { "text": "Foto USG numpuk di galeri.", "start": 4.4, "end": 7.4, "size": 52 },
+        { "text": "Ganti HP — kenangannya hilang.", "start": 7.6, "end": 10.6, "size": 50 },
+        { "text": "Di sini rapi, dan bisa jadi buku.", "start": 10.8, "end": 12.4, "size": 46 }
+      ],
+      "cta": "Mulai catat hari ini",
+      "music": "ads-assets/audio/bgm-sad.mp3",
+      "musicVolume": 0.18,
+      "sourceVolume": 0.55
+    },
+    {
+      "id": "PAIN2",
+      "angle": "pain",
+      "note": "Panik di ruang periksa. Butuh: POV ruang tunggu/klinik, catatan dokter, screen record statistik.",
+      "clips": [
+        { "file": "ads-assets/raw/ruang-tunggu-01.mp4", "start": 0, "duration": 5 },
+        { "file": "ads-assets/raw/dokter-01.mp4", "start": 0, "duration": 6 },
+        { "file": "ads-assets/raw/app-statistik-01.mp4", "start": 0, "duration": 6, "volume": 0.2 }
+      ],
+      "hook": {
+        "text": "Ditanya bidan:\n“berat terakhir berapa?”",
+        "start": 0.3,
+        "end": 3.6,
+        "size": 58,
+        "y": 0.13
+      },
+      "lines": [
+        { "text": "Catatan tercecer di Notes, WA, buku kecil.", "start": 3.8, "end": 7.6, "size": 46 },
+        { "text": "Tensi, lingkar, catatan dokter — satu layar.", "start": 7.8, "end": 11.0, "size": 46 },
+        { "text": "Jadwal USG + tombol WA suami.", "start": 11.2, "end": 13.2, "size": 44 }
+      ],
+      "cta": "Rapikan data kehamilanmu",
+      "music": "ads-assets/audio/bgm-tense.mp3",
+      "musicVolume": 0.16,
+      "sourceVolume": 0.5
+    },
+    {
+      "id": "GAIN1",
+      "angle": "gain",
+      "note": "Warisan. Butuh: tangan di perut (golden light), buku linen, voice QR discan.",
+      "clips": [
+        { "file": "ads-assets/raw/perut-01.mp4", "start": 0, "duration": 6 },
+        { "file": "ads-assets/raw/buku-linen-01.mp4", "start": 0, "duration": 6 },
+        { "file": "ads-assets/raw/voice-qr-01.mp4", "start": 0, "duration": 6, "volume": 0.3 }
+      ],
+      "hook": {
+        "text": "20 tahun lagi, anakmu masih\nbisa dengar detak jantungnya.",
+        "start": 0.4,
+        "end": 4.4,
+        "size": 52,
+        "y": 0.13
+      },
+      "lines": [
+        { "text": "Bukan file yang hilang di galeri.", "start": 4.6, "end": 8.2, "size": 50 },
+        { "text": "Ini warisan.", "start": 8.4, "end": 10.4, "size": 68 },
+        { "text": "Buku linen hardcover + voice QR.", "start": 10.6, "end": 13.4, "size": 48 }
+      ],
+      "cta": "Buat warisan kecilmu",
+      "music": "ads-assets/audio/bgm-warm.mp3",
+      "musicVolume": 0.2,
+      "sourceVolume": 0.5
+    },
+    {
+      "id": "GAIN2",
+      "angle": "gain",
+      "note": "Tenang & terkendali. Butuh: screen record mode pesawat, tangan di perut, screen record beranda.",
+      "clips": [
+        { "file": "ads-assets/raw/app-offline-01.mp4", "start": 0, "duration": 6, "volume": 0.2 },
+        { "file": "ads-assets/raw/perut-02.mp4", "start": 0, "duration": 5 },
+        { "file": "ads-assets/raw/app-beranda-01.mp4", "start": 0, "duration": 6, "volume": 0.2 }
+      ],
+      "hook": { "text": "Yang bikin bumil tenang\nbukan USG 4D.", "start": 0.3, "end": 3.6, "size": 56, "y": 0.14 },
+      "lines": [
+        { "text": "Tapi feeling “semua udah tercatat”.", "start": 3.8, "end": 6.8, "size": 48 },
+        { "text": "Jalan tanpa sinyal, di ruang tunggu.", "start": 7.0, "end": 9.8, "size": 48 },
+        { "text": "Data tersimpan di HP sendiri.", "start": 10.0, "end": 12.8, "size": 48 }
+      ],
+      "cta": "Lihat VIP-nya",
+      "music": "ads-assets/audio/bgm-warm.mp3",
+      "musicVolume": 0.2,
+      "sourceVolume": 0.55
+    }
+  ]
+}

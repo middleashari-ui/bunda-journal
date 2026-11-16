@@ -4,6 +4,7 @@
 import { json, normalizeEmail } from '../_lib/auth';
 import {
   getServerKey,
+  getSignatureKey,
   parseLegacyOrderId,
   serverKeyKind,
   verifyMidtransSignature,
@@ -26,6 +27,9 @@ export async function onRequestPost(context: any) {
     return json({ error: 'MIDTRANS_SERVER_KEY belum diset.' }, 503);
   }
 
+  // Signature memakai Signature Secret Key kalau ada (perubahan Midtrans 28 Okt 2026).
+  const signatureKey = getSignatureKey(env);
+
   const orderId = String(body.order_id || '').trim();
   if (!orderId) return json({ error: 'order_id wajib ada.' }, 400);
 
@@ -36,7 +40,7 @@ export async function onRequestPost(context: any) {
       gross_amount: body.gross_amount,
       signature_key: body.signature_key,
     },
-    serverKey
+    signatureKey
   );
   if (!signatureOk) {
     console.warn('callback: signature tidak valid', { order_id: orderId, mode: serverKeyKind(serverKey) });

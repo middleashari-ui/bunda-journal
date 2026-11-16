@@ -33,6 +33,21 @@ export function getServerKey(env: any): string {
   return String(env?.MIDTRANS_SERVER_KEY || '').trim();
 }
 
+/**
+ * Kunci verifikasi signature webhook.
+ * Sejak 28 Okt 2026 Midtrans memisahkan Signature Secret Key dari Server Key.
+ * Kalau belum diset, pakai Server Key (kompatibel dengan akun lama).
+ */
+export function getSignatureKey(env: any): string {
+  return String(
+    env?.MIDTRANS_SIGNATURE_SECRET_KEY || env?.MIDTRANS_SIGNATURE_KEY || getServerKey(env)
+  ).trim();
+}
+
+export function hasSeparateSignatureKey(env: any): boolean {
+  return Boolean(String(env?.MIDTRANS_SIGNATURE_SECRET_KEY || env?.MIDTRANS_SIGNATURE_KEY || '').trim());
+}
+
 export function serverKeyKind(key: string): 'sandbox' | 'production' | 'missing' | 'unknown' {
   if (!key) return 'missing';
   if (key.startsWith('SB-Mid-server-')) return 'sandbox';

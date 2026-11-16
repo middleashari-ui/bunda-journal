@@ -34,7 +34,8 @@ switch darurat tanpa deploy ulang.
 
 | Nama | Jenis | Isi |
 |---|---|---|
-| `MIDTRANS_SERVER_KEY` | Secret | server key production (`Mid-server-...`) |
+| `MIDTRANS_SERVER_KEY` | Secret | server key production yang **aktif** dan punya izin Snap Checkout Write + Core API Read |
+| `MIDTRANS_SIGNATURE_SECRET_KEY` | Secret (opsional) | Signature Secret Key untuk verifikasi webhook (Midtrans ≥ 28 Okt 2026) |
 | `MIDTRANS_ENV` | Env | `production` (opsional; default production) |
 | `PAYMENT_PAUSED` | Env | `false` (set `true` untuk mematikan darurat) |
 | `VITE_MIDTRANS_CLIENT_KEY` | Build-time | client key production |
@@ -49,6 +50,21 @@ Build production memakai `.env.production`. Jangan menaruh server key di
   `https://www.bundajournal.my.id/api/midtrans-callback`
 - Aktifkan channel QRIS/GoPay. Redirect finish URL opsional.
 - Sandbox: `https://app.sandbox.midtrans.com/snap/snap.js` + server key `SB-Mid-server-...`.
+
+#### Server key & signature (perubahan Midtrans 28 Okt 2026)
+
+- Dashboard → **Settings → Access Keys → Payment**.
+- Server Key hanya ditampilkan **sekali**; tidak bisa dilihat lagi. Kalau hilang,
+  generate baru lalu revoke yang lama.
+- Server key punya **status, expiry, dan permission**. Untuk aplikasi ini butuh
+  **Snap Checkout: Write** dan **Core API: Read** (cek status).
+- Signature webhook sekarang memakai **Signature Secret Key** (bukan Server Key).
+  Set `MIDTRANS_SIGNATURE_SECRET_KEY`. Kalau belum diisi, kode memakai Server Key
+  (kompatibel dengan akun lama).
+- **401 Unauthorized** dari Midtrans berarti kunci ditolak. Penyebab resmi:
+  kunci production dipakai ke endpoint sandbox (atau sebaliknya), kunci tidak
+  di-base64 dengan benar, ada spasi saat menyalin, kunci sudah **revoked/expired**,
+  atau kunci berasal dari akun lain. Cek `keyCheck` di `/api/payments/health`.
 
 ### D1
 
@@ -75,11 +91,18 @@ Respons tidak membocorkan kunci; contoh:
   "mode": "production",
   "paused": false,
   "serverKey": "production",
+  "keyCheck": "valid",
+  "signatureKey": "separate",
+  "clientKey": "unknown",
   "database": true,
   "tablesReady": true,
   "warnings": []
 }
 ```
+
+`keyCheck` adalah uji **langsung** ke Midtrans: `valid` (404 untuk order dummy),
+`invalid` (401 — kunci ditolak), `forbidden` (403 — kunci valid tapi tanpa izin
+Core API Read), atau `error`. Tidak membuat transaksi dan tidak membocorkan kunci.
 
 Kalau `serverKey` = `sandbox` di mode production, ganti secret sebelum menerima
 pembayaran nyata.

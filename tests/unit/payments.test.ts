@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   PLANS,
+  getSignatureKey,
+  hasSeparateSignatureKey,
   isFinalFailureStatus,
   isPaidStatus,
   isValidOrderId,
@@ -110,5 +112,14 @@ describe('mode & jenis kunci', () => {
     expect(serverKeyKind('')).toBe('missing');
     expect(serverKeyKind('SB-Mid-server-x')).toBe('sandbox');
     expect(serverKeyKind('Mid-server-x')).toBe('production');
+  });
+
+  it('signature memakai Signature Secret Key bila ada, fallback server key', () => {
+    const env = { MIDTRANS_SERVER_KEY: 'Mid-server-a' };
+    expect(getSignatureKey(env)).toBe('Mid-server-a');
+    expect(hasSeparateSignatureKey(env)).toBe(false);
+    const env2 = { ...env, MIDTRANS_SIGNATURE_SECRET_KEY: 'sig-secret' };
+    expect(getSignatureKey(env2)).toBe('sig-secret');
+    expect(hasSeparateSignatureKey(env2)).toBe(true);
   });
 });
