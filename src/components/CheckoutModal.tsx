@@ -72,8 +72,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         if (res.ok) {
-          const data = await res.json();
-          if (data && data.ok && data.is_paid) return true;
+          try {
+            const data = await res.json();
+            if (data && data.ok && data.is_paid) return true;
+          } catch {
+            // respons bukan JSON (mis. halaman error edge) — coba lagi
+          }
         }
       } catch {
         // jaringan berisik — ulangi pada iterasi berikutnya
@@ -113,9 +117,20 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         })
       });
 
-      const data = await res.json();
+      const raw = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        // Cloudflare/edge bisa mengembalikan halaman HTML saat error 5xx.
+        throw new Error(
+          res.ok
+            ? 'Respons server tidak valid.'
+            : `Server mengembalikan error ${res.status}. Coba lagi atau hubungi admin.`
+        );
+      }
       if (!res.ok || !data.token) {
-        throw new Error(data.error || 'Gagal membuat transaksi Midtrans');
+        throw new Error(data.error || `Gagal membuat transaksi Midtrans (${res.status})`);
       }
 
       const snapToken = data.token;

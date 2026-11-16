@@ -174,13 +174,25 @@ export async function handleCharge(context: any, forcedPlan?: PlanKey) {
     const data: any = await response.json().catch(() => ({}));
     if (!response.ok || !data?.token) {
       console.warn('charge: Midtrans menolak transaksi', response.status, data);
+      if (response.status === 401 || response.status === 403) {
+        return json(
+          {
+            error:
+              'Kunci pembayaran server ditolak Midtrans (401). Periksa MIDTRANS_SERVER_KEY production.',
+            code: 'MIDTRANS_AUTH',
+            order_id: orderId,
+          },
+          424
+        );
+      }
       return json(
         {
           error: data?.error_messages?.[0] || 'Midtrans gagal membuat transaksi.',
           code: 'MIDTRANS_ERROR',
+          midtrans_status: response.status,
           order_id: orderId,
         },
-        502
+        424
       );
     }
     return json({
@@ -192,7 +204,7 @@ export async function handleCharge(context: any, forcedPlan?: PlanKey) {
     });
   } catch (err: any) {
     console.warn('charge: error jaringan ke Midtrans', err);
-    return json({ error: 'Gagal menghubungi Midtrans. Coba lagi.' }, 502);
+    return json({ error: 'Gagal menghubungi Midtrans. Coba lagi.', code: 'MIDTRANS_FETCH_ERROR' }, 424);
   }
 }
 

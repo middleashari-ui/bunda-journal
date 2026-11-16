@@ -55,7 +55,10 @@ export async function onRequestPost(context: any) {
     }
     if (!res.ok) {
       console.warn('status: Midtrans menolak cek status', res.status, data);
-      return json({ error: 'Gagal mengecek status ke Midtrans.' }, 502);
+      return json(
+        { error: 'Gagal mengecek status ke Midtrans.', code: 'MIDTRANS_ERROR', midtrans_status: res.status },
+        424
+      );
     }
 
     const transactionStatus = String(data.transaction_status || '');
@@ -85,7 +88,7 @@ export async function onRequestPost(context: any) {
     );
   } catch (err) {
     console.warn('status: gagal menghubungi Midtrans', err);
-    return json({ error: 'Gagal menghubungi Midtrans.' }, 502);
+    return json({ error: 'Gagal menghubungi Midtrans.', code: 'MIDTRANS_FETCH_ERROR' }, 424);
   }
 }
 
