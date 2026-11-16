@@ -2,6 +2,7 @@
 import {
   json, normalizeEmail, pbkdf2, safeEqual, createSession, getTier,
 } from '../../_lib/auth';
+import { checkRateLimit, clientIp, tooManyRequests } from '../../_lib/rateLimit';
 
 export async function onRequestOptions() {
   return json({ ok: true });
@@ -17,6 +18,10 @@ export async function onRequestPost(context: any) {
     const password = String(body.password || '');
 
     if (!email || !password) return json({ error: 'Email dan password wajib diisi.' }, 400);
+
+    // Rate limit: 10 percobaan / 10 menit per IP+email.
+    const rl = await checkRateLimit(env, `login:${clientIp(request)}:${email}`, 10, 600);
+    if (rl.limited) return tooManyRequests(rl.retryAfter);
 
     const user: any = await env.BUNDA_JOURNAL_DB.prepare(
       'SELECT email, password_hash, salt, name, provider FROM bunda_users WHERE email = ?'

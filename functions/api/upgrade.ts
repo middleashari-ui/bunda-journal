@@ -1,4 +1,5 @@
 import { getSessionEmail } from '../_lib/auth';
+import { checkRateLimit, tooManyRequests } from '../_lib/rateLimit';
 
 // Kill switch pembayaran (mode perbaikan). Set false untuk aktifkan lagi.
 const PAYMENT_PAUSED = true; // production: payment OFF. 503 Service Unavailable.
@@ -50,6 +51,10 @@ export async function onRequestPost(context: any) {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    // Rate limit: 10 permintaan charge / jam per akun.
+    const rl = await checkRateLimit(env, `charge:${safeEmail.toLowerCase()}`, 10, 3600);
+    if (rl.limited) return tooManyRequests(rl.retryAfter);
 
     // Selisih upgrade dipegang server (80000) — amount client hanya boleh cocok.
     if (body.amount !== undefined && Number(body.amount) !== 80000) {

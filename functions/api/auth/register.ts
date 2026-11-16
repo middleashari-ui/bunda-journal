@@ -2,6 +2,7 @@
 import {
   json, normalizeEmail, pbkdf2, randomHex, validateEmail, validatePassword, createSession, getTier,
 } from '../../_lib/auth';
+import { checkRateLimit, clientIp, tooManyRequests } from '../../_lib/rateLimit';
 
 export async function onRequestOptions() {
   return json({ ok: true });
@@ -21,6 +22,10 @@ export async function onRequestPost(context: any) {
     if (emailErr) return json({ error: emailErr }, 400);
     const pwErr = validatePassword(password);
     if (pwErr) return json({ error: pwErr }, 400);
+
+    // Rate limit: 5 pendaftaran / jam per IP.
+    const rl = await checkRateLimit(env, `register:${clientIp(request)}`, 5, 3600);
+    if (rl.limited) return tooManyRequests(rl.retryAfter);
 
     const existing: any = await env.BUNDA_JOURNAL_DB.prepare(
       'SELECT email FROM bunda_users WHERE email = ?'

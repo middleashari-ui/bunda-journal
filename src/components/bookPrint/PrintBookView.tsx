@@ -12,6 +12,7 @@ import { Bab3Persiapan } from './pages/Bab3Persiapan';
 import { Bab4Kelahiran } from './pages/Bab4Kelahiran';
 import { Bab5KapsulWaktu } from './pages/Bab5KapsulWaktu';
 import { isMediaKey, mediaGet } from '../../lib/mediaStore';
+import { verifyExportEntitlement } from '../../lib/entitlement';
 
 // ============================================================================
 // Halaman /print — dipakai untuk flow: Jurnal > Download > browser > print > simpan PDF.
@@ -57,7 +58,23 @@ const PrintBookView: React.FC = () => {
   const entries = useMemo(() => readJSON<JournalEntry[]>(ENTRIES_KEY, []), []);
   const [photos, setPhotos] = useState<PhotoMemory[]>(() => readJSON<PhotoMemory[]>(PHOTOS_KEY, []));
   const [ready, setReady] = useState(false);
+  const [exportAccess, setExportAccess] = useState<'checking' | 'allowed' | 'blocked'>('checking');
   const printedRef = useRef(false);
+
+  // Gerbang ekspor: diverifikasi server (bukan hanya localStorage).
+  useEffect(() => {
+    let alive = true;
+    verifyExportEntitlement()
+      .then((res) => {
+        if (alive) setExportAccess(res.allowed ? 'allowed' : 'blocked');
+      })
+      .catch(() => {
+        if (alive) setExportAccess('allowed'); // fail-open
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const fileName = useMemo(() => buildBookFileName(profile), [profile]);
   // Gate tier: default mati (ESSENTIAL_GATE_ENABLED=false) → selalu 100 halaman.
@@ -203,6 +220,31 @@ const PrintBookView: React.FC = () => {
         return <Bab5KapsulWaktu theme={theme} spreadIndex={1} leftPageNum={leftNum} rightPageNum={rightNum} userProfile={profile} isFillMode={false} />;
     }
   };
+
+  if (exportAccess === 'checking') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F2EB] p-6">
+        <p className="text-sm text-stone-500">Memeriksa akses ekspor…</p>
+      </div>
+    );
+  }
+
+  if (exportAccess === 'blocked') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[#F5F2EB] p-6 text-center">
+        <h1 className="font-serif text-xl text-stone-800">Ekspor 100 halaman khusus VIP</h1>
+        <p className="text-sm text-stone-500 max-w-sm">
+          Akun Essential bisa membaca dan mengisi buku, tetapi ekspor PDF & cetak 100 halaman tersedia di paket VIP.
+        </p>
+        <a
+          href="/"
+          className="mt-2 px-4 py-2 rounded-xl bg-[#556B2F] text-white text-sm font-semibold"
+        >
+          Kembali ke aplikasi
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="print-book-root">

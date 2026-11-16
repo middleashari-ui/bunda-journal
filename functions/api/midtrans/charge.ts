@@ -1,6 +1,8 @@
 // Kill switch pembayaran (mode perbaikan). Set false untuk aktifkan lagi.
 const PAYMENT_PAUSED = true; // production: payment OFF. 503 Service Unavailable.
 
+import { checkRateLimit, tooManyRequests } from '../../_lib/rateLimit';
+
 export async function onRequestPost(context: any) {
   // Mode perbaikan: charge Midtrans dimatikan total. Balikin 503, jangan buat transaksi.
   if (PAYMENT_PAUSED) {
@@ -45,6 +47,10 @@ export async function onRequestPost(context: any) {
     const prefix = isUpgrade ? 'UP-VIP' : tier === 'vip' ? 'BU-VIP' : 'BU-ESS';
     // Embed tier + email di order_id agar webhook bisa tulis DB tanpa body tambahan.
     const safeEmail = String(customer_email || 'bunda@bundajournal.my.id').replace(/[^a-zA-Z0-9@._-]/g, '').slice(0, 60);
+
+    // Rate limit: 10 permintaan charge / jam per akun.
+    const rl = await checkRateLimit(env, `charge:${safeEmail.toLowerCase()}`, 10, 3600);
+    if (rl.limited) return tooManyRequests(rl.retryAfter);
 
     // Cek tier di Cloudflare D1: SELECT tier FROM bunda_subscriptions WHERE email=?
     if (env.BUNDA_JOURNAL_DB && safeEmail) {
