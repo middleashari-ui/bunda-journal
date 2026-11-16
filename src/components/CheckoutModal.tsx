@@ -169,7 +169,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-stone-900/75 backdrop-blur-xs flex items-center justify-center p-4 select-none">
-      <div className="bg-[#F5F2EB] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-300 relative text-[#292524]">
+      <div role="dialog" aria-modal="true" aria-label="Pembayaran" className="bg-[#F5F2EB] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-300 relative text-[#292524]">
         {/* Close button */}
         <button
           onClick={onClose}

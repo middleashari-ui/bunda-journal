@@ -221,13 +221,13 @@ export function MoneyRoute({
                             {product.assumption ? <span className="ads-assumption-inline">{product.assumption}</span> : null}
                           </div>
                         </td>
-                        <td className="num"><input className="ads-inline-input" type="number" value={product.price} onChange={(event) => updateProduct(product.id, { price: Number(event.target.value) })} /></td>
-                        <td className="num"><input className="ads-inline-input" type="number" value={product.cogs} onChange={(event) => updateProduct(product.id, { cogs: Number(event.target.value) })} /></td>
-                        <td className="num"><input className="ads-inline-input" type="number" value={product.shipping} onChange={(event) => updateProduct(product.id, { shipping: Number(event.target.value) })} /></td>
-                        <td className="num"><input className="ads-inline-input" type="number" step="0.1" value={(product.feePct * 100).toFixed(1)} onChange={(event) => updateProduct(product.id, { feePct: Number(event.target.value) / 100 })} /></td>
-                        <td className="num"><input className="ads-inline-input" type="number" step="0.1" value={(product.refundPct * 100).toFixed(1)} onChange={(event) => updateProduct(product.id, { refundPct: Number(event.target.value) / 100 })} /></td>
+                        <td className="num"><input className="ads-inline-input" type="number" aria-label={`Harga ${product.name}`} value={product.price} onChange={(event) => updateProduct(product.id, { price: Number(event.target.value) })} /></td>
+                        <td className="num"><input className="ads-inline-input" type="number" aria-label={`COGS ${product.name}`} value={product.cogs} onChange={(event) => updateProduct(product.id, { cogs: Number(event.target.value) })} /></td>
+                        <td className="num"><input className="ads-inline-input" type="number" aria-label={`Ongkir ${product.name}`} value={product.shipping} onChange={(event) => updateProduct(product.id, { shipping: Number(event.target.value) })} /></td>
+                        <td className="num"><input className="ads-inline-input" type="number" aria-label={`Fee persen ${product.name}`} step="0.1" value={(product.feePct * 100).toFixed(1)} onChange={(event) => updateProduct(product.id, { feePct: Number(event.target.value) / 100 })} /></td>
+                        <td className="num"><input className="ads-inline-input" type="number" aria-label={`Refund persen ${product.name}`} step="0.1" value={(product.refundPct * 100).toFixed(1)} onChange={(event) => updateProduct(product.id, { refundPct: Number(event.target.value) / 100 })} /></td>
                         <td>
-                          <select className="ads-inline-select" value={product.taxMode} onChange={(event) => updateProduct(product.id, { taxMode: event.target.value as ProductEconomics['taxMode'] })}>
+                          <select className="ads-inline-select" aria-label={`Mode pajak ${product.name}`} value={product.taxMode} onChange={(event) => updateProduct(product.id, { taxMode: event.target.value as ProductEconomics['taxMode'] })}>
                             <option value="none">Non-PKP</option>
                             <option value="inclusive">Incl PPN</option>
                             <option value="exclusive">Excl PPN</option>

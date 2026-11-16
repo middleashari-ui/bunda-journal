@@ -92,7 +92,7 @@ export const PWAInstallTutorial: React.FC<PWAInstallTutorialProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-[#F9F6F0]/88 backdrop-blur-xl animate-in fade-in duration-200 select-none">
-      <div className="bg-white/95 rounded-[20px] max-w-[390px] w-full p-4 border border-[#EDE8DF] shadow-[0_12px_40px_rgba(0,0,0,0.08)] flex flex-col space-y-2.5 font-sans text-[#292524] relative max-h-[96vh] overflow-y-auto no-scrollbar">
+      <div role="dialog" aria-modal="true" aria-label="Cara pasang aplikasi Bunda Journal" className="bg-white/95 rounded-[20px] max-w-[390px] w-full p-4 border border-[#EDE8DF] shadow-[0_12px_40px_rgba(0,0,0,0.08)] flex flex-col space-y-2.5 font-sans text-[#292524] relative max-h-[96vh] overflow-y-auto no-scrollbar">
         {/* Close Button */}
         <button
           type="button"
@@ -150,7 +150,7 @@ export const PWAInstallTutorial: React.FC<PWAInstallTutorialProps> = ({
             className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               platform === 'android'
                 ? 'bg-white text-stone-900 shadow-2xs font-bold'
-                : 'text-stone-500 hover:text-stone-800'
+                : 'text-stone-600 hover:text-stone-800'
             }`}
           >
             <Smartphone className="w-3.5 h-3.5" />
@@ -162,7 +162,7 @@ export const PWAInstallTutorial: React.FC<PWAInstallTutorialProps> = ({
             className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               platform === 'ios'
                 ? 'bg-white text-stone-900 shadow-2xs font-bold'
-                : 'text-stone-500 hover:text-stone-800'
+                : 'text-stone-600 hover:text-stone-800'
             }`}
           >
             <Smartphone className="w-3.5 h-3.5" />
@@ -335,7 +335,7 @@ export const PWAInstallTutorial: React.FC<PWAInstallTutorialProps> = ({
             <button
               type="button"
               onClick={handleDismiss}
-              className="text-[#8C887F] hover:text-stone-700 text-xs font-medium cursor-pointer transition-colors py-1"
+              className="text-[#6B655C] hover:text-stone-700 text-xs font-medium cursor-pointer transition-colors py-1"
             >
               Nanti saja, langsung buka jurnal
             </button>

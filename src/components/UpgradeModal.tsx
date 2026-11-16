@@ -13,7 +13,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onU
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 bg-stone-900/75 backdrop-blur-xs flex items-center justify-center p-4 select-none">
-      <div className="bg-[#F5F2EB] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-300 relative text-[#292524]">
+      <div role="dialog" aria-modal="true" aria-label="Upgrade ke VIP" className="bg-[#F5F2EB] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-300 relative text-[#292524]">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-stone-400 hover:text-stone-700 p-1 rounded-lg hover:bg-stone-200/50 cursor-pointer"
@@ -33,7 +33,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onU
         <div className="mt-5 space-y-2">
           <button
             onClick={onUpgrade}
-            className="w-full py-3 bg-[#C87A64] hover:bg-[#b56b56] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+            className="w-full py-3 bg-[#A85A44] hover:bg-[#8F4F3E] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
           >
             <Sparkles className="w-4 h-4" />
             <span>Upgrade Sekarang +80rb</span>

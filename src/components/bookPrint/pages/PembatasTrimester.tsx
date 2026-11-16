@@ -119,6 +119,7 @@ export const PembatasTrimester: React.FC<PembatasTrimesterProps> = ({
               </span>
               {isFillMode ? (
                 <textarea 
+                  aria-label="Refleksi trimester"
                   value={reflection}
                   onChange={(e) => setReflection(e.target.value)}
                   rows={3}
@@ -163,6 +164,7 @@ export const PembatasTrimester: React.FC<PembatasTrimesterProps> = ({
               </div>
               {isFillMode ? (
                 <textarea 
+                  aria-label="Doa trimester"
                   value={prayer}
                   onChange={(e) => setPrayer(e.target.value)}
                   rows={3}

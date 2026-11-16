@@ -390,7 +390,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
             setEditHospital(userProfile.hospitalName);
             setIsEditingProfile(true);
           }}
-          className="absolute top-4 right-4 p-2 text-stone-400 hover:text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-full transition-colors cursor-pointer"
+          className="absolute top-4 right-4 p-2 text-stone-600 hover:text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-full transition-colors cursor-pointer"
           title="Ubah Profil"
         >
           <Edit3 className="w-4 h-4" />
@@ -423,7 +423,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                 }}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-[#C87A64]/15 text-[#C87A64] font-serif text-2xl font-bold">
+              <div className="w-full h-full flex items-center justify-center bg-[#C87A64]/15 text-[#A85A44] font-serif text-2xl font-bold">
                 {(userProfile.name || 'B').trim().charAt(0).toUpperCase()}
               </div>
             )}
@@ -454,12 +454,12 @@ export const TabProfil: React.FC<TabProfilProps> = ({
 
         <div className="mt-4 p-3 bg-[#FAF8F5] rounded-2xl border border-stone-200/60 flex items-center justify-around text-xs">
           <div>
-            <span className="block text-[10px] text-stone-400 uppercase tracking-wider">Perkiraan Lahir (HPL)</span>
-            <span className="font-serif font-bold text-[#C87A64] text-sm">{userProfile.hplDate || '-'}</span>
+            <span className="block text-[10px] text-stone-600 uppercase tracking-wider">Perkiraan Lahir (HPL)</span>
+            <span className="font-serif font-bold text-[#A85A44] text-sm">{userProfile.hplDate || '-'}</span>
           </div>
           <div className="w-px h-7 bg-stone-200"></div>
           <div>
-            <span className="block text-[10px] text-stone-400 uppercase tracking-wider">Dokter Obgyn</span>
+            <span className="block text-[10px] text-stone-600 uppercase tracking-wider">Dokter Obgyn</span>
             <span className="font-serif font-bold text-stone-800 text-sm">{userProfile.doctorName || '-'}</span>
           </div>
         </div>
@@ -578,7 +578,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
               Hapus log
             </button>
           </div>
-          <p className="text-[9px] text-stone-400 mt-1.5">
+          <p className="text-[9px] text-stone-600 mt-1.5">
             Log hanya tersimpan di perangkat ini, tidak dikirim ke server.
           </p>
         </details>
@@ -588,7 +588,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           <div className="flex items-center justify-between p-2.5 bg-stone-50 rounded-2xl opacity-70">
             <div>
               <p className="text-xs font-bold text-stone-800">Mode Ayah (Read Only)</p>
-              <p className="text-[10px] text-stone-400">Akses pantau kehamilan tanpa izin edit data</p>
+              <p className="text-[10px] text-stone-600">Akses pantau kehamilan tanpa izin edit data</p>
             </div>
             <button 
               disabled
@@ -601,7 +601,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           <div className="flex items-center justify-between p-2.5 bg-stone-50 rounded-2xl opacity-70">
             <div>
               <p className="text-xs font-bold text-stone-800">Mode Newborn (0 - 30 Hari)</p>
-              <p className="text-[10px] text-stone-400">Beralih ke pemantauan bayi baru lahir & ASI</p>
+              <p className="text-[10px] text-stone-600">Beralih ke pemantauan bayi baru lahir & ASI</p>
             </div>
             <button 
               disabled
@@ -636,7 +636,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           </span>
         </div>
 
-        <p className="text-[10px] text-stone-400 font-light mt-2 leading-relaxed">
+        <p className="text-[10px] text-stone-600 font-light mt-2 leading-relaxed">
           Data Bunda tetap tersimpan di HP ini. File backup hanya dikirim ke{' '}
           <span className="text-stone-200">Google Drive milik Bunda sendiri</span>, bukan server kami.
         </p>
@@ -670,7 +670,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           Backup otomatis sekali sehari
         </label>
 
-        <div className="mt-3 pt-2.5 border-t border-stone-700/60 flex items-center justify-between text-[11px] text-stone-400">
+        <div className="mt-3 pt-2.5 border-t border-stone-700/60 flex items-center justify-between text-[11px] text-stone-600">
           <span>Penyimpanan Lokal: {journalEntries.length} catatan, {photos.length} foto</span>
           <div className="flex items-center gap-3">
             <button 
@@ -710,7 +710,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                 {restoreInfo.count} data disalin otomatis sebelum pemulihan ·{' '}
                 {new Date(restoreInfo.at).toLocaleString('id-ID')}
               </p>
-              <p className="text-[10px] text-stone-400 font-light mt-0.5">
+              <p className="text-[10px] text-stone-600 font-light mt-0.5">
                 Tersedia 7 hari. Gunakan bila isi jurnal terasa berubah setelah login.
               </p>
             </div>
@@ -736,9 +736,9 @@ export const TabProfil: React.FC<TabProfilProps> = ({
             onClick={() => setShowKickCounter(true)}
             className="p-3 bg-[#FAF8F5] rounded-2xl border border-stone-200/60 text-left hover:border-[#556B2F]/40 transition-all cursor-pointer"
           >
-            <Heart className="w-4 h-4 text-[#C87A64] mb-1" />
+            <Heart className="w-4 h-4 text-[#A85A44] mb-1" />
             <p className="text-xs font-bold text-stone-800">Hitung Tendangan</p>
-            <p className="text-[10px] text-stone-400 font-light">Catat keaktifan gerak si kecil</p>
+            <p className="text-[10px] text-stone-600 font-light">Catat keaktifan gerak si kecil</p>
           </button>
 
           <button
@@ -747,7 +747,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           >
             <Timer className="w-4 h-4 text-[#556B2F] mb-1" />
             <p className="text-xs font-bold text-stone-800">Timer Kontraksi</p>
-            <p className="text-[10px] text-stone-400 font-light">Durasi & interval kontraksi</p>
+            <p className="text-[10px] text-stone-600 font-light">Durasi & interval kontraksi</p>
           </button>
         </div>
       </div>
@@ -768,13 +768,17 @@ export const TabProfil: React.FC<TabProfilProps> = ({
         {/* Master Toggle */}
         <div className="flex items-center justify-between py-1">
           <div className="flex items-center gap-2.5">
-            <BellRing className={`w-4 h-4 ${reminderSettings.enabled ? 'text-[#556B2F]' : 'text-stone-400'}`} />
+            <BellRing className={`w-4 h-4 ${reminderSettings.enabled ? 'text-[#556B2F]' : 'text-stone-600'}`} />
             <div>
               <p className="text-xs font-semibold text-stone-850">Alarm Pengingat Otomatis</p>
               <p className="text-[10px] text-stone-500">Notifikasi minum vitamin & habit tracking</p>
             </div>
           </div>
           <button 
+            type="button"
+            role="switch"
+            aria-checked={reminderSettings.enabled}
+            aria-label="Alarm pengingat otomatis"
             onClick={() => {
               const nextVal = !reminderSettings.enabled;
               setReminderSettings(prev => ({ ...prev, enabled: nextVal }));
@@ -785,7 +789,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
               reminderSettings.enabled ? 'bg-[#556B2F]' : 'bg-stone-300'
             }`}
           >
-            <div className={`bg-white w-4 h-4 rounded-full shadow-xs transform transition-transform duration-200 ease-in-out ${
+            <div aria-hidden="true" className={`bg-white w-4 h-4 rounded-full shadow-xs transform transition-transform duration-200 ease-in-out ${
               reminderSettings.enabled ? 'translate-x-5' : 'translate-x-0'
             }`} />
           </button>
@@ -797,22 +801,23 @@ export const TabProfil: React.FC<TabProfilProps> = ({
             {/* Vitamin Reminder Time */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Pill className="w-3.5 h-3.5 text-[#C87A64]" />
+                <Pill className="w-3.5 h-3.5 text-[#A85A44]" />
                 <div>
                   <p className="text-xs font-medium text-stone-800">Jadwal Minum Vitamin</p>
-                  <p className="text-[10px] text-stone-400">Asam folat & zat besi</p>
+                  <p className="text-[10px] text-stone-600">Asam folat & zat besi</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
                 <input 
                   type="time" 
+                  aria-label="Jam pengingat minum vitamin"
                   value={reminderSettings.vitaminTime}
                   onChange={(e) => {
                     setReminderSettings(prev => ({ ...prev, vitaminTime: e.target.value }));
                   }}
                   className="bg-white border border-stone-300 rounded-lg px-2 py-1 text-xs font-sans text-stone-800 focus:outline-[#556B2F]"
                 />
-                <span className="text-[10px] text-stone-400">WIB</span>
+                <span className="text-[10px] text-stone-600">WIB</span>
               </div>
             </div>
 
@@ -822,19 +827,20 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                 <Clock className="w-3.5 h-3.5 text-[#556B2F]" />
                 <div>
                   <p className="text-xs font-medium text-stone-800">Jadwal Jurnal & Tidur</p>
-                  <p className="text-[10px] text-stone-400">Refleksi harian & istirahat</p>
+                  <p className="text-[10px] text-stone-600">Refleksi harian & istirahat</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
                 <input 
                   type="time" 
+                  aria-label="Jam pengingat jurnal dan tidur"
                   value={reminderSettings.journalTime}
                   onChange={(e) => {
                     setReminderSettings(prev => ({ ...prev, journalTime: e.target.value }));
                   }}
                   className="bg-white border border-stone-300 rounded-lg px-2 py-1 text-xs font-sans text-stone-800 focus:outline-[#556B2F]"
                 />
-                <span className="text-[10px] text-stone-400">WIB</span>
+                <span className="text-[10px] text-stone-600">WIB</span>
               </div>
             </div>
 
@@ -846,6 +852,9 @@ export const TabProfil: React.FC<TabProfilProps> = ({
               </div>
               <button
                 type="button"
+                role="switch"
+                aria-checked={reminderSettings.soundEnabled}
+                aria-label="Lonceng pengingat lembut"
                 onClick={() => {
                   const nextVal = !reminderSettings.soundEnabled;
                   setReminderSettings(prev => ({ ...prev, soundEnabled: nextVal }));
@@ -855,7 +864,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                   reminderSettings.soundEnabled ? 'bg-[#556B2F]' : 'bg-stone-300'
                 }`}
               >
-                <div className={`bg-white w-4 h-4 rounded-full shadow-xs transform transition-transform ${
+                <div aria-hidden="true" className={`bg-white w-4 h-4 rounded-full shadow-xs transform transition-transform ${
                   reminderSettings.soundEnabled ? 'translate-x-4' : 'translate-x-0'
                 }`} />
               </button>
@@ -887,7 +896,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
             <Globe className="w-4 h-4 text-stone-600" />
             <span>Bahasa Aplikasi</span>
           </div>
-          <span className="text-stone-400 font-medium">Bahasa Indonesia</span>
+          <span className="text-stone-600 font-medium">Bahasa Indonesia</span>
         </div>
 
         <div className="border-t border-stone-100 pt-3 space-y-2.5">
@@ -896,7 +905,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
               <Palette className="w-4 h-4 text-[#556B2F]" />
               <span className="font-semibold text-stone-850">Variasi Tema Warna</span>
             </div>
-            <span className="text-[10px] text-stone-400 font-sans">
+            <span className="text-[10px] text-stone-600 font-sans">
               Clean Editorial
             </span>
           </div>
@@ -935,7 +944,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                     <p className={`text-[11px] font-serif font-bold ${isSelected ? 'text-stone-900' : 'text-stone-700'}`}>
                       {theme.name}
                     </p>
-                    <p className="text-[8.5px] text-stone-400 font-light truncate">
+                    <p className="text-[8.5px] text-stone-600 font-light truncate">
                       {theme.tagline}
                     </p>
                   </div>
@@ -973,7 +982,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
             <Download className="w-4 h-4 text-[#556B2F]" />
             <span>Unduh Salinan Data Saya (JSON)</span>
           </div>
-          <span className="text-[10px] text-stone-400">Backup</span>
+          <span className="text-[10px] text-stone-600">Backup</span>
         </button>
 
         <a
@@ -986,15 +995,15 @@ export const TabProfil: React.FC<TabProfilProps> = ({
             <HelpCircle className="w-4 h-4 text-emerald-600" />
             <span>Hubungi Kami (WhatsApp CS)</span>
           </div>
-          <span className="text-[10px] text-stone-400">Respon Cepat</span>
+          <span className="text-[10px] text-stone-600">Respon Cepat</span>
         </a>
 
         <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500 px-1">
           <div className="flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-stone-400" />
+            <ShieldCheck className="w-3.5 h-3.5 text-stone-600" />
             <span>Data Bunda tersimpan di HP ini</span>
           </div>
-          <span className="text-[10px] text-stone-400">Enkripsi Perangkat</span>
+          <span className="text-[10px] text-stone-600">Enkripsi Perangkat</span>
         </div>
       </div>
 
@@ -1024,7 +1033,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           <RotateCcw className="w-4 h-4 text-rose-600" />
           <span>Reset Semua Data</span>
         </button>
-        <p className="text-[10px] text-stone-400 mt-2 text-center">Bunda Journal v2.4 • Data Tersimpan Aman di Perangkat</p>
+        <p className="text-[10px] text-stone-600 mt-2 text-center">Bunda Journal v2.4 • Data Tersimpan Aman di Perangkat</p>
       </div>
 
       {/* Edit Profile Modal */}
@@ -1037,7 +1046,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
               </h3>
               <button 
                 onClick={() => setIsEditingProfile(false)}
-                className="text-stone-400 hover:text-stone-600 p-1 cursor-pointer"
+                className="text-stone-600 hover:text-stone-600 p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1103,7 +1112,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           <div className="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl border border-stone-200 text-center">
             <div className="flex justify-between items-center mb-4">
               <span className="font-serif font-bold text-stone-800 text-sm">Hitung Gerak Janin</span>
-              <button onClick={() => setShowKickCounter(false)} className="text-stone-400 p-1">
+              <button onClick={() => setShowKickCounter(false)} className="text-stone-600 p-1">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -1114,7 +1123,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
 
             <button
               onClick={() => setKicksCount(c => c + 1)}
-              className="w-28 h-28 mx-auto rounded-full bg-[#C87A64]/15 border-4 border-[#C87A64] text-[#C87A64] flex flex-col items-center justify-center active:scale-95 transition-transform cursor-pointer shadow-md mb-4"
+              className="w-28 h-28 mx-auto rounded-full bg-[#C87A64]/15 border-4 border-[#C87A64] text-[#A85A44] flex flex-col items-center justify-center active:scale-95 transition-transform cursor-pointer shadow-md mb-4"
             >
               <Heart className="w-8 h-8 fill-[#C87A64] mb-1" />
               <span className="font-serif text-2xl font-bold">{kicksCount}</span>
@@ -1158,7 +1167,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                   setIsContractionRunning(false);
                   setShowContractionTimer(false);
                 }} 
-                className="text-stone-400 p-1"
+                className="text-stone-600 p-1"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1213,7 +1222,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                 setContractionSeconds(0);
                 setShowContractionTimer(false);
               }}
-              className="text-xs text-stone-400 hover:text-stone-600 py-1"
+              className="text-xs text-stone-600 hover:text-stone-600 py-1"
             >
               Tutup
             </button>

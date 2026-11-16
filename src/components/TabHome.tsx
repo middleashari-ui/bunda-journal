@@ -158,24 +158,24 @@ export const TabHome: React.FC<TabHomeProps> = ({
           <span className="text-[11px] uppercase tracking-wider font-semibold text-[#556B2F]">
             Trimester {weekData.trimester} • Hari ke-{dayOfPregnancy}
           </span>
-          <span className="text-[10px] text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
             Bulan ke-{weekData.month}
           </span>
         </div>
         <h2 className="font-serif text-xl font-bold text-stone-850 mt-1.5 leading-snug">
           Minggu ke-{week}, {userProfile.name ? userProfile.name.split(' ')[0] : 'Bunda'}.
         </h2>
-        <p className="text-xs text-stone-500 mt-1 font-light leading-relaxed">
+        <p className="text-xs text-stone-600 mt-1 font-light leading-relaxed">
           {weekData.fruitName ? `Si kecil sekarang sebesar ${weekData.fruitName.toLowerCase()}. ` : ''}
           Pelan-pelan saja — catatan hari ini akan jadi halaman yang Bunda baca lagi nanti.
         </p>
 
         {/* Quick Week Switcher with Drag Slider & Draggable Carousel */}
         <div className="mt-3 pt-2.5 border-t border-stone-100 space-y-2.5">
-          <div className="flex items-center justify-between text-[11px] text-stone-500">
+          <div className="flex items-center justify-between text-[11px] text-stone-600">
             <span className="font-medium">Geser Minggu Kehamilan:</span>
             <div className="flex items-center gap-1.5">
-              <span className="text-stone-400 text-[10px]">
+              <span className="text-stone-600 text-[10px]">
                 {week <= 13 ? 'Trimester 1' : week <= 27 ? 'Trimester 2' : 'Trimester 3'}
               </span>
               <span className="text-[#556B2F] font-bold bg-[#556B2F]/10 px-2 py-0.5 rounded-md text-[10px]">
@@ -205,7 +205,7 @@ export const TabHome: React.FC<TabHomeProps> = ({
                 className="w-full accent-[#556B2F] cursor-grab active:cursor-grabbing h-2.5 bg-stone-200/90 rounded-lg transition-all"
                 title={`Geser untuk memilih minggu: Minggu ke-${week}`}
               />
-              <div className="flex justify-between items-center text-[9px] text-stone-400 mt-0.5 px-0.5">
+              <div className="flex justify-between items-center text-[9px] text-stone-600 mt-0.5 px-0.5">
                 <span>Mg 5</span>
                 <span>Mg 13 (T1)</span>
                 <span>Mg 27 (T2)</span>
@@ -277,26 +277,26 @@ export const TabHome: React.FC<TabHomeProps> = ({
 
         <div className="mt-4 pt-3 border-t border-stone-200/60 grid grid-cols-4 gap-2 text-center text-stone-600">
           <div className="p-1">
-            <span className="block text-[9px] text-stone-400 uppercase tracking-wider">Panjang</span>
+            <span className="block text-[9px] text-stone-600 uppercase tracking-wider">Panjang</span>
             <span className="font-serif font-bold text-stone-800 text-xs sm:text-sm">{weekData.lengthCm}</span>
           </div>
           <div className="p-1 border-l border-stone-200/60">
-            <span className="block text-[9px] text-stone-400 uppercase tracking-wider">Berat</span>
+            <span className="block text-[9px] text-stone-600 uppercase tracking-wider">Berat</span>
             <span className="font-serif font-bold text-stone-800 text-xs sm:text-sm">{weekData.weightGrams}</span>
           </div>
           <div className="p-1 border-l border-stone-200/60">
-            <span className="block text-[9px] text-stone-400 uppercase tracking-wider">Jantung</span>
+            <span className="block text-[9px] text-stone-600 uppercase tracking-wider">Jantung</span>
             <span className="font-serif font-bold text-stone-800 text-xs sm:text-sm">{weekData.heartbeatBpm}</span>
           </div>
           <div className="p-1 border-l border-stone-200/60">
-            <span className="block text-[9px] text-stone-400 uppercase tracking-wider">Sisa Waktu</span>
-            <span className="font-serif font-bold text-[#C87A64] text-xs sm:text-sm">{weekData.daysLeft} Hari</span>
+            <span className="block text-[9px] text-stone-600 uppercase tracking-wider">Sisa Waktu</span>
+            <span className="font-serif font-bold text-[#A85A44] text-xs sm:text-sm">{weekData.daysLeft} Hari</span>
           </div>
         </div>
 
         {/* Developmental Milestones Bullet points */}
         <div className="mt-4 text-left bg-white/70 rounded-2xl p-3 border border-stone-200/50">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-stone-500 block mb-1.5">
+          <span className="text-[10px] uppercase font-bold tracking-wider text-stone-600 block mb-1.5">
             Perkembangan Minggu Ini:
           </span>
           <ul className="space-y-1.5 text-xs text-stone-600 font-light">
@@ -315,7 +315,7 @@ export const TabHome: React.FC<TabHomeProps> = ({
 
       {/* KURVA PERTUMBUHAN JANIN (WHO & Hadlock Standards) - Lazy Loaded */}
       <Suspense fallback={
-        <div className="bg-white p-6 rounded-3xl border border-stone-200/70 shadow-xs flex items-center justify-center min-h-[140px] text-stone-400 text-xs">
+        <div className="bg-white p-6 rounded-3xl border border-stone-200/70 shadow-xs flex items-center justify-center min-h-[140px] text-stone-600 text-xs">
           <span>Memuat kurva pertumbuhan janin...</span>
         </div>
       }>
@@ -327,7 +327,7 @@ export const TabHome: React.FC<TabHomeProps> = ({
 
       {/* VISUAL MOOD & SLEEP TREND CHART (Recharts) - Lazy Loaded */}
       <Suspense fallback={
-        <div className="bg-white p-6 rounded-3xl border border-stone-200/70 shadow-xs flex items-center justify-center min-h-[140px] text-stone-400 text-xs">
+        <div className="bg-white p-6 rounded-3xl border border-stone-200/70 shadow-xs flex items-center justify-center min-h-[140px] text-stone-600 text-xs">
           <span>Memuat tren suasana hati...</span>
         </div>
       }>
@@ -354,10 +354,10 @@ export const TabHome: React.FC<TabHomeProps> = ({
           </div>
           <div>
             <p className="text-xs font-bold text-stone-800">Studio Buku Kenangan</p>
-            <p className="text-[10px] text-stone-500 font-light">Personalisasi 100 halaman & sampul kain linen</p>
+            <p className="text-[10px] text-stone-600 font-light">Personalisasi 100 halaman & sampul kain linen</p>
           </div>
         </div>
-        <ArrowRight className="w-4 h-4 text-stone-400" />
+        <ArrowRight className="w-4 h-4 text-stone-600" />
       </div>
     </div>
   );

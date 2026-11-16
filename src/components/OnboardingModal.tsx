@@ -56,10 +56,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
 
   return (
     <div className="fixed inset-0 z-50 bg-stone-900/80 backdrop-blur-md flex items-center justify-center p-3 select-none">
-      <div className="bg-[#F5F2EB] rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-stone-300 text-[#292524]">
+      <div role="dialog" aria-modal="true" aria-labelledby="onboarding-title" className="bg-[#F5F2EB] rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-stone-300 text-[#292524]">
         <div className="text-center mb-5">
           <span className="font-serif text-3xl font-bold tracking-tight text-stone-900">bunda.</span>
-          <h2 className="text-sm font-serif font-bold text-stone-800 mt-1">Form Informasi Bunda</h2>
+          <h2 id="onboarding-title" className="text-sm font-serif font-bold text-stone-800 mt-1">Form Informasi Bunda</h2>
           <p className="text-[11px] text-stone-600 mt-0.5">
             Lengkapi data dasar kehamilan untuk menyesuaikan panduan jurnal harian Bunda.
           </p>
@@ -73,12 +73,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
           )}
           {/* 1. Nama Bunda (Wajib) */}
           <div>
-            <label className="text-xs font-semibold text-stone-700 flex items-center justify-between mb-1">
-              <span>Nama Bunda <span className="text-[#C87A64]">*</span></span>
-              <span className="text-[10px] text-stone-400">Wajib</span>
+            <label htmlFor="input-form-nama" className="text-xs font-semibold text-stone-700 flex items-center justify-between mb-1">
+              <span>Nama Bunda <span className="text-[#A85A44]">*</span></span>
+              <span className="text-[10px] text-stone-600">Wajib</span>
             </label>
             <div className="relative">
-              <User className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
+              <User className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
               <input 
                 type="text" 
                 id="input-form-nama"
@@ -93,9 +93,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
 
           {/* 2. Hari Perkiraan Lahir (HPL) (Wajib Date Picker) */}
           <div>
-            <label className="text-xs font-semibold text-stone-700 flex items-center justify-between mb-1">
-              <span>Hari Perkiraan Lahir (HPL) <span className="text-[#C87A64]">*</span></span>
-              <span className="text-[10px] text-stone-400">Date Picker (Wajib)</span>
+            <label htmlFor="input-form-hpl" className="text-xs font-semibold text-stone-700 flex items-center justify-between mb-1">
+              <span>Hari Perkiraan Lahir (HPL) <span className="text-[#A85A44]">*</span></span>
+              <span className="text-[10px] text-stone-600">Date Picker (Wajib)</span>
             </label>
             <div className="relative">
               <input 

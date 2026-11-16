@@ -65,7 +65,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSucce
     <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-[#F9F6F0]/88 backdrop-blur-xl" onClick={onClose} />
 
-      <div className="relative w-full max-w-[390px] bg-white rounded-[20px] border border-[#EDE8DF] shadow-[0_18px_50px_rgba(0,0,0,0.14)] p-6">
+      <div role="dialog" aria-modal="true" aria-label="Masuk atau daftar Bunda Journal" className="relative w-full max-w-[390px] bg-white rounded-[20px] border border-[#EDE8DF] shadow-[0_18px_50px_rgba(0,0,0,0.14)] p-6">
         <button
           type="button"
           onClick={onClose}
@@ -76,13 +76,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSucce
         </button>
 
         <div className="text-center mb-5">
-          <div className="text-[10px] tracking-[2px] uppercase text-[#8C887F] font-semibold">
+          <div className="text-[10px] tracking-[2px] uppercase text-[#6B655C] font-semibold">
             Bunda Journal
           </div>
           <h2 className="font-serif text-[22px] font-bold text-[#111] mt-1">
             {mode === 'login' ? 'Masuk ke Akun Bunda' : 'Buat Akun Bunda'}
           </h2>
-          <p className="text-[12px] text-[#8C887F] mt-1 italic font-serif">
+          <p className="text-[12px] text-[#6B655C] mt-1 italic font-serif">
             {mode === 'login'
               ? 'Data jurnal Bunda tersimpan per email.'
               : 'Sekali daftar, jurnal Bunda bisa dibuka di HP, tablet, dan laptop.'}
@@ -92,29 +92,29 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSucce
         <form onSubmit={submit} className="space-y-3">
           {mode === 'register' && (
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-[#8C887F] font-semibold block mb-1">
+              <label className="text-[10px] uppercase tracking-wider text-[#6B655C] font-semibold block mb-1">
                 Nama Bunda
               </label>
               <div className="flex items-center gap-2 border border-[#EDE8DF] rounded-xl px-3 h-[42px] focus-within:border-[#556B2F] bg-[#FAFAF9]">
-                <User className="w-4 h-4 text-[#B8B2A5]" />
+                <User className="w-4 h-4 text-[#7A7468]" />
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Nama Bunda"
                   autoComplete="name"
-                  className="flex-1 bg-transparent outline-none text-[13px] text-[#111] placeholder:text-[#B8B2A5]"
+                  className="flex-1 bg-transparent outline-none text-[13px] text-[#111] placeholder:text-[#7A7468]"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#8C887F] font-semibold block mb-1">
+            <label className="text-[10px] uppercase tracking-wider text-[#6B655C] font-semibold block mb-1">
               Email
             </label>
             <div className="flex items-center gap-2 border border-[#EDE8DF] rounded-xl px-3 h-[42px] focus-within:border-[#556B2F] bg-[#FAFAF9]">
-              <Mail className="w-4 h-4 text-[#B8B2A5]" />
+              <Mail className="w-4 h-4 text-[#7A7468]" />
               <input
                 type="email"
                 value={email}
@@ -123,24 +123,24 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSucce
                 autoComplete="email"
                 inputMode="email"
                 autoCapitalize="none"
-                className="flex-1 bg-transparent outline-none text-[13px] text-[#111] placeholder:text-[#B8B2A5]"
+                className="flex-1 bg-transparent outline-none text-[13px] text-[#111] placeholder:text-[#7A7468]"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#8C887F] font-semibold block mb-1">
+            <label className="text-[10px] uppercase tracking-wider text-[#6B655C] font-semibold block mb-1">
               Password
             </label>
             <div className="flex items-center gap-2 border border-[#EDE8DF] rounded-xl px-3 h-[42px] focus-within:border-[#556B2F] bg-[#FAFAF9]">
-              <Lock className="w-4 h-4 text-[#B8B2A5]" />
+              <Lock className="w-4 h-4 text-[#7A7468]" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={mode === 'register' ? 'Minimal 6 karakter' : 'Password Bunda'}
                 autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-                className="flex-1 bg-transparent outline-none text-[13px] text-[#111] placeholder:text-[#B8B2A5]"
+                className="flex-1 bg-transparent outline-none text-[13px] text-[#111] placeholder:text-[#7A7468]"
               />
             </div>
           </div>
@@ -168,7 +168,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSucce
 
           <div className="relative flex py-1 items-center">
             <div className="grow border-t border-[#EDE8DF]"></div>
-            <span className="shrink mx-2 text-[10px] text-[#B8B2A5] font-medium uppercase">atau email</span>
+            <span className="shrink mx-2 text-[10px] text-[#7A7468] font-medium uppercase">atau email</span>
             <div className="grow border-t border-[#EDE8DF]"></div>
           </div>
 
@@ -183,7 +183,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSucce
           </button>
         </form>
 
-        <div className="mt-4 text-center text-[12px] text-[#8C887F]">
+        <div className="mt-4 text-center text-[12px] text-[#6B655C]">
           {mode === 'login' ? (
             <>
               Belum punya akun?{' '}

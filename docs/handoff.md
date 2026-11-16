@@ -11,6 +11,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `e54f6bc4`)
 3. `docs/deploy.md` — langkah deploy + rollback
 4. `docs/google-drive-setup.md` — konfigurasi OAuth Drive
 5. `docs/meta-ads-command-center/IMPLEMENTATION-STATUS.md` — status Ruang Iklan (`/ads`)
+6. `docs/accessibility-audit.md` — hasil audit aksesibilitas 16 Nov
 
 ## Kondisi sekarang
 
@@ -44,6 +45,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `e54f6bc4`)
 | Log error lokal, storage usage nyata, pengingat backup | commit `437e70d` |
 | Rate limit login/register/charge (D1) + gerbang ekspor `/api/entitlement` | commit `d01c325` (gate dormant) |
 | Ruang Iklan demo `/ads` | `src/ads/`, `docs/meta-ads-command-center/` |
+| Audit aksesibilitas (axe WCAG A/AA) | `docs/accessibility-audit.md`; Lighthouse landing 1.00; semua layar utama 0 violation |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)
 
@@ -61,8 +63,9 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `e54f6bc4`)
 
 1. **Tes restore backup di HP asli** — ekspor lalu impor ulang; pastikan foto/bab
    IndexedDB ikut kembali. Tidak bisa diotomatiskan dari desktop.
-2. **Audit aksesibilitas** — fokus: fokus keyboard, label tombol ikon, kontras teks
-   kecil, target sentuh ≥44 px, pembaca layar di Beranda/Jurnal/Buku.
+2. **Aksesibilitas lanjutan** — audit dasar selesai (0 violation di layar utama).
+   Sisa: focus trap + Escape untuk modal, roving tabindex di pratinjau buku,
+   audit `/print` per 5 halaman (axe timeout kalau 100 halaman sekaligus).
 3. **Retest payment sandbox** — hanya setelah keputusan user; jangan aktifkan
    `PAYMENT_PAUSED`/tier tanpa izin.
 4. **Ads backend** (menunggu key): D1 `meta_*`, `functions/api/ads/*`, token vault

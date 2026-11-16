@@ -1376,7 +1376,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-[10px] text-stone-400 tracking-wide uppercase">geser hari</span>
+              <span className="text-[10px] text-stone-600 tracking-wide uppercase">geser hari</span>
               <button
                 type="button"
                 id="btn-hari-berikut"
@@ -1415,7 +1415,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                     }`}
                   >
                     <span className={`text-[9px] font-semibold tracking-wider ${
-                      isSelected ? 'text-stone-300' : 'text-stone-400'
+                      isSelected ? 'text-stone-300' : 'text-stone-600'
                     }`}>
                       {day.label}
                     </span>
@@ -1462,7 +1462,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
             {/* Box Header: Date info left, Fruit Badge right */}
             <div className="flex items-start justify-between gap-3 border-b border-stone-100 pb-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block mb-0.5">
                   CATATAN BUNDA
                 </span>
                 <div className="flex items-center flex-wrap gap-1.5">
@@ -1474,7 +1474,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                       HARI INI
                     </span>
                   )}
-                  <span className="text-[11px] text-stone-400 font-sans">
+                  <span className="text-[11px] text-stone-600 font-sans">
                     • Catat hari ini
                   </span>
                 </div>
@@ -1530,7 +1530,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
 
               {/* Suasana hati hari ini — masuk ke buku jurnal & widget Beranda */}
               <div className="flex items-center justify-between gap-2 pt-1">
-                <span className="text-[10px] text-stone-400">Suasana hati</span>
+                <span className="text-[10px] text-stone-600">Suasana hati</span>
                 <div className="flex items-center gap-1.5">
                   {MOOD_CHOICES.map((m, idx) => {
                     const active = weekMoods[selectedDayIndex] === idx;
@@ -1566,7 +1566,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                     ? 'text-rose-500 font-bold'
                     : currentNoteLength >= DAILY_NOTE_MAX_CHARS - 20
                     ? 'text-amber-600'
-                    : 'text-stone-400'
+                    : 'text-stone-600'
                 }`} title="Batas agar catatan muat 2 baris di buku jurnal">
                   {`${currentNoteLength}/${DAILY_NOTE_MAX_CHARS} karakter`}
                 </span>
@@ -1582,7 +1582,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                 </span>
                 <div className="min-w-0">
                   <h4 className="font-serif text-[13px] font-bold text-stone-900">Riwayat catatan</h4>
-                  <p className="text-[10px] text-stone-400">
+                  <p className="text-[10px] text-stone-600">
                     {weekNoteCount}/7 hari terisi minggu ini
                   </p>
                 </div>
@@ -1637,15 +1637,15 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                         </span>
                         <span
                           className={`flex-1 truncate text-[11px] ${
-                            isSelesai ? 'text-stone-600' : 'text-stone-400 italic'
+                            isSelesai ? 'text-stone-600' : 'text-stone-600 italic'
                           }`}
                         >
                           {isSelesai ? noteItem.text : 'Belum ada catatan'}
                         </span>
                         {isOpen ? (
-                          <ChevronUp className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                          <ChevronUp className="w-3.5 h-3.5 text-stone-600 shrink-0" />
                         ) : (
-                          <ChevronDown className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                          <ChevronDown className="w-3.5 h-3.5 text-stone-600 shrink-0" />
                         )}
                       </button>
 
@@ -1656,7 +1656,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                           </p>
                           <div className="flex items-center justify-between gap-2">
                             {noteItem.savedAt ? (
-                              <span className="text-[9px] text-stone-400">Tersimpan {noteItem.savedAt}</span>
+                              <span className="text-[9px] text-stone-600">Tersimpan {noteItem.savedAt}</span>
                             ) : (
                               <span />
                             )}
@@ -1698,7 +1698,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* [HALAMAN KANAN BUKU Statistik Fisik Bunda & Catatan Dokter] */}
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/70 shadow-xs space-y-3.5">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block tracking-wider font-semibold">
+              <span className="text-[9px] uppercase font-sans text-stone-600 block tracking-wider font-semibold">
                 Ikut tercetak di buku
               </span>
               <h4 className="font-serif text-xs sm:text-sm font-bold text-stone-850">
@@ -1748,7 +1748,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                 <label className="text-[9.5px] text-stone-500 font-medium block">
                   Catatan Dokter Obgyn / Bidan:
                 </label>
-                <span className={`text-[9px] ${((momStats.doctorNote || '').length >= 500) ? 'text-rose-500 font-bold' : ((momStats.doctorNote || '').length >= 450) ? 'text-amber-600' : 'text-stone-400'}`}>
+                <span className={`text-[9px] ${((momStats.doctorNote || '').length >= 500) ? 'text-rose-500 font-bold' : ((momStats.doctorNote || '').length >= 450) ? 'text-amber-600' : 'text-stone-600'}`}>
                   {(momStats.doctorNote || '').length}/500
                 </span>
               </div>
@@ -1769,7 +1769,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                   <h5 className="font-serif text-xs font-bold text-stone-850">
                     Foto USG / Perut Minggu ke-{week}
                   </h5>
-                  <p className="text-[9px] text-stone-400">Foto ini ikut tercetak di halaman kanan buku.</p>
+                  <p className="text-[9px] text-stone-600">Foto ini ikut tercetak di halaman kanan buku.</p>
                 </div>
 
                 <label className="px-3 py-1.5 bg-[#556B2F] text-white rounded-lg text-[10px] font-semibold flex items-center gap-1 cursor-pointer hover:bg-[#465926] shadow-2xs transition-colors">
@@ -1822,7 +1822,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                             <span className="text-[8px] font-bold text-stone-800 block truncate">
                               {photoEntry.label || frameTitle}
                             </span>
-                            <span className="text-[7.5px] text-stone-400 block truncate mt-0.5">
+                            <span className="text-[7.5px] text-stone-600 block truncate mt-0.5">
                               {photoEntry.date || defaultDate}
                             </span>
                           </div>
@@ -1843,11 +1843,11 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                         </div>
                       ) : (
                         <label className="w-full h-full border-2 border-dashed border-stone-300 hover:border-[#556B2F] rounded-lg flex flex-col items-center justify-center p-1 cursor-pointer transition-colors text-center group/btn">
-                          <Camera className="w-4 h-4 text-stone-400 group-hover/btn:text-[#556B2F] mb-1" />
+                          <Camera className="w-4 h-4 text-stone-600 group-hover/btn:text-[#556B2F] mb-1" />
                           <span className="text-[8px] font-bold text-stone-600 group-hover/btn:text-[#556B2F]">
                             {idx === 0 ? 'Frame 1' : `Frame ${idx + 1}`}
                           </span>
-                          <span className="text-[7px] text-stone-400">Pilih Foto</span>
+                          <span className="text-[7px] text-stone-600">Pilih Foto</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -1890,9 +1890,9 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                 <span className="flex items-center gap-1 text-[10px] text-stone-500">
                   {isArsipDokterOpen ? 'Tutup' : 'Lihat'}
                   {isArsipDokterOpen ? (
-                    <ChevronUp className="w-3.5 h-3.5 text-stone-400" />
+                    <ChevronUp className="w-3.5 h-3.5 text-stone-600" />
                   ) : (
-                    <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
+                    <ChevronDown className="w-3.5 h-3.5 text-stone-600" />
                   )}
                 </span>
               </button>
@@ -1900,7 +1900,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
               {isArsipDokterOpen && (
                 <div className="mt-2 space-y-2">
                   {arsipDokterList.length === 0 && (
-                    <p className="text-[10.5px] text-stone-400 leading-relaxed">
+                    <p className="text-[10.5px] text-stone-600 leading-relaxed">
                       Belum ada arsip. Simpan catatan dokter minggu ini untuk mulai mengumpulkan riwayat.
                     </p>
                   )}
@@ -1984,7 +1984,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
               <Check className="w-4 h-4 shrink-0" />
               <span className="flex flex-col items-start leading-tight">
                 <span className="font-semibold">Simpan catatan dokter</span>
-                <span className="text-[9.5px] font-normal text-white/80">{saveStatus}</span>
+                <span className="text-[9.5px] font-normal text-white">{saveStatus}</span>
               </span>
             </button>
             </div>
@@ -2061,7 +2061,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                     <p className="text-[11.5px] font-semibold text-stone-800 truncate">
                       {appointment.dokter || 'Dokter belum diisi'}
                     </p>
-                    <p className="text-[10px] text-stone-400 truncate">
+                    <p className="text-[10px] text-stone-600 truncate">
                       {appointment.jenis || 'Kontrol kehamilan'}
                       {appointment.lokasi ? ` \u2022 ${appointment.lokasi}` : ''}
                     </p>
@@ -2083,7 +2083,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                 </div>
 
                 <div className="mt-3 rounded-xl bg-[#FCFAF5] border border-[#EFE8DC] px-3 py-2.5">
-                  <p className="text-[8.5px] uppercase tracking-[0.14em] text-stone-400 font-semibold">Pesan untuk Ayah</p>
+                  <p className="text-[8.5px] uppercase tracking-[0.14em] text-stone-600 font-semibold">Pesan untuk Ayah</p>
                   <p className="font-serif italic text-[12px] text-stone-600 mt-0.5 leading-relaxed line-clamp-3">
                     {appointment.pesanAyah
                       ? `\u201c${appointment.pesanAyah}\u201d`
@@ -2114,7 +2114,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                 Kartu
               </button>
             </div>
-            <p className="text-[9px] text-stone-400 mt-2 leading-snug">
+            <p className="text-[9px] text-stone-600 mt-2 leading-snug">
               Kartu berisi tanggal, dokter, dan pesan Bunda — terkirim sebagai gambar lewat WhatsApp.
             </p>
             <canvas ref={appointmentCanvasRef} width={1080} height={1280} className="hidden" />
@@ -2130,7 +2130,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* Hal 3: Momen Garis Dua */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman 3 Buku</span>
+              <span className="text-[9px] uppercase font-sans text-stone-600 block">Halaman 3 Buku</span>
               <h4 className="font-serif text-sm font-bold text-stone-850">
                 Momen Garis Dua (Test Pack Perdana)
               </h4>
@@ -2161,7 +2161,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
 
             <div>
               <label className="text-[10px] text-stone-500 font-medium block mb-1">
-                Yang Pertama Terlintas di Hati Bunda: <span className="text-stone-400 font-normal">{(bab1Data.motherFeelings || '').length}/500</span>
+                Yang Pertama Terlintas di Hati Bunda: <span className="text-stone-600 font-normal">{(bab1Data.motherFeelings || '').length}/500</span>
               </label>
               <textarea
                 value={bab1Data.motherFeelings}
@@ -2199,7 +2199,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* Hal 4: Reaksi Ayah & Keluarga */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman 4 Buku</span>
+              <span className="text-[9px] uppercase font-sans text-stone-600 block">Halaman 4 Buku</span>
               <h4 className="font-serif text-sm font-bold text-stone-850">
                 Kabar Gembira untuk Ayah & Keluarga
               </h4>
@@ -2233,7 +2233,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* Hal 5: USG Kantung Janin & Detak Pertama */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman 5 Buku</span>
+              <span className="text-[9px] uppercase font-sans text-stone-600 block">Halaman 5 Buku</span>
               <h4 className="font-serif text-sm font-bold text-stone-850">
                 USG Perdana & Detak Pertama
               </h4>
@@ -2310,7 +2310,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* Hal 6: Ngidam & Pantangan */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman 6 Buku</span>
+              <span className="text-[9px] uppercase font-sans text-stone-600 block">Halaman 6 Buku</span>
               <h4 className="font-serif text-sm font-bold text-stone-850">
                 Gejala Awal & Cerita Ngidam
               </h4>
@@ -2363,7 +2363,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* Hal 85: Ide Nama Bayi */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman 85 Buku</span>
+              <span className="text-[9px] uppercase font-sans text-stone-600 block">Halaman 85 Buku</span>
               <h4 className="font-serif text-sm font-bold text-stone-850">
                 Inspirasi Nama Buah Hati
               </h4>
@@ -2433,7 +2433,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* Hal 86: Kamar Si Kecil */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman 86 Buku</span>
+              <span className="text-[9px] uppercase font-sans text-stone-600 block">Halaman 86 Buku</span>
               <h4 className="font-serif text-sm font-bold text-stone-850">
                 Kamar & Box Tidur Si Kecil
               </h4>
@@ -2484,7 +2484,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                     ) : (
                       <Square className="w-4 h-4 text-stone-300 shrink-0" />
                     )}
-                    <span className={(bab3Data as any)[item.k] ? 'text-stone-800 font-medium' : 'text-stone-400 line-through'}>
+                    <span className={(bab3Data as any)[item.k] ? 'text-stone-800 font-medium' : 'text-stone-600 line-through'}>
                       {item.label}
                     </span>
                   </button>
@@ -2496,7 +2496,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* Hal 87-88: Belanja Bayi & Hal 89-90: Tas RS */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman 87-90 Buku</span>
+              <span className="text-[9px] uppercase font-sans text-stone-600 block">Halaman 87-90 Buku</span>
               <h4 className="font-serif text-sm font-bold text-stone-850">
                 Checklist Belanja & Tas Bersalin RS
               </h4>
@@ -2531,7 +2531,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* Hal 91-92: Proses Kelahiran & Tangisan Pertama */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman 91-92 Buku</span>
+              <span className="text-[9px] uppercase font-sans text-stone-600 block">Halaman 91-92 Buku</span>
               <h4 className="font-serif text-sm font-bold text-stone-850">
                 Hari Persalinan & Tangisan Pertama
               </h4>
@@ -2608,7 +2608,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* Hal 93: Biodata Lengkap Sang Bayi */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman 93 Buku</span>
+              <span className="text-[9px] uppercase font-sans text-stone-600 block">Halaman 93 Buku</span>
               <h4 className="font-serif text-sm font-bold text-stone-850">
                 Biodata Lengkap Sang Bayi
               </h4>
@@ -2690,7 +2690,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* Hal 94-96: Cap Kaki, Gelang RS, Foto Keluarga */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman 94-96 Buku</span>
+              <span className="text-[9px] uppercase font-sans text-stone-600 block">Halaman 94-96 Buku</span>
               <h4 className="font-serif text-sm font-bold text-stone-850">
                 Cap Kaki, Gelang RS & Foto Pulang ke Rumah
               </h4>
@@ -2704,9 +2704,9 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                   className="hidden" 
                   onChange={(e) => handleImageFile(e, (src) => setBab4Data({ ...bab4Data, leftFootprintPhoto: src }))}
                 />
-                <Footprints className="w-5 h-5 mx-auto text-stone-400 mb-1" />
+                <Footprints className="w-5 h-5 mx-auto text-stone-600 mb-1" />
                 <span className="text-[10px] font-medium block text-stone-700">Cap Kaki Kiri/Kanan</span>
-                <span className="text-[9px] text-stone-400">{bab4Data.leftFootprintPhoto ? '✓ Foto Terpasang' : 'Unggah foto'}</span>
+                <span className="text-[9px] text-stone-600">{bab4Data.leftFootprintPhoto ? '✓ Foto Terpasang' : 'Unggah foto'}</span>
               </label>
 
               <label className="p-3 border-2 border-dashed border-stone-200 rounded-xl text-center cursor-pointer bg-stone-50 block">
@@ -2716,9 +2716,9 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                   className="hidden" 
                   onChange={(e) => handleImageFile(e, (src) => setBab4Data({ ...bab4Data, familyHomePhoto: src }))}
                 />
-                <Home className="w-5 h-5 mx-auto text-stone-400 mb-1" />
+                <Home className="w-5 h-5 mx-auto text-stone-600 mb-1" />
                 <span className="text-[10px] font-medium block text-stone-700">Foto Keluarga Perdana</span>
-                <span className="text-[9px] text-stone-400">{bab4Data.familyHomePhoto ? '✓ Foto Terpasang' : 'Unggah foto'}</span>
+                <span className="text-[9px] text-stone-600">{bab4Data.familyHomePhoto ? '✓ Foto Terpasang' : 'Unggah foto'}</span>
               </label>
             </div>
           </div>
@@ -2733,7 +2733,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* Hal 97-98: Surat dari Bunda */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman 97-98 Buku</span>
+              <span className="text-[9px] uppercase font-sans text-stone-600 block">Halaman 97-98 Buku</span>
               <h4 className="font-serif text-sm font-bold text-stone-850">
                 Surat Cinta dari Bunda (Buka Usia 17 Tahun)
               </h4>
@@ -2763,7 +2763,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
           {/* Hal 99-100: Surat dari Ayah */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200/70 shadow-xs space-y-3">
             <div className="border-b border-stone-100 pb-2">
-              <span className="text-[9px] uppercase font-sans text-stone-400 block">Halaman 99-100 Buku</span>
+              <span className="text-[9px] uppercase font-sans text-stone-600 block">Halaman 99-100 Buku</span>
               <h4 className="font-serif text-sm font-bold text-stone-850">
                 Surat Cinta dari Ayah
               </h4>
@@ -2832,7 +2832,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsEditAppointmentModalOpen(false)}
-                className="text-stone-400 hover:text-stone-600 p-1 rounded-full cursor-pointer"
+                className="text-stone-600 hover:text-stone-600 p-1 rounded-full cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>

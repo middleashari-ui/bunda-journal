@@ -43,7 +43,7 @@ export const ActivityRingsCard: React.FC = () => {
           </div>
           <div>
             <h4 className="font-serif text-sm font-bold text-stone-850">Kebutuhan Jasmani</h4>
-            <p className="text-[10px] text-stone-400 font-sans">
+            <p className="text-[10px] text-stone-600 font-sans">
               3 Cincin Aktivitas Sehari-hari
             </p>
           </div>
@@ -135,7 +135,7 @@ export const ActivityRingsCard: React.FC = () => {
               <span className="font-serif font-bold text-stone-850 text-base leading-none">
                 {avgProgress}%
               </span>
-              <span className="text-[8.5px] text-stone-400 font-sans mt-0.5 uppercase tracking-wider">
+              <span className="text-[8.5px] text-stone-600 font-sans mt-0.5 uppercase tracking-wider">
                 Hari Ini
               </span>
             </div>
@@ -164,13 +164,14 @@ export const ActivityRingsCard: React.FC = () => {
               </div>
               <div className="truncate">
                 <p className="text-xs font-semibold text-stone-800 truncate">Jalan Santai</p>
-                <p className="text-[9.5px] text-stone-400">Target: {TARGETS.walk} menit</p>
+                <p className="text-[9.5px] text-stone-600">Target: {TARGETS.walk} menit</p>
               </div>
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
+                aria-label="Kurangi target jalan santai 5 menit"
                 onClick={() => updateGoal('walkMinutes', goals.walkMinutes - 5)}
                 className="w-6 h-6 rounded-md bg-white border border-stone-200 text-stone-600 hover:bg-stone-100 flex items-center justify-center cursor-pointer active:scale-95"
               >
@@ -179,16 +180,18 @@ export const ActivityRingsCard: React.FC = () => {
               <div className="flex items-center gap-0.5 bg-white border border-stone-200 rounded-md px-1.5 py-0.5 w-14 justify-center">
                 <input
                   type="number"
+                  aria-label="Target jalan santai (menit)"
                   min="0"
                   max="180"
                   value={goals.walkMinutes}
                   onChange={(e) => updateGoal('walkMinutes', Number(e.target.value))}
                   className="w-8 text-center text-xs font-bold text-stone-850 bg-transparent outline-none"
                 />
-                <span className="text-[9px] text-stone-400">m</span>
+                <span className="text-[9px] text-stone-600">m</span>
               </div>
               <button
                 type="button"
+                aria-label="Tambah target jalan santai 5 menit"
                 onClick={() => updateGoal('walkMinutes', goals.walkMinutes + 5)}
                 className="w-6 h-6 rounded-md bg-white border border-stone-200 text-stone-600 hover:bg-stone-100 flex items-center justify-center cursor-pointer active:scale-95"
               >
@@ -205,13 +208,14 @@ export const ActivityRingsCard: React.FC = () => {
               </div>
               <div className="truncate">
                 <p className="text-xs font-semibold text-stone-800 truncate">Senam & Yoga</p>
-                <p className="text-[9.5px] text-stone-400">Target: {TARGETS.workout} menit</p>
+                <p className="text-[9.5px] text-stone-600">Target: {TARGETS.workout} menit</p>
               </div>
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
+                aria-label="Kurangi target senam dan yoga 5 menit"
                 onClick={() => updateGoal('workoutMinutes', goals.workoutMinutes - 5)}
                 className="w-6 h-6 rounded-md bg-white border border-stone-200 text-stone-600 hover:bg-stone-100 flex items-center justify-center cursor-pointer active:scale-95"
               >
@@ -220,16 +224,18 @@ export const ActivityRingsCard: React.FC = () => {
               <div className="flex items-center gap-0.5 bg-white border border-stone-200 rounded-md px-1.5 py-0.5 w-14 justify-center">
                 <input
                   type="number"
+                  aria-label="Target senam dan yoga (menit)"
                   min="0"
                   max="120"
                   value={goals.workoutMinutes}
                   onChange={(e) => updateGoal('workoutMinutes', Number(e.target.value))}
                   className="w-8 text-center text-xs font-bold text-stone-850 bg-transparent outline-none"
                 />
-                <span className="text-[9px] text-stone-400">m</span>
+                <span className="text-[9px] text-stone-600">m</span>
               </div>
               <button
                 type="button"
+                aria-label="Tambah target senam dan yoga 5 menit"
                 onClick={() => updateGoal('workoutMinutes', goals.workoutMinutes + 5)}
                 className="w-6 h-6 rounded-md bg-white border border-stone-200 text-stone-600 hover:bg-stone-100 flex items-center justify-center cursor-pointer active:scale-95"
               >
@@ -246,13 +252,14 @@ export const ActivityRingsCard: React.FC = () => {
               </div>
               <div className="truncate">
                 <p className="text-xs font-semibold text-stone-800 truncate">Tidur Nyenyak</p>
-                <p className="text-[9.5px] text-stone-400">Target: {TARGETS.sleep} jam</p>
+                <p className="text-[9.5px] text-stone-600">Target: {TARGETS.sleep} jam</p>
               </div>
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
+                aria-label="Kurangi target tidur 30 menit"
                 onClick={() => updateGoal('sleepHours', Math.max(0, goals.sleepHours - 0.5))}
                 className="w-6 h-6 rounded-md bg-white border border-stone-200 text-stone-600 hover:bg-stone-100 flex items-center justify-center cursor-pointer active:scale-95"
               >
@@ -261,6 +268,7 @@ export const ActivityRingsCard: React.FC = () => {
               <div className="flex items-center gap-0.5 bg-white border border-stone-200 rounded-md px-1.5 py-0.5 w-14 justify-center">
                 <input
                   type="number"
+                  aria-label="Target tidur (jam)"
                   step="0.5"
                   min="0"
                   max="16"
@@ -268,10 +276,11 @@ export const ActivityRingsCard: React.FC = () => {
                   onChange={(e) => updateGoal('sleepHours', Number(e.target.value))}
                   className="w-8 text-center text-xs font-bold text-stone-850 bg-transparent outline-none"
                 />
-                <span className="text-[9px] text-stone-400">j</span>
+                <span className="text-[9px] text-stone-600">j</span>
               </div>
               <button
                 type="button"
+                aria-label="Tambah target tidur 30 menit"
                 onClick={() => updateGoal('sleepHours', Math.min(16, goals.sleepHours + 0.5))}
                 className="w-6 h-6 rounded-md bg-white border border-stone-200 text-stone-600 hover:bg-stone-100 flex items-center justify-center cursor-pointer active:scale-95"
               >

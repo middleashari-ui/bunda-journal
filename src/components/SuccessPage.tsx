@@ -195,7 +195,7 @@ export const SuccessPage: React.FC<SuccessPageProps> = ({
         </div>
 
         {/* Security Footer */}
-        <p className="text-center text-[11px] text-stone-500 font-sans">
+        <p className="text-center text-[11px] text-stone-600 font-sans">
           Bunda Journal • www.bundajournal.my.id
         </p>
       </div>

@@ -140,7 +140,8 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                 
                 <label className="block cursor-pointer group">
                   <input 
-                    type="file" 
+                    type="file"
+                    aria-label="Unggah foto"
                     accept="image/*" 
                     className="hidden" 
                     onChange={(e) => handleImageUpload(e, setTestPackPhoto)} 
@@ -176,6 +177,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                   {isFillMode ? (
                     <input 
                       type="text" 
+                      aria-label="Tanggal test pack"
                       value={testPackDate}
                       onChange={(e) => setTestPackDate(e.target.value)}
                       className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none border-b border-transparent hover:border-stone-300 focus:border-[#556B2F]"
@@ -190,6 +192,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                   {isFillMode ? (
                     <input 
                       type="text" 
+                      aria-label="Waktu dan tempat test pack"
                       value={testPackTimePlace}
                       onChange={(e) => setTestPackTimePlace(e.target.value)}
                       className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none border-b border-transparent hover:border-stone-300 focus:border-[#556B2F]"
@@ -207,6 +210,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                 </div>
                 {isFillMode ? (
                   <textarea 
+                    aria-label="Pikiran pertama Bunda"
                     value={motherFirstThought}
                     onChange={(e) => setMotherFirstThought(e.target.value)}
                     rows={3}
@@ -254,6 +258,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                 </div>
                 {isFillMode ? (
                   <textarea 
+                    aria-label="Reaksi Ayah"
                     value={fatherReaction}
                     onChange={(e) => setFatherReaction(e.target.value)}
                     rows={3}
@@ -275,6 +280,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                 </div>
                 {isFillMode ? (
                   <textarea 
+                    aria-label="Reaksi keluarga"
                     value={familyReaction}
                     onChange={(e) => setFamilyReaction(e.target.value)}
                     rows={3}
@@ -346,7 +352,8 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
               />
               <label className="block cursor-pointer group">
                 <input 
-                  type="file" 
+                  type="file"
+                  aria-label="Unggah foto"
                   accept="image/*" 
                   className="hidden" 
                   onChange={(e) => handleImageUpload(e, setUsgPhoto)} 
@@ -382,6 +389,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                 {isFillMode ? (
                   <input 
                     type="text" 
+                    aria-label="Nama rumah sakit"
                     value={hospital}
                     onChange={(e) => setHospital(e.target.value)}
                     className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none"
@@ -396,6 +404,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                 {isFillMode ? (
                   <input 
                     type="text" 
+                    aria-label="Nama dokter"
                     value={doctor}
                     onChange={(e) => setDoctor(e.target.value)}
                     className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none"
@@ -410,6 +419,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                 {isFillMode ? (
                   <input 
                     type="text" 
+                    aria-label="Detak jantung janin"
                     value={heartRate}
                     onChange={(e) => setHeartRate(e.target.value)}
                     className="w-full font-serif font-bold text-[#556B2F] bg-transparent outline-none"
@@ -427,6 +437,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
               </div>
               {isFillMode ? (
                 <textarea 
+                  aria-label="Kesan saat mendengar detak jantung"
                   value={heartbeatImpression}
                   onChange={(e) => setHeartbeatImpression(e.target.value)}
                   rows={2}
@@ -475,6 +486,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                 </div>
                 {isFillMode ? (
                   <textarea 
+                    aria-label="Makanan yang diidamkan"
                     value={cravings}
                     onChange={(e) => setCravings(e.target.value)}
                     rows={3}
@@ -495,6 +507,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                 </div>
                 {isFillMode ? (
                   <textarea 
+                    aria-label="Makanan yang dihindari"
                     value={avoidedFoods}
                     onChange={(e) => setAvoidedFoods(e.target.value)}
                     rows={2}
@@ -515,6 +528,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                 </div>
                 {isFillMode ? (
                   <textarea 
+                    aria-label="Dukungan pasangan"
                     value={partnerSupport}
                     onChange={(e) => setPartnerSupport(e.target.value)}
                     rows={2}

@@ -67,6 +67,7 @@ export const IntroPages: React.FC<IntroPagesProps> = ({ theme, userProfile, isFi
               <input 
                 type="text"
                 placeholder="Nama Bunda"
+                aria-label="Nama Bunda"
                 value={ownerName}
                 onChange={(e) => setOwnerName(e.target.value)}
                 className="w-full text-center font-serif text-base text-lg font-bold bg-transparent focus:outline-hidden"
@@ -79,6 +80,7 @@ export const IntroPages: React.FC<IntroPagesProps> = ({ theme, userProfile, isFi
                 <input 
                   type="text"
                   placeholder="Tanggal HPL"
+                  aria-label="Tanggal HPL"
                   value={hplText}
                   onChange={(e) => setHplText(e.target.value)}
                   className="w-24 text-[9px] font-sans font-medium bg-transparent border-b border-stone-300 focus:outline-hidden"

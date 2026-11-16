@@ -83,7 +83,7 @@ const ScoreRing: React.FC<{ pct: number; size?: number }> = ({ pct, size = 88 })
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="font-serif text-xl font-bold text-stone-800 leading-none">{pct}%</span>
-        <span className="text-[8px] uppercase tracking-widest text-stone-400 mt-0.5">ritme</span>
+        <span className="text-[8px] uppercase tracking-widest text-stone-600 mt-0.5">ritme</span>
       </div>
     </div>
   );
@@ -281,14 +281,14 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
       {/* ===================== HEADER ===================== */}
       <div className="flex items-end justify-between gap-2">
         <div>
-          <p className="text-[9px] uppercase tracking-[0.18em] text-[#8A8178] font-semibold">
+          <p className="text-[9px] uppercase tracking-[0.18em] text-[#6E665C] font-semibold">
             Cerita minggu {weekNum}
           </p>
           <h3 className="font-serif text-[19px] leading-tight text-stone-800 mt-0.5">
             {hasAnyData ? 'Catatan kecil Bunda' : 'Mulai satu cerita'}
           </h3>
           {weekRangeLabel && (
-            <p className="text-[10px] text-stone-400 mt-0.5 font-light">{weekRangeLabel}</p>
+            <p className="text-[10px] text-stone-600 mt-0.5 font-light">{weekRangeLabel}</p>
           )}
         </div>
 
@@ -302,7 +302,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
               className={`px-2.5 py-1 text-[10px] rounded-full capitalize transition-all cursor-pointer ${
                 timeframe === tab
                   ? 'bg-white text-stone-800 font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
-                  : 'text-stone-500 hover:text-stone-700'
+                  : 'text-stone-600 hover:text-stone-700'
               }`}
             >
               {tab}
@@ -326,7 +326,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
           <div className="flex items-center gap-4">
             <ScoreRing pct={timeframe === 'harian' ? Math.round((waterPct + vitaminPct + activityPct) / 3) : score.overallPct} />
             <div className="min-w-0">
-              <p className="text-[9px] uppercase tracking-[0.16em] text-[#8A8178] font-semibold">
+              <p className="text-[9px] uppercase tracking-[0.16em] text-[#6E665C] font-semibold">
                 {timeframe === 'harian'
                   ? dayIsLive
                     ? 'Hari ini'
@@ -349,13 +349,13 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
                   <Droplets className="w-2.5 h-2.5" />
                   {timeframe === 'harian' ? waterPct : score.waterPct}% air
                 </span>
-                <span className="inline-flex items-center gap-1 text-[9.5px] text-[#A25E4B] bg-[#FBEEE9] border border-[#F2DCD4] px-1.5 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-[9.5px] text-[#8F4F3E] bg-[#FBEEE9] border border-[#F2DCD4] px-1.5 py-0.5 rounded-full">
                   <Footprints className="w-2.5 h-2.5" />
                   {timeframe === 'harian' ? activityPct : score.activityPct}% gerak
                 </span>
               </div>
               {timeframe === 'mingguan' && scoreDelta !== null && (
-                <p className={`text-[9.5px] mt-1.5 font-medium ${scoreDelta >= 0 ? 'text-[#556B2F]' : 'text-[#A25E4B]'}`}>
+                <p className={`text-[9.5px] mt-1.5 font-medium ${scoreDelta >= 0 ? 'text-[#556B2F]' : 'text-[#8F4F3E]'}`}>
                   {scoreDelta >= 0 ? '▲' : '▼'} {Math.abs(scoreDelta)}% dibanding minggu lalu
                 </p>
               )}
@@ -384,7 +384,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
                     }`}
                     title={`${d.dayName}: ${hasData ? 'ada catatan' : 'belum ada catatan'}`}
                   >
-                    <span className={`text-[8.5px] uppercase tracking-wider ${isToday ? 'text-[#C87A64] font-bold' : 'text-stone-400'}`}>
+                    <span className={`text-[8.5px] uppercase tracking-wider ${isToday ? 'text-[#A85A44] font-bold' : 'text-stone-600'}`}>
                       {d.dayName}
                     </span>
                     <span className="font-serif text-[12px] leading-none text-stone-700">
@@ -400,7 +400,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
                 );
               })}
             </div>
-            <p className="text-center text-[8.5px] text-stone-400 mt-1.5">
+            <p className="text-center text-[8.5px] text-stone-600 mt-1.5">
               Ketuk hari untuk membaca catatannya
             </p>
           </div>
@@ -412,7 +412,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
         <div className="rounded-[24px] border border-[#EDE6DA] bg-white p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[9px] uppercase tracking-[0.16em] text-[#8A8178] font-semibold">
+              <p className="text-[9px] uppercase tracking-[0.16em] text-[#6E665C] font-semibold">
                 {selectedMood !== null ? MOOD_LABEL[selectedMood] : 'Catatan hari'}
               </p>
               <p className="font-serif text-[15px] text-stone-800 mt-0.5">
@@ -430,7 +430,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
               </p>
             </div>
           ) : (
-            <p className="mt-3 text-[11.5px] text-stone-400 font-light leading-relaxed">
+            <p className="mt-3 text-[11.5px] text-stone-600 font-light leading-relaxed">
               Belum ada tulisan untuk hari ini. Satu kalimat pendek pun cukup untuk dikenang nanti.
             </p>
           )}
@@ -445,7 +445,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
               <div key={i} className="rounded-xl px-1.5 py-2 text-center" style={{ backgroundColor: s.bg }}>
                 <s.icon className="w-3 h-3 mx-auto mb-1" style={{ color: s.color }} />
                 <p className="font-serif text-[13px] font-bold text-stone-800 leading-none">{s.value}</p>
-                <p className="text-[8px] text-stone-500 mt-0.5">{s.label}</p>
+                <p className="text-[8px] text-stone-600 mt-0.5">{s.label}</p>
               </div>
             ))}
           </div>
@@ -470,7 +470,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
           {/* Kartu kenangan: catatan terpanjang / foto minggu */}
           <div className="rounded-[24px] border border-[#EDE6DA] bg-white p-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[9px] uppercase tracking-[0.16em] text-[#8A8178] font-semibold">
+              <p className="text-[9px] uppercase tracking-[0.16em] text-[#6E665C] font-semibold">
                 Momen minggu ini
               </p>
               <span aria-hidden className="w-6 h-px bg-[#D9D2C5]" />
@@ -490,7 +490,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
                 </span>
               </button>
             ) : (
-              <p className="text-[11px] text-stone-400 font-light leading-relaxed">
+              <p className="text-[11px] text-stone-600 font-light leading-relaxed">
                 Belum ada tulisan minggu ini. Cerita paling sederhana pun layak disimpan.
               </p>
             )}
@@ -516,7 +516,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
                     {storedPhoto ? (
                       <img src={storedPhoto} alt={`Momen minggu ${weekNum}`} className="w-full h-full object-cover" />
                     ) : (
-                      <Camera className="w-5 h-5 text-stone-400" />
+                      <Camera className="w-5 h-5 text-stone-600" />
                     )}
                     {onUpdatePhoto && (
                       <span className="absolute inset-0 bg-black/35 text-white text-[9.5px] font-medium flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -525,12 +525,12 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
                       </span>
                     )}
                   </div>
-                  <p className="mt-1.5 text-center font-serif italic text-[10px] text-stone-500 truncate px-1">
+                  <p className="mt-1.5 text-center font-serif italic text-[10px] text-stone-600 truncate px-1">
                     {storedPhoto ? `Momen minggu ${weekNum}` : 'Belum ada foto minggu ini'}
                   </p>
                 </div>
               </button>
-              <p className="text-center text-[9px] text-stone-400 mt-2 leading-snug">
+              <p className="text-center text-[9px] text-stone-600 mt-2 leading-snug">
                 {storedPhoto
                   ? 'Foto ini akan ikut tercetak di buku kenangan.'
                   : onUpdatePhoto
@@ -544,30 +544,30 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
           <div className="rounded-[22px] border border-[#EDE6DA] bg-white/70 px-4 py-3">
             <div className="grid grid-cols-3 divide-x divide-[#F0EAE0] text-center">
               <div>
-                <p className="text-[8.5px] uppercase tracking-wider text-stone-400">Air</p>
+                <p className="text-[8.5px] uppercase tracking-wider text-stone-600">Air</p>
                 <p className="font-serif text-[15px] text-stone-800 mt-0.5">
                   {totalWaterLiters > 0 ? totalWaterLiters.toFixed(1) : '0'}{' '}
-                  <span className="text-[9px] text-stone-400">L</span>
+                  <span className="text-[9px] text-stone-600">L</span>
                 </p>
-                <p className="text-[8px] text-stone-400">total minggu</p>
+                <p className="text-[8px] text-stone-600">total minggu</p>
               </div>
               <div>
-                <p className="text-[8.5px] uppercase tracking-wider text-stone-400">Gerak</p>
+                <p className="text-[8.5px] uppercase tracking-wider text-stone-600">Gerak</p>
                 <p className="font-serif text-[15px] text-stone-800 mt-0.5">
                   {days.reduce((a, d) => a + d.activityMinutes, 0)}{' '}
-                  <span className="text-[9px] text-stone-400">mnt</span>
+                  <span className="text-[9px] text-stone-600">mnt</span>
                 </p>
-                <p className="text-[8px] text-stone-400">jalan & senam</p>
+                <p className="text-[8px] text-stone-600">jalan & senam</p>
               </div>
               <div>
-                <p className="text-[8.5px] uppercase tracking-wider text-stone-400">Tidur</p>
+                <p className="text-[8.5px] uppercase tracking-wider text-stone-600">Tidur</p>
                 <p className="font-serif text-[15px] text-stone-800 mt-0.5">
                   {days.filter((d) => d.sleepHours > 0).length
                     ? (days.reduce((a, d) => a + d.sleepHours, 0) / days.filter((d) => d.sleepHours > 0).length).toFixed(1)
                     : '0'}{' '}
-                  <span className="text-[9px] text-stone-400">jam</span>
+                  <span className="text-[9px] text-stone-600">jam</span>
                 </p>
-                <p className="text-[8px] text-stone-400">rerata malam</p>
+                <p className="text-[8px] text-stone-600">rerata malam</p>
               </div>
             </div>
           </div>
@@ -578,7 +578,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
       {timeframe === 'bulanan' && (
         <div className="rounded-[26px] border border-[#EDE6DA] bg-[#FDFBF7] p-5 space-y-4 animate-in fade-in slide-in-from-bottom-1 duration-300">
           <div className="flex items-center justify-between">
-            <p className="text-[9px] uppercase tracking-[0.16em] text-[#8A8178] font-semibold">
+            <p className="text-[9px] uppercase tracking-[0.16em] text-[#6E665C] font-semibold">
               Rekap minggu ini
             </p>
             <span className="text-[9px] text-[#556B2F] bg-[#F1F4EA] border border-[#E3E9D6] px-2 py-0.5 rounded-full">
@@ -590,7 +590,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
             <p className="font-serif text-[26px] leading-tight text-stone-800">
               {wordCount} kata tentang si kecil
             </p>
-            <p className="text-[11px] text-stone-500 mt-1.5 font-light leading-relaxed">
+            <p className="text-[11px] text-stone-600 mt-1.5 font-light leading-relaxed">
               Ritme minggu ini: <span className="text-stone-700 font-medium">{score.vitaminPct}% vitamin</span>,{' '}
               <span className="text-stone-700 font-medium">{score.waterPct}% air</span>,{' '}
               <span className="text-stone-700 font-medium">{score.activityPct}% gerak</span>. Angka ini bukan
@@ -605,7 +605,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
               { label: 'Gerak & aktivitas', pct: score.activityPct, color: '#A25E4B' },
             ].map((row) => (
               <div key={row.label}>
-                <div className="flex items-center justify-between text-[9.5px] text-stone-500 mb-1">
+                <div className="flex items-center justify-between text-[9.5px] text-stone-600 mb-1">
                   <span>{row.label}</span>
                   <span className="font-semibold text-stone-700">{row.pct}%</span>
                 </div>
@@ -619,7 +619,7 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
             ))}
           </div>
 
-          <p className="font-serif italic text-[11.5px] text-stone-500 leading-relaxed border-t border-[#F0EAE0] pt-3">
+          <p className="font-serif italic text-[11.5px] text-stone-600 leading-relaxed border-t border-[#F0EAE0] pt-3">
             “Suatu hari nanti, halaman ini akan dibaca oleh orang yang paling Bunda cintai — dan ia akan tahu
             betapa ia ditunggu.”
           </p>
@@ -629,10 +629,10 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
       {/* ===================== PEMANTAUAN JASMANI ===================== */}
       <div className="rounded-[22px] border border-[#EDE6DA] bg-white px-4 py-3">
         <div className="flex items-center justify-between">
-          <p className="text-[9px] uppercase tracking-[0.16em] text-[#8A8178] font-semibold">
+          <p className="text-[9px] uppercase tracking-[0.16em] text-[#6E665C] font-semibold">
             Gerak &amp; Tidur Bunda
           </p>
-          <span className="text-[9.5px] text-stone-400">{jasmaniLabel}</span>
+          <span className="text-[9.5px] text-stone-600">{jasmaniLabel}</span>
         </div>
 
         <div className="grid grid-cols-3 gap-2 mt-2">
@@ -647,16 +647,16 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
             },
           ].map((item) => (
             <div key={item.label}>
-              <p className="text-[9px] text-stone-500">{item.dot} {item.label}</p>
+              <p className="text-[9px] text-stone-600">{item.dot} {item.label}</p>
               <p className="font-serif text-[14px] font-semibold text-stone-800 leading-tight mt-0.5">
                 {item.value}
               </p>
-              <p className="text-[8.5px] text-stone-400">{item.pct}% dari target</p>
+              <p className="text-[8.5px] text-stone-600">{item.pct}% dari target</p>
             </div>
           ))}
         </div>
 
-        <p className="text-[9px] text-stone-400 mt-2">
+        <p className="text-[9px] text-stone-600 mt-2">
           {jasmani.days} hari tercatat · ringkasan {timeframe}
         </p>
       </div>
@@ -664,9 +664,9 @@ const DashboardOverviewInner: React.FC<DashboardOverviewProps> = ({ week, onOpen
       {/* ===================== EMPTY STATE ===================== */}
       {!hasAnyData && (
         <div className="rounded-[22px] border border-dashed border-[#DED6C8] bg-white/60 p-4 text-center">
-          <BookHeart className="w-5 h-5 text-[#C87A64] mx-auto mb-1.5" />
+          <BookHeart className="w-5 h-5 text-[#A85A44] mx-auto mb-1.5" />
           <p className="font-serif text-[13px] text-stone-700">Belum ada cerita minggu ini</p>
-          <p className="text-[10.5px] text-stone-500 mt-1 font-light leading-relaxed">
+          <p className="text-[10.5px] text-stone-600 mt-1 font-light leading-relaxed">
             Catat suplemen, air, atau satu kalimat hari ini. Ringkasan akan tumbuh sendiri.
           </p>
         </div>

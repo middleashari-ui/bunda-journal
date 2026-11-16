@@ -145,6 +145,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                       <input 
                         type="text" 
                         placeholder="Contoh: Pukul 02:30 Dini Hari"
+                        aria-label="Waktu kontraksi pertama"
                         value={contractionTime}
                         onChange={(e) => setContractionTime(e.target.value)}
                         className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none whitespace-normal break-words"
@@ -160,6 +161,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                       <input 
                         type="text" 
                         placeholder="Contoh: Pukul 04:15 Pagi"
+                        aria-label="Waktu tiba di rumah sakit"
                         value={arrivalTime}
                         onChange={(e) => setArrivalTime(e.target.value)}
                         className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none whitespace-normal break-words"
@@ -176,6 +178,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                   </div>
                   {isFillMode ? (
                     <textarea 
+                      aria-label="Cerita proses persalinan"
                       value={laborStory}
                       onChange={(e) => setLaborStory(e.target.value)}
                       rows={5}
@@ -217,7 +220,8 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                 
                 <label className="block cursor-pointer group">
                   <input 
-                    type="file" 
+                    type="file"
+                    aria-label="Unggah foto"
                     accept="image/*" 
                     className="hidden" 
                     onChange={(e) => handleImageUpload(e, setBirthPhoto)} 
@@ -252,6 +256,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                 </div>
                 {isFillMode ? (
                   <textarea 
+                    aria-label="Perasaan saat menggendong bayi"
                     value={holdingBabyFeeling}
                     onChange={(e) => setHoldingBabyFeeling(e.target.value)}
                     rows={3}
@@ -300,6 +305,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                   {isFillMode ? (
                     <input 
                       type="text"
+                      aria-label="Nama bayi"
                       value={babyName}
                       onChange={(e) => setBabyName(e.target.value)}
                       className="font-serif text-lg text-xl font-bold text-center w-full bg-transparent outline-none mt-0.5" 
@@ -316,6 +322,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                     {isFillMode ? (
                       <input 
                         type="text" 
+                        aria-label="Tanggal lahir"
                         value={birthDate} 
                         onChange={(e) => setBirthDate(e.target.value)}
                         className="w-full font-bold text-stone-850 bg-transparent outline-none" 
@@ -328,6 +335,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                     {isFillMode ? (
                       <input 
                         type="text" 
+                        aria-label="Jam lahir"
                         value={birthTime} 
                         onChange={(e) => setBirthTime(e.target.value)}
                         className="w-full font-bold text-stone-850 bg-transparent outline-none" 
@@ -340,6 +348,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                     {isFillMode ? (
                       <input 
                         type="text" 
+                        aria-label="Berat lahir"
                         value={birthWeight} 
                         onChange={(e) => setBirthWeight(e.target.value)}
                         className="w-full font-bold text-stone-850 bg-transparent outline-none" 
@@ -352,6 +361,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                     {isFillMode ? (
                       <input 
                         type="text" 
+                        aria-label="Panjang lahir"
                         value={birthLength} 
                         onChange={(e) => setBirthLength(e.target.value)}
                         className="w-full font-bold text-stone-850 bg-transparent outline-none" 
@@ -364,6 +374,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                     {isFillMode ? (
                       <input 
                         type="text" 
+                        aria-label="Lingkar kepala"
                         value={headCircumference} 
                         onChange={(e) => setHeadCircumference(e.target.value)}
                         className="w-full font-bold text-stone-850 bg-transparent outline-none" 
@@ -376,6 +387,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                     {isFillMode ? (
                       <input 
                         type="text" 
+                        aria-label="Golongan darah"
                         value={bloodType} 
                         onChange={(e) => setBloodType(e.target.value)}
                         className="w-full font-bold text-stone-850 bg-transparent outline-none" 
@@ -414,7 +426,8 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <label className="block cursor-pointer">
                   <input 
-                    type="file" 
+                    type="file"
+                    aria-label="Unggah foto"
                     accept="image/*" 
                     className="hidden" 
                     onChange={(e) => handleImageUpload(e, setLeftFootprint)} 
@@ -434,7 +447,8 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
 
                 <label className="block cursor-pointer">
                   <input 
-                    type="file" 
+                    type="file"
+                    aria-label="Unggah foto"
                     accept="image/*" 
                     className="hidden" 
                     onChange={(e) => handleImageUpload(e, setRightFootprint)} 
@@ -496,7 +510,8 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                 
                 <label className="block cursor-pointer mt-2">
                   <input 
-                    type="file" 
+                    type="file"
+                    aria-label="Unggah foto"
                     accept="image/*" 
                     className="hidden" 
                     onChange={(e) => handleImageUpload(e, setBabyWristbandPhoto)} 
@@ -521,7 +536,8 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                 
                 <label className="block cursor-pointer mt-2">
                   <input 
-                    type="file" 
+                    type="file"
+                    aria-label="Unggah foto"
                     accept="image/*" 
                     className="hidden" 
                     onChange={(e) => handleImageUpload(e, setMomWristbandPhoto)} 
@@ -562,7 +578,8 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
               
               <label className="block cursor-pointer group">
                 <input 
-                  type="file" 
+                  type="file"
+                  aria-label="Unggah foto"
                   accept="image/*" 
                   className="hidden" 
                   onChange={(e) => handleImageUpload(e, setFamilyPhoto)} 

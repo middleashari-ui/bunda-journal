@@ -88,6 +88,7 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
               <div>
                 {isFillMode ? (
                   <textarea 
+                    aria-label="Surat Bunda bagian 1"
                     value={bundaLetterPart1}
                     onChange={(e) => setBundaLetterPart1(e.target.value)}
                     rows={12}
@@ -124,6 +125,7 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
               <div>
                 {isFillMode ? (
                   <textarea 
+                    aria-label="Surat Bunda bagian 2"
                     value={bundaLetterPart2}
                     onChange={(e) => setBundaLetterPart2(e.target.value)}
                     rows={9}
@@ -146,6 +148,7 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
                   {isFillMode ? (
                     <input 
                       type="text" 
+                      aria-label="Nama penanda tangan Bunda"
                       value={bundaSignName}
                       onChange={(e) => setBundaSignName(e.target.value)}
                       className="font-serif text-sm font-bold block text-right bg-transparent outline-none w-full"
@@ -187,6 +190,7 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
             <div>
               {isFillMode ? (
                 <textarea 
+                  aria-label="Surat Ayah bagian 1"
                   value={ayahLetterPart1}
                   onChange={(e) => setAyahLetterPart1(e.target.value)}
                   rows={12}
@@ -223,6 +227,7 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
             <div>
               {isFillMode ? (
                 <textarea 
+                  aria-label="Surat Ayah bagian 2"
                   value={ayahLetterPart2}
                   onChange={(e) => setAyahLetterPart2(e.target.value)}
                   rows={8}
@@ -245,6 +250,7 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
                 {isFillMode ? (
                   <input 
                     type="text" 
+                    aria-label="Nama penanda tangan Ayah"
                     value={ayahSignName}
                     onChange={(e) => setAyahSignName(e.target.value)}
                     className="font-serif text-sm font-bold block text-right bg-transparent outline-none w-full"

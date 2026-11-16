@@ -962,7 +962,7 @@ export default function App() {
             {/* App Sticky Header */}
             <header className="px-5 pt-3 pb-2.5 flex items-center justify-between border-b border-stone-200/50 bg-[#F5F2EB]/95 backdrop-blur-md sticky top-0 z-30">
               <div className="flex items-center gap-2">
-                <img src="/bunda_journal_FINAL_BIG.png" className="h-20 w-40 object-contain" />
+                <img src="/bunda_journal_FINAL_BIG.png" alt="Bunda Journal" className="h-20 w-40 object-contain" />
               </div>
               <div className="text-[11px] font-sans font-medium text-stone-600 bg-stone-200/50 px-2.5 py-0.5 rounded-full">
                 W{week} • Trimester {week <= 13 ? 1 : week <= 27 ? 2 : 3}
@@ -1126,7 +1126,7 @@ export default function App() {
                     setIsBookPreviewOpen(false);
                   }} 
                   className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
-                    activeTab === 'home' && !isBookPreviewOpen ? 'text-[#556B2F] font-semibold' : 'text-stone-400 hover:text-stone-700'
+                    activeTab === 'home' && !isBookPreviewOpen ? 'text-[#556B2F] font-semibold' : 'text-stone-600 hover:text-stone-800'
                   }`}
                 >
                   <Home className={`w-5 h-5 ${activeTab === 'home' && !isBookPreviewOpen ? 'stroke-[2.5]' : 'stroke-1.5'}`} />
@@ -1140,7 +1140,7 @@ export default function App() {
                     setIsBookPreviewOpen(false);
                   }} 
                   className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
-                    activeTab === 'jurnal' && !isBookPreviewOpen ? 'text-[#556B2F] font-semibold' : 'text-stone-400 hover:text-stone-700'
+                    activeTab === 'jurnal' && !isBookPreviewOpen ? 'text-[#556B2F] font-semibold' : 'text-stone-600 hover:text-stone-800'
                   }`}
                 >
                   <BookMarked className={`w-5 h-5 ${activeTab === 'jurnal' && !isBookPreviewOpen ? 'stroke-[2.5]' : 'stroke-1.5'}`} />
@@ -1154,7 +1154,7 @@ export default function App() {
                     setIsBookPreviewOpen(false);
                   }} 
                   className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
-                    activeTab === 'studio' ? 'text-[#556B2F] font-semibold' : 'text-stone-400 hover:text-stone-700'
+                    activeTab === 'studio' ? 'text-[#556B2F] font-semibold' : 'text-stone-600 hover:text-stone-800'
                   }`}
                 >
                   <BookOpen className={`w-5 h-5 ${activeTab === 'studio' ? 'stroke-[2.5]' : 'stroke-1.5'}`} />
@@ -1168,7 +1168,7 @@ export default function App() {
                     setIsBookPreviewOpen(false);
                   }} 
                   className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
-                    activeTab === 'profil' && !isBookPreviewOpen ? 'text-[#556B2F] font-semibold' : 'text-stone-400 hover:text-stone-700'
+                    activeTab === 'profil' && !isBookPreviewOpen ? 'text-[#556B2F] font-semibold' : 'text-stone-600 hover:text-stone-800'
                   }`}
                 >
                   <User className={`w-5 h-5 ${activeTab === 'profil' && !isBookPreviewOpen ? 'stroke-[2.5]' : 'stroke-1.5'}`} />

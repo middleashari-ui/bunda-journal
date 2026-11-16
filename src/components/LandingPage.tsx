@@ -64,9 +64,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
       <header className="sticky top-[var(--safe-area-inset-top)] z-30 bg-[#FAFAF9]/80 backdrop-blur-[12px] border-b border-[#E5E5E5]">
         <div className="max-w-[1120px] mx-auto px-6 md:px-8 h-[56px] flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <div className="cursor-pointer" onClick={onEnterApp}>
-              <img src="/bunda_journal_FINAL_BIG.png" className="h-12 md:h-14 w-auto" />
-            </div>
+            <button
+              type="button"
+              onClick={onEnterApp}
+              aria-label="Bunda Journal — buka aplikasi"
+              className="cursor-pointer bg-transparent border-0 p-0"
+            >
+              <img src="/bunda_journal_FINAL_BIG.png" alt="Bunda Journal" className="h-12 md:h-14 w-auto" />
+            </button>
             <nav className="hidden md:flex items-center gap-6 text-[13px] text-[#666]">
               <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-[#111] transition-colors">
                 Beranda
@@ -125,6 +130,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
         </div>
       )}
 
+      <main>
       {/* SECTION 1: HERO */}
       <section className="max-w-[1120px] mx-auto px-6 md:px-8 pt-16 md:pt-24 pb-16 md:pb-20">
         <div className="grid md:grid-cols-[1.1fr_0.9fr] gap-12 md:gap-8 items-start">
@@ -188,7 +194,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
       <section className="border-y border-[#E5E5E5] bg-white">
         <div className="max-w-[1120px] mx-auto px-6 md:px-8 py-14 md:py-20">
           <div className="max-w-[560px] mb-10">
-            <div className="text-[11px] tracking-[0.08em] text-[#999] mb-3 font-medium">LIHAT APP-NYA</div>
+            <div className="text-[11px] tracking-[0.08em] text-[#6B6B6B] mb-3 font-medium">LIHAT APP-NYA</div>
             <h2 className="serif text-[28px] md:text-[36px] leading-[1.05] tracking-[-0.02em] text-[#111] mb-3">
               Ini yang Bunda lihat setiap hari.
             </h2>
@@ -242,7 +248,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
             <div className="w-8 h-8 rounded-[8px] border border-[#E5E5E5] flex items-center justify-center mb-4 text-[#111]">
               <Activity className="w-4 h-4" />
             </div>
-            <div className="text-[11px] tracking-[0.08em] text-[#999] mb-2 font-medium">
+            <div className="text-[11px] tracking-[0.08em] text-[#6B6B6B] mb-2 font-medium">
               WHO CURVE • P10-P50-P90
             </div>
             <div className="serif text-[18px] leading-[1.1] mb-2 text-[#111]">
@@ -268,7 +274,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
             <div className="w-8 h-8 rounded-[8px] border border-[#E5E5E5] flex items-center justify-center mb-4 text-[#111]">
               <Apple className="w-4 h-4" />
             </div>
-            <div className="text-[11px] tracking-[0.08em] text-[#999] mb-2 font-medium">
+            <div className="text-[11px] tracking-[0.08em] text-[#6B6B6B] mb-2 font-medium">
               MILESTONE • W37
             </div>
             <div className="serif text-[18px] leading-[1.1] mb-2 text-[#111]">
@@ -284,7 +290,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
               </div>
               <div className="text-[11px] leading-[1.2]">
                 <div className="font-medium text-[#111]">W37 • 2.9kg est.</div>
-                <div className="text-[#999]">Siap lahir kapan aja</div>
+                <div className="text-[#6B6B6B]">Siap lahir kapan aja</div>
               </div>
               <div className="ml-auto text-[10px] px-2 py-1 rounded-[6px] bg-[#111] text-white">
                 P50
@@ -297,7 +303,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
             <div className="w-8 h-8 rounded-[8px] border border-[#E5E5E5] flex items-center justify-center mb-4 text-[#111]">
               <Heart className="w-4 h-4" />
             </div>
-            <div className="text-[11px] tracking-[0.08em] text-[#999] mb-2 font-medium">
+            <div className="text-[11px] tracking-[0.08em] text-[#6B6B6B] mb-2 font-medium">
               3 RINGS • JASMANI
             </div>
             <div className="serif text-[18px] leading-[1.1] mb-2 text-[#111]">
@@ -324,7 +330,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
             <div className="w-8 h-8 rounded-[8px] border border-[#E5E5E5] flex items-center justify-center mb-4 text-[#111]">
               <MessageCircle className="w-4 h-4" />
             </div>
-            <div className="text-[11px] tracking-[0.08em] text-[#999] mb-2 font-medium">
+            <div className="text-[11px] tracking-[0.08em] text-[#6B6B6B] mb-2 font-medium">
               JADWAL • KIRIM KE AYAH
             </div>
             <div className="serif text-[18px] leading-[1.1] mb-2 text-[#111]">
@@ -334,8 +340,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
             <p className="text-[12px] leading-[1.5] text-[#666] mb-4">
               Isi sekali. Kartu berisi tanggal, dokter, dan pesan Bunda siap dikirim lewat WhatsApp.
             </p>
-            <div className="mt-auto flex items-center gap-2 h-[32px] px-2.5 rounded-[6px] bg-[#25D366] text-white">
-              <MessageCircle className="w-4 h-4" />
+            <div className="mt-auto flex items-center gap-2 h-[32px] px-2.5 rounded-[6px] bg-[#25D366] text-[#0B2E1E]">
+              <MessageCircle className="w-4 h-4" aria-hidden="true" />
               <span className="text-[11px]">Kirim ke Ayah</span>
             </div>
           </div>
@@ -345,7 +351,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
             <div className="w-8 h-8 rounded-[8px] border border-[#E5E5E5] flex items-center justify-center mb-4 text-[#111]">
               <Palette className="w-4 h-4" />
             </div>
-            <div className="text-[11px] tracking-[0.08em] text-[#999] mb-2 font-medium">
+            <div className="text-[11px] tracking-[0.08em] text-[#6B6B6B] mb-2 font-medium">
               5 TEMA • PREVIEW = CETAK
             </div>
             <div className="serif text-[18px] leading-[1.1] mb-2 text-[#111]">
@@ -367,7 +373,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
             <div className="w-8 h-8 rounded-[8px] border border-[#E5E5E5] flex items-center justify-center mb-4 text-[#111]">
               <Droplets className="w-4 h-4" />
             </div>
-            <div className="text-[11px] tracking-[0.08em] text-[#999] mb-2 font-medium">
+            <div className="text-[11px] tracking-[0.08em] text-[#6B6B6B] mb-2 font-medium">
               SUPLEMEN & AIR • 1.5/2.0L
             </div>
             <div className="serif text-[18px] leading-[1.1] mb-2 text-[#111]">
@@ -378,7 +384,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
               Ceklis 1.5L / 2.0L + suplemen. Bukan tracking kalori bikin stres.
             </p>
             <div className="mt-auto">
-              <div className="flex justify-between text-[10px] text-[#999] mb-1">
+              <div className="flex justify-between text-[10px] text-[#6B6B6B] mb-1">
                 <span>Air hari ini</span>
                 <span>1.5 / 2.0L</span>
               </div>
@@ -405,18 +411,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
 
             {/* Live Toggle Simulation (Sebelum Bayar vs Setelah Bayar) */}
             <div className="flex items-center gap-2 text-[11px]">
-              <span className={!isPaidPreview ? "text-[#111] font-medium" : "text-[#999]"}>
+              <span className={!isPaidPreview ? "text-[#111] font-medium" : "text-[#6B6B6B]"}>
                 Sebelum bayar
               </span>
               <button 
+                type="button"
+                role="switch"
+                aria-checked={isPaidPreview}
+                aria-label="Pratinjau tampilan setelah bayar"
                 onClick={() => setIsPaidPreview(!isPaidPreview)}
                 className={`relative w-[36px] h-[20px] rounded-full transition-colors cursor-pointer ${isPaidPreview ? "bg-[#111]" : "bg-[#E5E5E5]"}`}
               >
                 <span 
+                  aria-hidden="true"
                   className={`absolute top-[2px] w-[16px] h-[16px] rounded-full bg-white shadow-sm transition-all ${isPaidPreview ? "left-[18px]" : "left-[2px]"}`}
                 />
               </button>
-              <span className={isPaidPreview ? "text-[#111] font-medium" : "text-[#999]"}>
+              <span className={isPaidPreview ? "text-[#111] font-medium" : "text-[#6B6B6B]"}>
                 Setelah bayar
               </span>
             </div>
@@ -477,7 +488,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
 
               {/* Plan 2: Hardcover Cetak Fisik */}
               <div className="bg-white p-6 md:p-8 flex flex-col rounded-[11px]">
-                <div className="text-[11px] tracking-[0.08em] text-[#999] mb-3 flex items-center gap-2 font-medium">
+                <div className="text-[11px] tracking-[0.08em] text-[#6B6B6B] mb-3 flex items-center gap-2 font-medium">
                   <span>HARDCOVER CETAK FISIK</span>
                   <span className="px-2 py-0.5 rounded-[4px] bg-[#556B2F]/10 text-[#556B2F] font-bold text-[9px]">
                     FISIK
@@ -485,7 +496,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                 </div>
                 <div className="flex items-baseline gap-2 mb-1">
                   <span className="serif text-[32px] md:text-[36px] leading-none text-[#111]">Rp249rb</span>
-                  <span className="text-[12px] text-[#999]">cetak + kirim</span>
+                  <span className="text-[12px] text-[#6B6B6B]">cetak + kirim</span>
                 </div>
                 <div className="text-[12px] text-[#666] mb-6">Buku cetak fisik 100 halaman A4</div>
                 <ul className="space-y-3 text-[13px] text-[#444] mb-8">
@@ -514,7 +525,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                 >
                   {PAYMENT_PAUSED ? 'Cetak Fisik Segera Hadir' : 'Pesan Cetak Fisik — Rp 249rb'}
                 </button>
-                <div className="mt-3 text-[10px] text-stone-400 text-center">
+                <div className="mt-3 text-[10px] text-stone-600 text-center">
                   Siap kirim setelah kehamilan selesai
                 </div>
               </div>
@@ -569,7 +580,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                 {/* Receipt Card */}
                 <div className="bg-white p-6 flex flex-col justify-center gap-4 border-l border-emerald-100">
                   <div className="rounded-[8px] border border-[#E5E5E5] p-4 bg-[#FAFAF9]">
-                    <div className="text-[11px] text-[#999] mb-1 font-medium">INVOICE PEMBAYARAN</div>
+                    <div className="text-[11px] text-[#6B6B6B] mb-1 font-medium">INVOICE PEMBAYARAN</div>
                     <div className="serif text-[18px] text-[#111] mb-2 font-normal">VIP Memorable • Lunas</div>
                     <div className="text-[11px] text-[#666] flex justify-between py-1 border-b border-[#E5E5E5]">
                       <span>Nominal</span>
@@ -590,13 +601,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
           )}
         </div>
       </section>
+      </main>
 
       {/* FOOTER */}
       <footer className="max-w-[1120px] mx-auto px-6 md:px-8 py-10">
         <div className="flex flex-col md:flex-row items-start justify-between gap-8">
           <div>
             <div className="serif text-[20px] font-normal text-[#111]">bunda.</div>
-            <div className="mt-2 text-[11px] leading-[1.5] text-[#999] max-w-[280px]">
+            <div className="mt-2 text-[11px] leading-[1.5] text-[#6B6B6B] max-w-[280px]">
               Jurnal kehamilan untuk Bunda yang ingin menyimpan kenangan. Dibuat offline-first, tanpa langganan.
             </div>
           </div>
@@ -621,7 +633,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
             </div>
           </div>
 
-          <div className="text-[11px] text-[#999]">
+          <div className="text-[11px] text-[#6B6B6B]">
             © 2026 BUN - Bunda Journal<br />
             support@bundajournal.my.id<br />
             Midtrans: GoPay QRIS, Bank Transfer VA, GoPay eMoney, BSI VA - HTTPS Secured
@@ -650,7 +662,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                 <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]" />
                 <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
                 <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F]" />
-                <span className="ml-3 text-[11px] text-[#999] font-mono">bunda-jurnal-preview.pdf</span>
+                <span className="ml-3 text-[11px] text-[#6B6B6B] font-mono">bunda-jurnal-preview.pdf</span>
               </div>
               <button 
                 onClick={() => setIsPreviewModalOpen(false)}
@@ -671,7 +683,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                       Lemon 🍋
                     </div>
                     <div className="mt-4 flex-1 rounded-[6px] bg-white border border-[#E5E5E5] p-3 shadow-2xs">
-                      <div className="text-[10px] text-[#999] tracking-widest mb-2 font-mono">
+                      <div className="text-[10px] text-[#6B6B6B] tracking-widest mb-2 font-mono">
                         USG 4D • 5.4CM • P50
                       </div>
                       <div className="aspect-[4/3] bg-[#111] rounded-[4px] relative overflow-hidden flex items-center justify-center">
@@ -702,7 +714,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
 
                 {/* Explanations */}
                 <div>
-                  <div className="text-[11px] tracking-[0.08em] text-[#999] mb-3 font-medium">
+                  <div className="text-[11px] tracking-[0.08em] text-[#6B6B6B] mb-3 font-medium">
                     APA ISINYA?
                   </div>
                   <h3 className="serif text-[20px] leading-[1.1] mb-4 text-[#111]">

@@ -639,7 +639,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
             {/* Dropdown Pemilih Bab */}
             <div className="relative flex items-center max-w-[65%] sm:max-w-[70%]">
               <select
-                value={getCurrentChapterId()}
+                value={getCurrentChapterId()} aria-label="Pilih bab"
                 onChange={(e) => handleChapterSelect(e.target.value)}
                 className="bg-stone-800 text-stone-200 text-[11px] font-medium py-0.5 pl-2 pr-6 rounded-md border border-stone-700 truncate cursor-pointer appearance-none focus:outline-none focus:border-[#556B2F]"
                 title="Pilih Bab"
@@ -661,7 +661,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
 
           {/* Slider Garis Progres Hijau */}
           <input 
-            type="range"
+            type="range" aria-label="Posisi halaman"
             min="0"
             max="49"
             value={currentSpreadIndex}
@@ -727,7 +727,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
                 <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Cari halaman atau bab..."
+                  placeholder="Cari halaman atau bab..." aria-label="Cari halaman atau bab"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-stone-800/90 text-stone-100 placeholder-stone-400 text-xs pl-8 pr-7 py-1.5 rounded-lg border border-stone-700 focus:outline-none focus:border-[#556B2F] transition-colors"

@@ -326,6 +326,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
         type="file"
         ref={fileInputRef}
         accept="image/*"
+        aria-label="Unggah foto minggu ini"
         className="hidden"
         onChange={handleFileChange}
       />
@@ -365,6 +366,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                 <span className="text-stone-400 mr-1.5 shrink-0">Tanggal:</span>
                 <input 
                   type="text"
+                  aria-label={`Tanggal minggu ${week}`}
                   placeholder="Isi tanggal..."
                   value={dateText}
                   onChange={(e) => setDateText(e.target.value)}
@@ -411,6 +413,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                       <textarea
                         rows={noteLines}
                         maxLength={DAILY_NOTE_MAX_CHARS}
+                        aria-label={`Catatan hari ${dayObj.label} minggu ${week}`}
                         placeholder={`Catatan hari ${dayObj.label}...`}
                         value={noteText}
                         onChange={(e) => handleDailyTextChange(dayObj.key, e.target.value)}
@@ -686,6 +689,8 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                                     <button
                                       type="button"
                                       onClick={() => toggleCheck(checkKey)}
+                                      aria-label={`${row.label} hari ${['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'][dayIdx]}`}
+                                      aria-pressed={isDone}
                                       className="w-full h-5 flex items-center justify-center cursor-pointer"
                                     >
                                       <div className={`w-3 h-3 rounded-full border flex items-center justify-center transition-colors ${
@@ -822,6 +827,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                 >
                   <input 
                     type="text"
+                    aria-label={`Berat Bunda minggu ${week}`}
                     value={momWeight}
                     onChange={(e) => handleMomStatChange('weight', e.target.value)}
                     className="w-full text-[9px] font-serif font-bold text-stone-800 bg-transparent pr-4 focus:outline-hidden"
@@ -843,6 +849,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                 >
                   <input 
                     type="text"
+                    aria-label={`Lingkar perut minggu ${week}`}
                     value={momWaist}
                     onChange={(e) => handleMomStatChange('waist', e.target.value)}
                     className="w-full text-[9px] font-serif font-bold text-stone-800 bg-transparent pr-4 focus:outline-hidden"
@@ -864,6 +871,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                 >
                   <input 
                     type="text"
+                    aria-label={`Tekanan darah minggu ${week}`}
                     value={momBp}
                     onChange={(e) => handleMomStatChange('bloodPressure', e.target.value)}
                     className="w-full text-[8.5px] font-serif font-bold text-stone-800 bg-transparent pr-6 focus:outline-hidden"
@@ -885,6 +893,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
               <textarea 
                 rows={3}
                 value={doctorNote}
+                aria-label={`Catatan dokter minggu ${week}`}
                 onChange={(e) => handleMomStatChange('doctorNote', e.target.value)}
                 placeholder="Tulis hasil konsultasi dokter obgyn..."
                 className="w-full text-[9.5px] font-serif italic text-stone-700 bg-white border p-1.5 rounded-xs resize-none leading-relaxed focus:outline-hidden"

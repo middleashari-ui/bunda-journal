@@ -97,7 +97,7 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
         <h2 className="font-serif text-2xl font-bold text-stone-850 mt-2">
           Studio Buku Kenangan
         </h2>
-        <p className="text-xs text-stone-500 font-light mt-1 max-w-xs mx-auto leading-relaxed">
+        <p className="text-xs text-stone-600 font-light mt-1 max-w-xs mx-auto leading-relaxed">
           Personalisasi desain, sampul kain linen, dan cetak seluruh 100 halaman kenangan kehamilan Anda.
         </p>
       </div>
@@ -170,7 +170,7 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
               <button
                 id="btn-upgrade-studio"
                 onClick={onOpenUpgradeModal}
-                className="px-3 py-1.5 bg-[#C87A64] hover:bg-[#b56b56] text-white rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+                className="px-3 py-1.5 bg-[#A85A44] hover:bg-[#8F4F3E] text-white rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Upgrade ke VIP - Tambah {PRICING_CONFIG.upgrade_vip.label}</span>
@@ -256,7 +256,7 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
           ) : (
             <button
               onClick={onOpenUpgradeModal}
-              className="flex-1 py-2 bg-[#C87A64] hover:bg-[#b56b56] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
+              className="flex-1 py-2 bg-[#A85A44] hover:bg-[#8F4F3E] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Upgrade VIP ({PRICING_CONFIG.upgrade_vip.label})</span>
@@ -323,10 +323,11 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
 
         {/* Custom Title Input */}
         <div>
-          <label className="text-[11px] font-medium text-stone-600 block mb-1">
+          <label htmlFor="book-title-input" className="text-[11px] font-medium text-stone-600 block mb-1">
             Judul di Sampul Depan:
           </label>
           <input 
+            id="book-title-input"
             type="text"
             value={bookTitle}
             onChange={(e) => setBookTitle(e.target.value)}
@@ -393,7 +394,7 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
           <button 
             id="btn-studio-cta-main"
             onClick={onOpenUpgradeModal}
-            className="w-3/5 py-2.5 px-4 rounded-xl bg-[#C87A64] text-white font-medium text-xs tracking-wide shadow-md hover:bg-[#b56b56] active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-3/5 py-2.5 px-4 rounded-xl bg-[#A85A44] text-white font-medium text-xs tracking-wide shadow-md hover:bg-[#8F4F3E] active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Upgrade ke VIP — Tambah {PRICING_CONFIG.upgrade_vip.label}</span>
@@ -402,7 +403,7 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
 
         {/* Tulisan Kecil Optional Hardcover Fisik di Bawah */}
         <div className="mt-3 text-center">
-          <p className="text-[11px] text-stone-500 font-normal">
+          <p className="text-[11px] text-stone-600 font-normal">
             Mau cetak fisik?{' '}
             <button
               onClick={() => {
@@ -417,7 +418,7 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
               Cetak Fisik {PRICING_CONFIG.hardcover.label} — Optional
             </button>
           </p>
-          <p className="text-[10px] text-stone-400 mt-0.5 font-light">
+          <p className="text-[10px] text-stone-600 mt-0.5 font-light">
             Buku hardcover linen mewah dikirim ke rumah saat masa kehamilan selesai.
           </p>
         </div>
@@ -462,8 +463,9 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
               </div>
 
               <div>
-                <label className="block text-stone-700 font-medium mb-1">Nama Penerima</label>
+                <label htmlFor="recipient-name" className="block text-stone-700 font-medium mb-1">Nama Penerima</label>
                 <input 
+                  id="recipient-name"
                   type="text"
                   required
                   value={recipientName}
@@ -473,8 +475,9 @@ export const TabKatalog: React.FC<TabKatalogProps> = ({
               </div>
 
               <div>
-                <label className="block text-stone-700 font-medium mb-1">Nomor WhatsApp / HP</label>
+                <label htmlFor="recipient-phone" className="block text-stone-700 font-medium mb-1">Nomor WhatsApp / HP</label>
                 <input 
+                  id="recipient-phone"
                   type="tel"
                   required
                   value={phone}

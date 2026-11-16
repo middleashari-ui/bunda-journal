@@ -177,6 +177,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                           <>
                             <input 
                               type="text"
+                              aria-label="Nama pilihan"
                               value={row.name}
                               onChange={(e) => {
                                 const up = [...candidates];
@@ -187,6 +188,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                             />
                             <input 
                               type="text"
+                              aria-label="Arti nama pilihan"
                               value={row.meaning}
                               onChange={(e) => {
                                 const up = [...candidates];
@@ -216,6 +218,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                     <>
                       <input 
                         type="text"
+                        aria-label="Nama bayi pilihan"
                         value={chosenName}
                         onChange={(e) => setChosenName(e.target.value)}
                         className="font-serif text-xl text-2xl font-bold py-0.5 text-center w-full bg-transparent outline-none" 
@@ -223,6 +226,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                       />
                       <input 
                         type="text"
+                        aria-label="Arti nama bayi pilihan"
                         value={chosenMeaning}
                         onChange={(e) => setChosenMeaning(e.target.value)}
                         className="text-[10px] text-stone-500 italic font-serif text-center w-full bg-transparent outline-none mt-1"
@@ -260,7 +264,8 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                 
                 <label className="block cursor-pointer group">
                   <input 
-                    type="file" 
+                    type="file"
+                    aria-label="Unggah foto"
                     accept="image/*" 
                     className="hidden" 
                     onChange={(e) => handleImageUpload(e, setNurseryPhoto)} 

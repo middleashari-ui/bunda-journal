@@ -47,13 +47,13 @@ export const PicModal: React.FC<PicModalProps> = ({ isOpen, onClose, onShowToast
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-5 shadow-2xl border border-stone-300 max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div role="dialog" aria-modal="true" aria-label="PIC Internal Control" className="bg-white rounded-3xl max-w-lg w-full p-5 shadow-2xl border border-stone-300 max-h-[90vh] overflow-y-auto no-scrollbar">
         <div className="flex items-center justify-between pb-3 border-b border-stone-200">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-[#556B2F]" />
             <h3 className="font-serif font-bold text-base text-stone-900">PIC Internal Control (/pic)</h3>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-stone-100 rounded-full cursor-pointer">
+          <button onClick={onClose} aria-label="Tutup" className="p-1 hover:bg-stone-100 rounded-full cursor-pointer">
             <X className="w-5 h-5 text-stone-500" />
           </button>
         </div>
