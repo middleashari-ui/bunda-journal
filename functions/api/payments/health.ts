@@ -33,6 +33,20 @@ export async function onRequestGet(context: any) {
     warnings.push('MIDTRANS_ENV=sandbox tetapi server key terlihat production.');
   }
 
+  // Pastikan tabel pembayaran benar-benar ada (bukan hanya binding D1).
+  let tablesReady = false;
+  if (env.BUNDA_JOURNAL_DB) {
+    try {
+      await env.BUNDA_JOURNAL_DB.prepare('SELECT 1 FROM bunda_orders LIMIT 1').first();
+      await env.BUNDA_JOURNAL_DB.prepare('SELECT 1 FROM bunda_subscriptions LIMIT 1').first();
+      tablesReady = true;
+    } catch {
+      warnings.push('Tabel bunda_orders/bunda_subscriptions belum ada. Jalankan schema_payments.sql.');
+    }
+  } else {
+    warnings.push('Binding D1 BUNDA_JOURNAL_DB belum ada.');
+  }
+
   return json({
     ok: kind !== 'missing' && warnings.length === 0,
     mode,
@@ -40,6 +54,7 @@ export async function onRequestGet(context: any) {
     serverKey: kind,
     clientKey: clientKind,
     database: Boolean(env.BUNDA_JOURNAL_DB),
+    tablesReady,
     warnings,
   });
 }

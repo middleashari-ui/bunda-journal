@@ -2,8 +2,8 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `1c73a170`,
-17 Nov 2026; `/ads` diverifikasi 200)
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `514d9d0b`,
+17 Nov 2026; `/ads`, apex→www, dan `/api/payments/health` diverifikasi)
 
 ## Baca dulu
 
@@ -69,8 +69,11 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `1c73a170`,
 2. **Aksesibilitas lanjutan** — audit axe selesai, focus trap + Escape dan roving
    tabindex sudah ada. Sisa satu keputusan desain: kontras palet tema buku di
    `/print` (703 node; lihat `docs/accessibility-audit.md`).
-3. **Uji bayar sandbox di UI** — API sudah diuji 15/15, tetapi popup QRIS Snap
-   perlu dipindai manual sekali di HP (sandbox), lalu cek tier berubah.
+3. **Uji bayar sandbox di UI + setelan dashboard Midtrans** — API sudah diuji
+   15/15 dan production health `ok`, tetapi popup QRIS perlu dipindai manual
+   sekali. Pastikan Payment Notification URL di dashboard Midtrans =
+   `https://www.bundajournal.my.id/api/midtrans-callback` dan channel
+   QRIS/GoPay aktif. Detail: `docs/payment-setup.md`.
 4. **Ads backend** (menunggu key): D1 `meta_*`, `functions/api/ads/*`, token vault
    AES-GCM, Cloudflare Access, scheduler. Lihat IMPLEMENTATION-STATUS §7.
 

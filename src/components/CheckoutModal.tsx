@@ -119,6 +119,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       }
 
       const snapToken = data.token;
+      const orderId = String(data.order_id || '');
       const snap = (window as any).snap;
 
       if (!snap || typeof snap.pay !== 'function') {
@@ -133,6 +134,19 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       snap.pay(snapToken, {
         onSuccess: async function (result: any) {
           console.log('Midtrans Snap Success:', result);
+          // Sinkronkan status langsung ke Midtrans: kalau webhook telat/belum
+          // diset, tier tetap aktif tanpa menunggu.
+          if (orderId) {
+            try {
+              await fetch('/api/midtrans/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: orderId, email: chargeFor }),
+              });
+            } catch {
+              // webhook masih bisa menyusul
+            }
+          }
           // WAJIB: konfirmasi ke server dulu. Tanpa is_paid dari server, tidak lanjut.
           const verified = await verifyPaymentOnServer(chargeFor);
           if (!verified) {

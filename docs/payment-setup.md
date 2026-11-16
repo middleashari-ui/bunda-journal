@@ -14,7 +14,10 @@ switch darurat tanpa deploy ulang.
 6. Webhook memverifikasi signature SHA-512, mencocokkan nominal dengan order,
    lalu menulis `bunda_subscriptions.is_paid = 1` + tier.
 7. Client memverifikasi ke `GET /api/subscription?email=...`; baru setelah
-   `is_paid` dari server, akses VIP diaktifkan di perangkat.
+   `is_paid` dari server, akses VIP diaktifkan di perangkat. Kalau webhook telat,
+   client juga memanggil `POST /api/midtrans/status` (`order_id` + email) untuk
+   membaca status langsung dari Midtrans. **Webhook tetap jalur utama** — endpoint
+   status hanya jaring pengaman.
 
 ## Harga (satu sumber: `src/config/pricing.ts` + `functions/_lib/payments.ts`)
 
@@ -73,6 +76,7 @@ Respons tidak membocorkan kunci; contoh:
   "paused": false,
   "serverKey": "production",
   "database": true,
+  "tablesReady": true,
   "warnings": []
 }
 ```
@@ -125,6 +129,12 @@ expire tidak menurunkan tier).
 
 ## Batasan yang diketahui
 
+- **Payment Notification URL di dashboard Midtrans wajib diset** ke
+  `https://www.bundajournal.my.id/api/midtrans-callback`. Tanpa itu, tier hanya
+  aktif lewat pengecekan status manual dan bisa telat.
+- Endpoint `POST /api/midtrans/status` bergantung pada Midtrans yang baru
+  mengenali transaksi setelah pembayaran diproses; sebelum itu Midtrans
+  menjawab `404 Transaction doesn't exist`.
 - Pembelian **sebelum punya akun** tetap diizinkan (email dari form checkout),
   mengikuti alur produk "bayar dulu, akun menyusul". Verifikasi kepemilikan email
   belum ada; registrasi saat ini juga belum memverifikasi email.

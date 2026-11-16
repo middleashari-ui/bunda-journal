@@ -1,7 +1,5 @@
-/*
-  Cloudflare Pages redirects.
-  Catatan: file ini hanya menerima path relatif + komentar dengan tanda #.
-  Route SPA (/ads, /print, /jurnal, ...) sudah ditangani fallback otomatis
-  Cloudflare Pages. Jangan rewrite ke /index.html: Pages mengkanonikalisasi
-  /index.html menjadi "/" (308).
-*/
+# Cloudflare Pages redirects.
+# File ini hanya menerima path relatif; komentar memakai tanda #.
+# Route SPA (/ads, /print, /jurnal, ...) ditangani fallback otomatis Cloudflare Pages.
+# Jangan rewrite ke /index.html: Pages mengkanonikalisasi /index.html menjadi "/" (308).
+# Redirect apex -> www ditangani functions/_middleware.ts.
