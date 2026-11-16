@@ -1,8 +1,9 @@
 # Handoff — lanjutan sesi berikutnya
 
-Terakhir diperbarui: 16 Nov 2026
+Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `e54f6bc4`)
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `1c73a170`,
+17 Nov 2026; `/ads` diverifikasi 200)
 
 ## Baca dulu
 

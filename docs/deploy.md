@@ -1,6 +1,7 @@
 # Deploy — Cloudflare Pages
 
-Dijalankan **besok**, setelah tes HP. Jangan deploy sebelum branch di-merge.
+Dijalankan setelah tes HP / smoke test. Production terakhir: deployment `1c73a170`
+(17 Nov 2026).
 
 ## 1. Merge branch
 
@@ -21,7 +22,7 @@ Cek cepat: `dist/assets/index-*.js` ada, ukuran wajar (±900 kB sebelum gzip).
 ## 3. Deploy
 
 ```bash
-npx wrangler pages deploy dist --project-name bunda-journal
+npx wrangler pages deploy dist --project-name bunda-journal --branch main
 ```
 
 Kalau belum login: `npx wrangler login`.
@@ -37,8 +38,10 @@ Environment yang harus ada di Pages (Settings → Environment variables):
 
 ## 4. Setelah deploy
 
-1. Buka `https://www.bundajournal.my.id/?v=19` sekali → pastikan service worker naik ke `v19`
-   (cek DevTools → Application → Service Workers).
+1. Buka `https://www.bundajournal.my.id/?v=21` sekali → pastikan service worker naik ke
+   `v21` (cek DevTools → Application → Service Workers).
+2. Buka `https://www.bundajournal.my.id/ads` → harus 200 dan tampil Ruang Iklan
+   (bukan redirect ke `/`).
 2. Buka `/#/print` di Chrome HP → harus muncul halaman cetak A4, bukan 404.
 3. Tes alur: Jurnal → Download → dialog print → Save as PDF.
 4. Tes kartu jadwal → **Kirim ke Ayah** → share sheet WhatsApp.

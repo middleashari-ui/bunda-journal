@@ -119,7 +119,8 @@ src/ads/
 Perubahan kecil di luar folder:
 
 - `src/main.tsx` — branch route `/ads`, lazy-load.
-- `public/_redirects` — SPA fallback `/ads` dan `/ads/*`.
+- `public/_redirects` — hanya redirect domain; route `/ads` memakai fallback SPA
+  otomatis Cloudflare Pages (rule `/ads /index.html 200` ternyata memicu 308 ke `/`).
 - `tests/e2e/ads.spec.ts`, `tests/unit/ads-*.test.ts`.
 
 ---
