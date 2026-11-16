@@ -2,7 +2,7 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `297b4fff`,
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `7d08adc6`,
 17 Nov 2026; `/ads`, apex→www, `/api/payments/health` diverifikasi)
 
 ## Baca dulu

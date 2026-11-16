@@ -131,7 +131,7 @@ expire tidak menurunkan tier).
 
 | Gejala | Penyebab | Tindakan |
 |---|---|---|
-| `MIDTRANS_AUTH` / “Kunci pembayaran server ditolak Midtrans (401)” | `MIDTRANS_SERVER_KEY` production salah, kedaluwarsa, atau akun Midtrans belum aktif untuk production | Ambil ulang server key di dashboard Midtrans → Settings → Access Keys, lalu `npx wrangler pages secret put MIDTRANS_SERVER_KEY --project-name bunda-journal` |
+| `MIDTRANS_AUTH` / UI “Pembayaran sedang tidak tersedia” | `MIDTRANS_SERVER_KEY` production salah, kedaluwarsa, atau akun Midtrans belum aktif untuk production | Ambil ulang server key di dashboard Midtrans → Settings → Access Keys, lalu `npx wrangler pages secret put MIDTRANS_SERVER_KEY --project-name bunda-journal` |
 | `MIDTRANS_ERROR` + `midtrans_status` | Midtrans menolak payload/channel | Cek status di dashboard Midtrans; pastikan QRIS/GoPay aktif |
 | Respons HTML / “Unexpected token '<'” | Error 5xx dari edge diganti halaman Cloudflare | Endpoint sekarang mengembalikan 424 JSON; kalau masih HTML, cek deployment & log |
 | Health `ok:false` | Kunci/tabel/mode tidak konsisten | Ikuti `warnings` di `/api/payments/health` |

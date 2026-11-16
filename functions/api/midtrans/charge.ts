@@ -177,8 +177,7 @@ export async function handleCharge(context: any, forcedPlan?: PlanKey) {
       if (response.status === 401 || response.status === 403) {
         return json(
           {
-            error:
-              'Kunci pembayaran server ditolak Midtrans (401). Periksa MIDTRANS_SERVER_KEY production.',
+            error: 'Pembayaran sedang tidak tersedia. Coba lagi nanti atau hubungi admin.',
             code: 'MIDTRANS_AUTH',
             order_id: orderId,
           },
