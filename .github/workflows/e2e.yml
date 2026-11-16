@@ -26,6 +26,12 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      - name: Unit tests
+        run: npx vitest run
+
+      - name: Storage audit
+        run: npm run audit:storage
+
       - name: Run E2E (Chromium + WebKit)
         run: npx playwright test --reporter=list
 

@@ -1,4 +1,5 @@
 import {createRoot} from 'react-dom/client';
+import { lazy, Suspense } from 'react';
 import App from './App.tsx';
 import './index.css';
 import { HealthDataProvider } from './context/HealthDataContext';
@@ -6,10 +7,18 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { DevToolbar } from './components/DevToolbar';
 import { migrateLocalStorage } from './lib/schemaMigration';
 import { hydrateMedia } from './lib/mediaStore';
+import { installErrorLogging } from './lib/errorLog';
+
+// Ruang Iklan (/ads) dimuat terpisah supaya user PWA tidak membayar bundle-nya.
+const AdsApp = lazy(() => import('./ads/AdsApp'));
+const isAdsRoute =
+  typeof window !== 'undefined' &&
+  (window.location.pathname === '/ads' || window.location.pathname.startsWith('/ads/'));
 
 // Migrasi skema data lokal (mis. index hari Rab=0 -> Sen=0) SEBELUM React
 // membaca localStorage. Idempoten lewat `bunda_schema_version`.
 migrateLocalStorage();
+installErrorLogging();
 
 // P0.7: migrasi dummy satu-kali bertanda (bukan purge tiap boot).
 // - Hanya jalan sekali (flag bunda_dummy_purge_v1).
@@ -62,19 +71,48 @@ try {
 
 // Hydrate media (foto & bab buku) dari IndexedDB SEBELUM render, supaya
 // komponen tetap bisa membaca `mediaGet()` secara sinkron.
-hydrateMedia().finally(() => {
-  createRoot(document.getElementById('root')!).render(
-    <ErrorBoundary fallbackTitle="Terjadi Kendala Sistem Bunda Journal">
-      <HealthDataProvider>
-        <App />
-        <DevToolbar />
-      </HealthDataProvider>
+const root = createRoot(document.getElementById('root')!);
+
+if (isAdsRoute) {
+  root.render(
+    <ErrorBoundary fallbackTitle="Ruang Iklan mengalami kendala">
+      <Suspense
+        fallback={
+          <div
+            style={{
+              minHeight: '100vh',
+              display: 'grid',
+              placeItems: 'center',
+              background: '#F5F2EB',
+              color: '#556B2F',
+              fontFamily: 'Inter, sans-serif',
+              fontSize: 13,
+            }}
+          >
+            Memuat Ruang Iklan…
+          </div>
+        }
+      >
+        <AdsApp />
+      </Suspense>
     </ErrorBoundary>
   );
-});
+} else {
+  hydrateMedia().finally(() => {
+    root.render(
+      <ErrorBoundary fallbackTitle="Terjadi Kendala Sistem Bunda Journal">
+        <HealthDataProvider>
+          <App />
+          <DevToolbar />
+        </HealthDataProvider>
+      </ErrorBoundary>
+    );
+  });
+}
 
 // Register modern Service Worker for PWA Offline-First
-if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+// Ruang Iklan sengaja tidak memakai service worker consumer.
+if (!isAdsRoute && 'serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js', { updateViaCache: 'none' })

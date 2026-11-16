@@ -12,6 +12,7 @@ import {
 import { playGentleChime, sendSystemNotification } from './utils/notifications';
 import { STORAGE_FULL_EVENT } from './lib/storageQuota';
 import { mediaGet, mediaSet } from './lib/mediaStore';
+import { logError } from './lib/errorLog';
 import { applyAppColorTheme, getSavedAppColorTheme } from './utils/themeManager';
 import { LandingPage } from './components/LandingPage';
 import { TabHome } from './components/TabHome';
@@ -560,9 +561,22 @@ export default function App() {
     const email = storageGet('bunda_user_email');
     if (email) {
       fetchUserTierFromSupabase(email).then((tierFromDb) => {
-        if (tierFromDb === 'vip' || tierFromDb === 'essential') {
-          setUserTier(tierFromDb);
-          storageSet('bunda_user_tier', tierFromDb);
+        if (tierFromDb === 'vip') {
+          // Server adalah sumber kebenaran: kalau server bilang VIP, naikkan lokal.
+          setUserTier('vip');
+          storageSet('bunda_user_tier', 'vip');
+          if (!isPaid) {
+            setIsPaid(true);
+            storageSet('bunda_is_paid', 'true');
+          }
+        } else if (tierFromDb === 'essential') {
+          setUserTier('essential');
+          storageSet('bunda_user_tier', 'essential');
+          if (isPaid) {
+            // Jangan turunkan otomatis (bisa jadi offline/transaksi baru),
+            // cukup catat untuk diagnosa.
+            logError('Tier mismatch: lokal VIP, server essential', { source: 'tier-sync' });
+          }
         }
       });
     }

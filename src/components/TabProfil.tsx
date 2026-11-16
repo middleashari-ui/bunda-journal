@@ -4,6 +4,8 @@ import { UserProfile, JournalEntry, PhotoMemory, HabitState, ReminderSettings } 
 import { PRICING_CONFIG } from '../config/pricing';
 import { getRestoreSnapshotInfo, undoLastRestore } from '../lib/authClient';
 import { getTodayPosition } from '../lib/pregnancyDate';
+import { estimateLocalStorageBytes } from '../lib/storageQuota';
+import { clearErrorLog, getErrorLog } from '../lib/errorLog';
 import {
   backupJournalToDrive,
   getBackupMeta,
@@ -110,6 +112,57 @@ export const TabProfil: React.FC<TabProfilProps> = ({
   const [restoreInfo, setRestoreInfo] = useState<{ at: string; count: number } | null>(null);
   const [isUndoing, setIsUndoing] = useState(false);
 
+  // Pemakaian storage sebenarnya (bukan bar 100% statis).
+  const [driveMeta, setDriveMeta] = useState<DriveBackupMeta | null>(() => getBackupMeta());
+  const [storageUsage, setStorageUsage] = useState<{ used: number; quota: number } | null>(null);
+  const [errorLogCount, setErrorLogCount] = useState<number>(() => getErrorLog().length);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      let used = 0;
+      let quota = 0;
+      try {
+        const est = await navigator.storage?.estimate?.();
+        used = Number(est?.usage || 0);
+        quota = Number(est?.quota || 0);
+      } catch {}
+      if (!used) used = estimateLocalStorageBytes();
+      if (alive) setStorageUsage({ used, quota });
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [driveMeta]);
+
+  const fmtBytes = (n: number) =>
+    n >= 1073741824 ? `${(n / 1073741824).toFixed(2)} GB` : n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`;
+
+  const storagePct = storageUsage?.quota
+    ? Math.min(100, Math.max(1, Math.round((storageUsage.used / storageUsage.quota) * 100)))
+    : 0;
+
+  const backupDays = driveMeta?.at
+    ? Math.max(0, Math.floor((Date.now() - new Date(driveMeta.at).getTime()) / 86400000))
+    : null;
+
+  const handleDownloadErrorLog = () => {
+    try {
+      const payload = JSON.stringify(
+        { exportedAt: new Date().toISOString(), errors: getErrorLog() },
+        null,
+        2
+      );
+      const blob = new Blob([payload], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bunda-error-log-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {}
+  };
+
   useEffect(() => {
     let cancelled = false;
     getRestoreSnapshotInfo()
@@ -132,7 +185,6 @@ export const TabProfil: React.FC<TabProfilProps> = ({
   };
 
   // ---- Backup ke Google Drive milik user ----
-  const [driveMeta, setDriveMeta] = useState<DriveBackupMeta | null>(() => getBackupMeta());
   const [autoBackup, setAutoBackupState] = useState<boolean>(() => isAutoBackupEnabled());
   const [isDriveBusy, setIsDriveBusy] = useState(false);
 
@@ -454,14 +506,82 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           <h4 className="font-serif text-xs font-bold text-stone-800 uppercase tracking-wider">
             Kapasitas Penyimpanan
           </h4>
-          <span className="text-[10px] font-mono text-[#556B2F] font-semibold">Tersimpan Aman</span>
+          <span className={`text-[10px] font-mono font-semibold ${storagePct >= 85 ? 'text-red-600' : storagePct >= 60 ? 'text-amber-600' : 'text-[#556B2F]'}`}>
+            {storageUsage ? fmtBytes(storageUsage.used) : 'menghitung…'}
+          </span>
         </div>
         
-        {/* Progress Bar */}
+        {/* Progress Bar — pemakaian sebenarnya */}
         <div className="w-full bg-stone-100 rounded-full h-2.5 overflow-hidden">
-          <div className="bg-[#556B2F] h-2.5 rounded-full transition-all duration-300" style={{ width: '100%' }}></div>
+          <div
+            className={`h-2.5 rounded-full transition-all duration-300 ${storagePct >= 85 ? 'bg-red-500' : storagePct >= 60 ? 'bg-amber-500' : 'bg-[#556B2F]'}`}
+            style={{ width: `${storagePct}%` }}
+          ></div>
         </div>
-        <p className="text-[10px] text-stone-500 font-medium">Penyimpanan Aman di Perangkat Anda</p>
+        <p className="text-[10px] text-stone-500 font-medium">
+          {storageUsage
+            ? `${storagePct}% terpakai${storageUsage.quota ? ` dari ${fmtBytes(storageUsage.quota)}` : ''} · ${storagePct >= 85 ? 'hampir penuh' : storagePct >= 60 ? 'pantau pemakaian' : 'aman'}`
+            : 'Menghitung pemakaian penyimpanan…'}
+        </p>
+
+        {/* Pengingat backup */}
+        <div
+          className={`rounded-xl px-3 py-2 text-[10.5px] leading-snug border ${
+            backupDays === null || backupDays > 7
+              ? 'bg-amber-50 border-amber-200 text-amber-800'
+              : 'bg-[#F1F4EA] border-[#E3E9D6] text-[#556B2F]'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span>
+              {backupDays === null
+                ? 'Belum pernah backup — data hanya ada di HP ini.'
+                : backupDays === 0
+                ? 'Backup terakhir: hari ini.'
+                : `Backup terakhir: ${backupDays} hari lalu.`}
+            </span>
+            {(backupDays === null || backupDays > 7) && (
+              <button
+                type="button"
+                onClick={handleDriveBackup}
+                disabled={isDriveBusy}
+                className="shrink-0 px-2 py-1 rounded-lg bg-[#556B2F] text-white text-[10px] font-semibold disabled:opacity-50 cursor-pointer"
+              >
+                {isDriveBusy ? 'Menyiapkan…' : 'Backup'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Diagnostik lokal */}
+        <details className="pt-2 border-t border-stone-100">
+          <summary className="text-[10px] text-stone-500 cursor-pointer select-none">
+            Diagnostik & log error ({errorLogCount})
+          </summary>
+          <div className="flex gap-2 mt-2">
+            <button
+              type="button"
+              onClick={handleDownloadErrorLog}
+              className="flex-1 py-1.5 rounded-lg border border-stone-200 text-[10px] text-stone-600 hover:bg-stone-50 cursor-pointer"
+            >
+              Unduh log
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                clearErrorLog();
+                setErrorLogCount(0);
+                if (onShowToast) onShowToast('Log error dibersihkan');
+              }}
+              className="flex-1 py-1.5 rounded-lg border border-stone-200 text-[10px] text-stone-600 hover:bg-stone-50 cursor-pointer"
+            >
+              Hapus log
+            </button>
+          </div>
+          <p className="text-[9px] text-stone-400 mt-1.5">
+            Log hanya tersimpan di perangkat ini, tidak dikirim ke server.
+          </p>
+        </details>
 
         {/* Toggles Mode Ayah & Mode Newborn */}
         <div className="pt-2 border-t border-stone-100 space-y-2">

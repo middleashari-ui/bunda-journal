@@ -12,6 +12,16 @@ export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
+// Supabase bisa tidak terjangkau (offline / diblokir jaringan). Cukup beri tahu
+// sekali per jenis pesan supaya console tidak banjir warning berulang.
+const warnedOnce = new Set<string>();
+function warnOnce(...args: unknown[]) {
+  const key = String(args[0] ?? 'warn');
+  if (warnedOnce.has(key)) return;
+  warnedOnce.add(key);
+  console.warn(...args);
+}
+
 // Helper sinkronisasi profil Bunda
 export async function syncProfileToSupabase(profile: any) {
   if (!supabase) return { error: 'Supabase not configured' };
@@ -30,14 +40,14 @@ export async function syncProfileToSupabase(profile: any) {
       .select()
       .then(
         ({ data, error }) => {
-          if (error) console.warn('Supabase sync error:', error);
+          if (error) warnOnce('Supabase sync error:', error);
         },
-        (err) => console.warn('Supabase profile sync catch:', err)
+        (err) => warnOnce('Supabase profile sync catch:', err)
       );
     
     return { status: 'dispatched' };
   } catch (err) {
-    console.warn('Gagal sync profil ke Supabase:', err);
+    warnOnce('Gagal sync profil ke Supabase:', err);
     return { error: err };
   }
 }
@@ -59,7 +69,7 @@ export async function saveJournalEntryToSupabase(weekNumber: number, journalData
       .select();
     return { data, error };
   } catch (err) {
-    console.warn('Gagal sync jurnal ke Supabase:', err);
+    warnOnce('Gagal sync jurnal ke Supabase:', err);
     return { error: err };
   }
 }
@@ -77,7 +87,7 @@ export async function signInWithGoogleOAuth() {
     });
     return { data, error };
   } catch (err) {
-    console.warn('Gagal OAuth Google:', err);
+    warnOnce('Gagal OAuth Google:', err);
     return { error: err };
   }
 }
@@ -96,10 +106,10 @@ export async function syncSubscriptionToSupabase(email: string, tier: 'essential
       verifiedAmount = Number(data.amount) || amount;
     }
   } catch (verifyErr) {
-    console.warn('D1 subscription verify catch:', verifyErr);
+    warnOnce('D1 subscription verify catch:', verifyErr);
   }
   if (!verifiedTier) {
-    console.warn('Subscription sync dilewati: pembayaran belum terverifikasi server.', email);
+    warnOnce('Subscription sync dilewati: pembayaran belum terverifikasi server.', email);
     return { status: 'skipped_unverified' };
   }
 
@@ -113,9 +123,9 @@ export async function syncSubscriptionToSupabase(email: string, tier: 'essential
       method: 'POST',
       headers,
       body: JSON.stringify({ email, tier: verifiedTier, amount: verifiedAmount, is_paid: true }),
-    }).catch((e) => console.warn('D1 syncSubscription catch:', e));
+    }).catch((e) => warnOnce('D1 syncSubscription catch:', e));
   } catch (err) {
-    console.warn('D1 sync error:', err);
+    warnOnce('D1 sync error:', err);
   }
 
   if (!supabase) return { status: 'dispatched_d1' };
@@ -132,14 +142,14 @@ export async function syncSubscriptionToSupabase(email: string, tier: 'essential
       .select()
       .then(
         ({ data, error }) => {
-          if (error) console.warn('Supabase subscription sync error:', error);
+          if (error) warnOnce('Supabase subscription sync error:', error);
         },
-        (err) => console.warn('Supabase subscription sync catch:', err)
+        (err) => warnOnce('Supabase subscription sync catch:', err)
       );
 
     return { status: 'dispatched' };
   } catch (err) {
-    console.warn('Gagal sync subscription ke Supabase (fallback ke lokal):', err);
+    warnOnce('Gagal sync subscription ke Supabase (fallback ke lokal):', err);
     return { error: err };
   }
 }
@@ -160,7 +170,7 @@ export async function fetchUserTierFromSupabase(email: string): Promise<'essenti
       }
     }
   } catch (d1Err) {
-    console.warn('Gagal fetch tier dari D1, fallback ke Supabase:', d1Err);
+    warnOnce('Gagal fetch tier dari D1, fallback ke Supabase:', d1Err);
   }
 
   // 2. Fallback Supabase jika D1 belum terjangkau
@@ -177,7 +187,7 @@ export async function fetchUserTierFromSupabase(email: string): Promise<'essenti
     }
     return data.tier === 'vip' ? 'vip' : 'essential';
   } catch (err) {
-    console.warn('Gagal fetch tier dari Supabase:', err);
+    warnOnce('Gagal fetch tier dari Supabase:', err);
     return 'none';
   }
 }
@@ -193,10 +203,10 @@ export async function sendMagicLink(email: string) {
       email,
       options: { emailRedirectTo: window.location.origin },
     });
-    if (error) console.warn('Magic link error (fallback lokal tetap login):', error.message);
+    if (error) warnOnce('Magic link error (fallback lokal tetap login):', error.message);
     return { error };
   } catch (err) {
-    console.warn('Gagal kirim magic link (fallback lokal tetap login):', err);
+    warnOnce('Gagal kirim magic link (fallback lokal tetap login):', err);
     return { error: err };
   }
 }
@@ -217,10 +227,10 @@ export async function syncBabyDobToSupabase(email: string, babyDob: string) {
         promo_consent: consent,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'mom_name' });
-    if (error) console.warn('Supabase baby_dob sync error:', error);
+    if (error) warnOnce('Supabase baby_dob sync error:', error);
     return { error };
   } catch (err) {
-    console.warn('Gagal sync baby_dob:', err);
+    warnOnce('Gagal sync baby_dob:', err);
     return { error: err };
   }
 }
