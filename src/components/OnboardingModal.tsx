@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, ArrowRight, User } from 'lucide-react';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -16,6 +17,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
   const [name, setName] = useState('');
   const [hpl, setHpl] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  const dialogRef = useModalA11y(isOpen);
 
   if (!isOpen) return null;
 
@@ -56,7 +59,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
 
   return (
     <div className="fixed inset-0 z-50 bg-stone-900/80 backdrop-blur-md flex items-center justify-center p-3 select-none">
-      <div role="dialog" aria-modal="true" aria-labelledby="onboarding-title" className="bg-[#F5F2EB] rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-stone-300 text-[#292524]">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="onboarding-title" className="bg-[#F5F2EB] rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-stone-300 text-[#292524]">
         <div className="text-center mb-5">
           <span className="font-serif text-3xl font-bold tracking-tight text-stone-900">bunda.</span>
           <h2 id="onboarding-title" className="text-sm font-serif font-bold text-stone-800 mt-1">Form Informasi Bunda</h2>

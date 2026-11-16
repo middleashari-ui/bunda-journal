@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Sparkles, BookHeart } from 'lucide-react';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -10,10 +11,11 @@ interface UpgradeModalProps {
 // Gate output 49k vs 129k: input Bab 1-5 tetap bebas, cek cuma di output.
 // Copy persis sesuai spec produk.
 export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onUpgrade }) => {
+  const dialogRef = useModalA11y(isOpen, onClose);
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 bg-stone-900/75 backdrop-blur-xs flex items-center justify-center p-4 select-none">
-      <div role="dialog" aria-modal="true" aria-label="Upgrade ke VIP" className="bg-[#F5F2EB] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-300 relative text-[#292524]">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Upgrade ke VIP" className="bg-[#F5F2EB] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-300 relative text-[#292524]">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-stone-400 hover:text-stone-700 p-1 rounded-lg hover:bg-stone-200/50 cursor-pointer"

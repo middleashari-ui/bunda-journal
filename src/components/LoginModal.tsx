@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Mail, Lock, Loader2, User } from 'lucide-react';
 import { apiLogin, apiRegister, AuthUser } from '../lib/authClient';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -25,6 +26,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSucce
       setPassword('');
     }
   }, [isOpen, defaultMode]);
+
+  const dialogRef = useModalA11y(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -65,7 +68,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSucce
     <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-[#F9F6F0]/88 backdrop-blur-xl" onClick={onClose} />
 
-      <div role="dialog" aria-modal="true" aria-label="Masuk atau daftar Bunda Journal" className="relative w-full max-w-[390px] bg-white rounded-[20px] border border-[#EDE8DF] shadow-[0_18px_50px_rgba(0,0,0,0.14)] p-6">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Masuk atau daftar Bunda Journal" className="relative w-full max-w-[390px] bg-white rounded-[20px] border border-[#EDE8DF] shadow-[0_18px_50px_rgba(0,0,0,0.14)] p-6">
         <button
           type="button"
           onClick={onClose}

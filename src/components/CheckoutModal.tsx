@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { X, CheckCircle2, QrCode, Mail, ArrowRight, ShieldCheck, CreditCard, Sparkles } from 'lucide-react';
 import { PRICING_CONFIG, PlanConfig } from '../config/pricing';
 import { getToken } from '../lib/authClient';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 import { PAYMENT_PAUSED } from '../config/payments';
 
@@ -36,6 +37,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setStep('plan');
     setSnapError(null);
   }, [defaultPlan, isOpen]);
+
+  const dialogRef = useModalA11y(isOpen && !PAYMENT_PAUSED, onClose);
 
   if (!isOpen) return null;
 
@@ -169,7 +172,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-stone-900/75 backdrop-blur-xs flex items-center justify-center p-4 select-none">
-      <div role="dialog" aria-modal="true" aria-label="Pembayaran" className="bg-[#F5F2EB] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-300 relative text-[#292524]">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Pembayaran" className="bg-[#F5F2EB] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-300 relative text-[#292524]">
         {/* Close button */}
         <button
           onClick={onClose}

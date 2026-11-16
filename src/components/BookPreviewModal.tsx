@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { PhotoMemory, UserProfile } from '../types';
 import { X, Download, Check, Lock, Unlock, Loader2 } from 'lucide-react';
 import { generatePDF, PDFExportProgress } from '../utils/pdfGenerator';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface BookPreviewModalProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ export const BookPreviewModal: React.FC<BookPreviewModalProps> = ({
     }
   };
 
+  const dialogRef = useModalA11y(isOpen, onClose);
   if (!isOpen) return null;
 
   const currentPhoto = photos[0] || {
@@ -56,7 +58,7 @@ export const BookPreviewModal: React.FC<BookPreviewModalProps> = ({
 
   return (
     <div className="book-preview-container fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200 print:static print:bg-white print:p-0 print:overflow-visible">
-      <div role="dialog" aria-modal="true" aria-label="Pratinjau buku" className="bg-[#1C1A18] rounded-2xl sm:rounded-3xl max-w-2xl w-full h-[95vh] sm:h-[92vh] shadow-2xl border border-stone-800 flex flex-col overflow-hidden print:bg-white print:border-none print:shadow-none print:w-[176mm] print:h-auto print:overflow-visible">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Pratinjau buku" className="bg-[#1C1A18] rounded-2xl sm:rounded-3xl max-w-2xl w-full h-[95vh] sm:h-[92vh] shadow-2xl border border-stone-800 flex flex-col overflow-hidden print:bg-white print:border-none print:shadow-none print:w-[176mm] print:h-auto print:overflow-visible">
         {/* ============================================================== */}
         {/* 1. TOP HEADER: TUTUP (X), LOGO BUNDA., EDIT, & DOWNLOAD PDF     */}
         {/* ============================================================== */}

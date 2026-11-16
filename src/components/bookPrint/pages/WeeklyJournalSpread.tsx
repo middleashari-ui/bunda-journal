@@ -22,6 +22,15 @@ const SUPPLEMENT_ROWS: Array<{ id: string; label: string }> = [
   { id: 'zatBesi', label: 'Zat besi' },
 ];
 
+// Baris ceklis mingguan: suplemen + air + aktivitas. Dipakai untuk roving tabindex.
+const CHECK_ROWS: Array<{ key: string; label: string }> = [
+  ...SUPPLEMENT_ROWS.map((s) => ({ key: s.id, label: s.label })),
+  { key: 'water', label: 'Air 2L' },
+  { key: 'walk', label: 'Aktivitas' },
+];
+
+const DAY_NAMES_ID = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+
 /** "2026-11-06" -> "6 Nov 2026" (format yang dipakai benchmark). */
 function formatDisplayDate(raw: string): string {
   const value = String(raw || '').trim();
@@ -57,6 +66,32 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
 }) => {
   const weekData = getWeekData(week);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Roving tabindex untuk tabel ceklis: hanya satu sel yang masuk urutan Tab,
+  // sisanya dijangkau dengan panah. Tanpa ini pratinjau 100 halaman punya
+  // ribuan titik Tab.
+  const [rovingCell, setRovingCell] = useState<string>(`${CHECK_ROWS[0].key}-0`);
+  const cellRefs = useRef(new Map<string, HTMLButtonElement>());
+
+  const moveChecklistFocus = (event: React.KeyboardEvent<HTMLButtonElement>, rowIndex: number, dayIndex: number) => {
+    const key = event.key;
+    const lastRow = CHECK_ROWS.length - 1;
+    let nextRow = rowIndex;
+    let nextDay = dayIndex;
+    if (key === 'ArrowRight') nextDay = Math.min(6, dayIndex + 1);
+    else if (key === 'ArrowLeft') nextDay = Math.max(0, dayIndex - 1);
+    else if (key === 'ArrowDown') nextRow = Math.min(lastRow, rowIndex + 1);
+    else if (key === 'ArrowUp') nextRow = Math.max(0, rowIndex - 1);
+    else if (key === 'Home') nextDay = 0;
+    else if (key === 'End') nextDay = 6;
+    else return;
+
+    event.preventDefault();
+    const nextKey = `${CHECK_ROWS[nextRow].key}-${nextDay}`;
+    setRovingCell(nextKey);
+    // Fokus langsung (bukan rAF) supaya tetap jalan saat jendela tidak fokus.
+    cellRefs.current.get(nextKey)?.focus();
+  };
 
   // User-editable state with direct two-way sync with TabJurnal & LocalStorage
   // Tanggal minggu: pakai tanggal ASLI minggu itu (Sen–Min), BUKAN tanggal hari ini.
@@ -674,11 +709,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                           </tr>
                         </thead>
                         <tbody className="text-[8.5px]">
-                          {[
-                            ...SUPPLEMENT_ROWS.map((s) => ({ key: s.id, label: s.label })),
-                            { key: 'water', label: 'Air 2L' },
-                            { key: 'walk', label: 'Aktivitas' },
-                          ].map((row) => (
+                          {CHECK_ROWS.map((row, rowIdx) => (
                             <tr key={row.key} className="border-b border-stone-200 last:border-b-0">
                               <td className="border-r border-stone-200 text-[8px] font-medium py-1 text-left px-1">{row.label}</td>
                               {[0, 1, 2, 3, 4, 5, 6].map((dayIdx) => {
@@ -688,8 +719,15 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                                   <td key={dayIdx} className="p-0">
                                     <button
                                       type="button"
+                                      ref={(el) => {
+                                        if (el) cellRefs.current.set(checkKey, el);
+                                        else cellRefs.current.delete(checkKey);
+                                      }}
+                                      tabIndex={rovingCell === checkKey ? 0 : -1}
+                                      onFocus={() => setRovingCell(checkKey)}
+                                      onKeyDown={(event) => moveChecklistFocus(event, rowIdx, dayIdx)}
                                       onClick={() => toggleCheck(checkKey)}
-                                      aria-label={`${row.label} hari ${['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'][dayIdx]}`}
+                                      aria-label={`${row.label} hari ${DAY_NAMES_ID[dayIdx]}`}
                                       aria-pressed={isDone}
                                       className="w-full h-5 flex items-center justify-center cursor-pointer"
                                     >

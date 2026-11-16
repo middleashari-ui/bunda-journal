@@ -1,6 +1,7 @@
 import { storageSet } from '../lib/storage/appStorage';
 import React, { useState } from 'react';
 import { X, ShieldCheck, UserCheck, DollarSign, ListOrdered, CheckCircle2 } from 'lucide-react';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface PicModalProps {
   isOpen: boolean;
@@ -26,6 +27,8 @@ export const PicModal: React.FC<PicModalProps> = ({ isOpen, onClose, onShowToast
     enableFatherMode: true,
   });
 
+  const dialogRef = useModalA11y(isOpen, onClose);
+
   if (!isOpen) return null;
 
   const handleLogin = (e: React.FormEvent) => {
@@ -47,7 +50,7 @@ export const PicModal: React.FC<PicModalProps> = ({ isOpen, onClose, onShowToast
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3">
-      <div role="dialog" aria-modal="true" aria-label="PIC Internal Control" className="bg-white rounded-3xl max-w-lg w-full p-5 shadow-2xl border border-stone-300 max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="PIC Internal Control" className="bg-white rounded-3xl max-w-lg w-full p-5 shadow-2xl border border-stone-300 max-h-[90vh] overflow-y-auto no-scrollbar">
         <div className="flex items-center justify-between pb-3 border-b border-stone-200">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-[#556B2F]" />

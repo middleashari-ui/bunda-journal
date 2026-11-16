@@ -23,7 +23,7 @@ Chromium, ditambah Lighthouse untuk skor awal landing.
 | `/success` + tutorial PWA | contrast 2 | **0** |
 | `/ads`, `/ads/iklan`, `/ads/rencana`, `/ads/pengaturan` | 0 | **0** |
 | `/ads/uang` | 20 input + 4 select tanpa nama | **0** |
-| `/print` | lihat catatan di bawah | komponen sama dengan Studio |
+| `/print` (100 halaman, audit per 4 halaman) | belum terukur | **703 kontras**, 0 masalah struktur |
 
 Lighthouse landing: aksesibilitas **0.80 → 1.00** (target; lihat bagian verifikasi).
 
@@ -68,16 +68,21 @@ Lighthouse landing: aksesibilitas **0.80 → 1.00** (target; lihat bagian verifi
 
 ## Catatan & batasan
 
-1. **`/print` tidak dijalankan penuh di axe** karena 100 halaman membuat satu
-   proses audit > 60 detik. Halaman ini memakai komponen yang sama dengan
-   pratinjau Studio (`WeeklyJournalSpread`, Bab 1–5) yang sudah bersih, dan semua
-   kontrolnya sudah diberi label. Bila perlu audit terpisah, jalankan axe per
-   5 halaman (`axe.run(document.querySelectorAll('.b5-page')[i])`).
-2. **Focus trap & tombol Escape** belum ditambahkan ke modal. Ini langkah
-   berikutnya yang disarankan: pindahkan fokus ke modal saat dibuka, kunci Tab di
-   dalamnya, kembalikan fokus saat ditutup, dan tutup dengan Escape.
-3. **Urutan Tab di pratinjau buku panjang** (ratusan kontrol). Label sudah ada,
-   tetapi belum ada roving tabindex; pertimbangkan navigasi per-halaman.
+1. **`/print` punya 703 node kontras rendah**, semuanya berasal dari palet tema buku
+   (contoh: aksen `#C87A64` di atas kertas `#FAF9F7` = 3.1:1; label mikro
+   `stone-400` 8 px = 2.45:1). Tidak ada masalah struktur: semua tombol/input di
+   100 halaman sudah punya nama. Ini keputusan desain buku — kalau ingin lolos
+   WCAG, aksen tema perlu digelapkan (mis. `#A85A44`) dan baseline visual buku
+   diperbarui. Jangan diubah tanpa persetujuan karena mengubah tampilan cetak.
+   Audit dilakukan per 4 halaman (100 halaman sekaligus membuat axe > 60 detik).
+2. **Focus trap & Escape sudah ditambahkan** lewat `src/hooks/useModalA11y.ts`:
+   fokus awal masuk ke modal, Tab/Shift+Tab berputar, Escape menutup (kecuali
+   onboarding yang wajib), dan fokus kembali ke tombol pemicu. Berlaku untuk
+   login, onboarding, upgrade, checkout, pratinjau buku, PIC, dan tutorial PWA.
+3. **Urutan Tab pratinjau buku** memakai roving tabindex di tabel ceklis:
+   1.764 tombol ceklis kini hanya 36 titik Tab (satu per minggu); panah
+   kiri/kanan/atas/bawah serta Home/End memindahkan fokus. Tombol lain di
+   halaman buku tetap mengikuti urutan normal.
 4. Perubahan warna sengaja membuat beberapa label kecil lebih gelap. Cek visual
    di HP sebelum deploy; palet aksen utama tidak berubah, hanya versi teksnya.
 5. Ruang Iklan memakai token kontras yang lebih baik sejak awal; tidak ada

@@ -1,6 +1,7 @@
 import { storageSet } from '../lib/storage/appStorage';
 import React, { useState, useEffect } from 'react';
 import { Check, Download, Share2, PlusSquare, MoreVertical, Smartphone, X } from 'lucide-react';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface PWAInstallTutorialProps {
   isOpen: boolean;
@@ -45,6 +46,8 @@ export const PWAInstallTutorial: React.FC<PWAInstallTutorialProps> = ({
       };
     }
   }, []);
+
+  const dialogRef = useModalA11y(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -92,7 +95,7 @@ export const PWAInstallTutorial: React.FC<PWAInstallTutorialProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-[#F9F6F0]/88 backdrop-blur-xl animate-in fade-in duration-200 select-none">
-      <div role="dialog" aria-modal="true" aria-label="Cara pasang aplikasi Bunda Journal" className="bg-white/95 rounded-[20px] max-w-[390px] w-full p-4 border border-[#EDE8DF] shadow-[0_12px_40px_rgba(0,0,0,0.08)] flex flex-col space-y-2.5 font-sans text-[#292524] relative max-h-[96vh] overflow-y-auto no-scrollbar">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Cara pasang aplikasi Bunda Journal" className="bg-white/95 rounded-[20px] max-w-[390px] w-full p-4 border border-[#EDE8DF] shadow-[0_12px_40px_rgba(0,0,0,0.08)] flex flex-col space-y-2.5 font-sans text-[#292524] relative max-h-[96vh] overflow-y-auto no-scrollbar">
         {/* Close Button */}
         <button
           type="button"

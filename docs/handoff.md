@@ -63,9 +63,9 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `e54f6bc4`)
 
 1. **Tes restore backup di HP asli** — ekspor lalu impor ulang; pastikan foto/bab
    IndexedDB ikut kembali. Tidak bisa diotomatiskan dari desktop.
-2. **Aksesibilitas lanjutan** — audit dasar selesai (0 violation di layar utama).
-   Sisa: focus trap + Escape untuk modal, roving tabindex di pratinjau buku,
-   audit `/print` per 5 halaman (axe timeout kalau 100 halaman sekaligus).
+2. **Aksesibilitas lanjutan** — audit axe selesai, focus trap + Escape dan roving
+   tabindex sudah ada. Sisa satu keputusan desain: kontras palet tema buku di
+   `/print` (703 node; lihat `docs/accessibility-audit.md`).
 3. **Retest payment sandbox** — hanya setelah keputusan user; jangan aktifkan
    `PAYMENT_PAUSED`/tier tanpa izin.
 4. **Ads backend** (menunggu key): D1 `meta_*`, `functions/api/ads/*`, token vault
