@@ -1,0 +1,12 @@
+name = "bunda-reminder-cron"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "BUNDA_JOURNAL_DB"
+database_name = "bunda-journal-db"
+database_id = "9f4f935c-98be-45c4-b672-8ab76a3050f7"
+
+[triggers]
+crons = ["* * * * *"]

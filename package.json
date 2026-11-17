@@ -20,6 +20,7 @@
     "ads:render": "node scripts/ads/render.mjs"
   },
   "dependencies": {
+    "@block65/webcrypto-web-push": "^2.0.0",
     "@google/genai": "^2.4.0",
     "@react-pdf/renderer": "^4.9.0",
     "@supabase/supabase-js": "^2.118.0",

@@ -60,6 +60,7 @@ import { isJournalLocalOnly } from './config/storage';
 import { maybeAutoBackup } from './lib/driveBackup';
 import { isReminderDue, reminderDayKey } from './lib/reminderSchedule';
 import { ReminderPopup, type ReminderPopupData } from './components/ReminderPopup';
+import { isPushEnabled, syncPushReminders, enablePush } from './lib/pushNotifications';
 import { OnboardingModal } from './components/OnboardingModal';
 import { PicModal } from './components/PicModal';
 import { CheckoutModal } from './components/CheckoutModal';
@@ -516,6 +517,35 @@ export default function App() {
     } catch {}
   }, []);
 
+  // Pesan dari service worker: push saat app terlihat → pop-up, bukan notifikasi sistem.
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const onMessage = (event: MessageEvent) => {
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+      if (data.type === 'bunda_push_reminder') {
+        setReminderQueue((prev) =>
+          prev.some((item) => item.tag === data.tag)
+            ? prev
+            : [
+                ...prev,
+                {
+                  tag: String(data.tag || 'bunda-push'),
+                  title: String(data.title || 'Bunda Journal'),
+                  message: String(data.body || 'Pengingat dari Bunda Journal.'),
+                  time: String(data.time || ''),
+                },
+              ]
+        );
+      }
+      if (data.type === 'bunda_push_subscription_lost' && isPushEnabled()) {
+        void enablePush(reminderSettings).catch(() => {});
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', onMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage);
+  }, [reminderSettings]);
+
   // Tombol "Cek Pengingat Sekarang" di Profil memicu pemeriksaan ulang.
   useEffect(() => {
     const onCheck = () => setReminderCheckNonce((n) => n + 1);
@@ -686,7 +716,7 @@ export default function App() {
 
   // Periodic Reminder Checker (every 30s + saat app kembali terlihat)
   useEffect(() => {
-    if (!reminderSettings.enabled) return;
+    if (!reminderSettings.enabled || !isLoggedIn) return;
 
     let checking = false;
     const checkReminders = async () => {
@@ -732,6 +762,12 @@ export default function App() {
 
           // Saat app di background: coba notifikasi sistem; kalau gagal, jangan
           // tandai terkirim supaya pop-up muncul saat app dibuka kembali.
+          // Saat app di background: kalau Web Push aktif, biarkan Worker yang
+          // mengirim notifikasi (hindari dobel), lalu tandai sudah terkirim.
+          if (isPushEnabled()) {
+            storageSet(key, todayDateStr);
+            return true;
+          }
           const shown = await sendSystemNotification(title, body, {
             tag: options.tag,
             url: '/#/jurnal',
@@ -789,7 +825,21 @@ export default function App() {
       window.removeEventListener('focus', onVisible);
       window.removeEventListener('pageshow', onVisible);
     };
-  }, [reminderSettings, habits.vitamins, reminderCheckNonce]);
+  }, [reminderSettings, habits.vitamins, reminderCheckNonce, isLoggedIn]);
+
+  // Jangan pernah menampilkan pop-up pengingat di landing page.
+  useEffect(() => {
+    if (!isLoggedIn) setReminderQueue([]);
+  }, [isLoggedIn]);
+
+  // Sinkronkan jadwal pengingat ke Worker push saat pengaturan berubah.
+  useEffect(() => {
+    if (!isPushEnabled()) return;
+    const timer = window.setTimeout(() => {
+      void syncPushReminders(reminderSettings);
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [reminderSettings]);
 
   // Auto-balik 5 menit (300.000 ms) idle view-only ke tanggal & minggu hari ini.
   // Ini BUKAN reset data: catatan history tetap tersimpan di localStorage.

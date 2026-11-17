@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bunda-journal-v24';
+const CACHE_NAME = 'bunda-journal-v26';
 // Gunakan URL kanonik. Cloudflare Pages membalikkan /index.html dan
 // /offline.html dengan 308, yang bisa membuat cache.addAll gagal dan install
 // PWA menggantung lama.
@@ -35,6 +35,49 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => self.clients.claim())
   );
+});
+
+self.addEventListener('push', (event) => {
+  event.waitUntil((async () => {
+    let data = {};
+    try {
+      data = event.data ? event.data.json() : {};
+    } catch {}
+
+    // Kalau ada jendela app yang terlihat, tampilkan pop-up di app saja —
+    // jangan kirim notifikasi sistem supaya tidak dobel.
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const visible = windows.filter((client) => client.visibilityState === 'visible');
+    if (visible.length > 0) {
+      visible.forEach((client) =>
+        client.postMessage({
+          type: 'bunda_push_reminder',
+          tag: data.tag || 'bunda-push',
+          title: data.title || 'Bunda Journal',
+          body: data.body || 'Pengingat dari Bunda Journal.',
+          time: data.time || '',
+        })
+      );
+      return;
+    }
+
+    await self.registration.showNotification(data.title || 'Bunda Journal', {
+      body: data.body || 'Pengingat dari Bunda Journal.',
+      icon: '/icon-192-v2.png',
+      badge: '/icon-192-v2.png',
+      tag: data.tag || 'bunda-push',
+      data: { url: data.url || '/#/jurnal' },
+    });
+  })());
+});
+
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of windows) {
+      client.postMessage({ type: 'bunda_push_subscription_lost' });
+    }
+  })());
 });
 
 self.addEventListener('notificationclick', (event) => {

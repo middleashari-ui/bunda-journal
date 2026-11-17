@@ -17,6 +17,7 @@ import {
 } from '../lib/driveBackup';
 import { playGentleChime, requestNotificationPermission, sendSystemNotification } from '../utils/notifications';
 import { AutoFillJournalModal } from './AutoFillJournalModal';
+import { disablePush, enablePush, isPushEnabled, isPushSupported } from '../lib/pushNotifications';
 import { 
   ColorThemeId, 
   APP_COLOR_THEMES, 
@@ -306,6 +307,9 @@ export const TabProfil: React.FC<TabProfilProps> = ({
   // Kick Counter State
   const [showKickCounter, setShowKickCounter] = useState(false);
   const [showAutoFill, setShowAutoFill] = useState(false);
+  const [pushSupported] = useState<boolean>(() => isPushSupported());
+  const [pushEnabled, setPushEnabled] = useState<boolean>(() => isPushEnabled());
+  const [pushBusy, setPushBusy] = useState(false);
   const [kicksCount, setKicksCount] = useState(0);
   const [kickStartedAt, setKickStartedAt] = useState<Date | null>(null);
   const [newReminderTitle, setNewReminderTitle] = useState('');
@@ -1160,6 +1164,65 @@ export const TabProfil: React.FC<TabProfilProps> = ({
             </div>
           </div>
         )}
+
+        {/* Web Push: notifikasi saat aplikasi ditutup */}
+        <div className="bg-white p-4 rounded-3xl border border-stone-200/60 shadow-xs space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="font-serif text-xs font-bold text-stone-800 uppercase tracking-wider">
+                Notifikasi saat app ditutup
+              </h4>
+              <p className="text-[10px] text-stone-600 mt-0.5">Web Push · hanya jadwal, bukan isi jurnal</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={pushEnabled}
+              aria-label="Notifikasi saat aplikasi ditutup"
+              disabled={!pushSupported || pushBusy}
+              onClick={async () => {
+                if (!pushSupported) return;
+                setPushBusy(true);
+                try {
+                  if (pushEnabled) {
+                    await disablePush();
+                    setPushEnabled(false);
+                    if (onShowToast) onShowToast('Notifikasi latar belakang dimatikan');
+                  } else {
+                    if (!reminderSettings.enabled) {
+                      if (onShowToast) onShowToast('Aktifkan pengingat harian dulu');
+                      return;
+                    }
+                    await enablePush(reminderSettings);
+                    setPushEnabled(true);
+                    if (onShowToast) onShowToast('Notifikasi latar belakang aktif untuk HP ini');
+                  }
+                } catch (err: any) {
+                  if (onShowToast) onShowToast(err?.message || 'Gagal mengaktifkan notifikasi latar belakang');
+                } finally {
+                  setPushBusy(false);
+                }
+              }}
+              className={`w-10 h-6 flex items-center rounded-full p-0.5 transition-colors ${
+                pushEnabled ? 'bg-[#556B2F]' : 'bg-stone-300'
+              } ${!pushSupported || pushBusy ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              <span
+                aria-hidden="true"
+                className={`bg-white w-5 h-5 rounded-full shadow-xs transform transition-transform ${
+                  pushEnabled ? 'translate-x-4' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+          <p className="text-[10px] text-stone-600 leading-snug">
+            {!pushSupported
+              ? 'Belum didukung di browser ini. Di iPhone, pasang dulu Bunda Journal ke Home Screen.'
+              : pushEnabled
+                ? 'Aktif. Notifikasi pengingat akan dikirim Worker meski aplikasi ditutup.'
+                : 'Nonaktif. Notifikasi hanya muncul saat aplikasi dibuka.'}
+          </p>
+        </div>
 
         <div className="border-t border-stone-100 pt-2 flex items-center justify-between text-xs text-stone-700 py-1">
           <div className="flex items-center gap-2.5">
