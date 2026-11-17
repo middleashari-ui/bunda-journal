@@ -8,6 +8,7 @@ import { DevToolbar } from './components/DevToolbar';
 import { migrateLocalStorage } from './lib/schemaMigration';
 import { hydrateMedia } from './lib/mediaStore';
 import { installErrorLogging } from './lib/errorLog';
+import { initMetaPixel } from './lib/metaPixel';
 
 // Ruang Iklan (/ads) dimuat terpisah supaya user PWA tidak membayar bundle-nya.
 const AdsApp = lazy(() => import('./ads/AdsApp'));
@@ -19,6 +20,10 @@ const isAdsRoute =
 // membaca localStorage. Idempoten lewat `bunda_schema_version`.
 migrateLocalStorage();
 installErrorLogging();
+
+// Meta Pixel: no-op kalau VITE_META_PIXEL_ID kosong.
+// Ruang Iklan (/ads) tidak perlu pixel consumer.
+if (!isAdsRoute) initMetaPixel();
 
 // P0.7: migrasi dummy satu-kali bertanda (bukan purge tiap boot).
 // - Hanya jalan sekali (flag bunda_dummy_purge_v1).

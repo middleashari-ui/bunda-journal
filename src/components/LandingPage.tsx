@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { PAYMENT_PAUSED } from '../config/payments';
+import { trackMetaOnce } from '../lib/metaPixel';
 import { 
   ArrowRight, 
   Mic, 
@@ -33,6 +34,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
 
   const pricingRef = useRef<HTMLDivElement>(null);
   const journalRef = useRef<HTMLDivElement>(null);
+
+  // Meta: ViewContent saat section harga benar-benar terlihat.
+  useEffect(() => {
+    const node = pricingRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.some((e) => e.isIntersecting && e.intersectionRatio >= 0.35);
+        if (!visible) return;
+        trackMetaOnce(
+          'viewcontent:pricing',
+          'ViewContent',
+          {
+            content_name: 'VIP Bundle',
+            content_ids: ['vip'],
+            content_type: 'product',
+            value: 129000,
+            currency: 'IDR',
+          },
+          24
+        );
+        observer.disconnect();
+      },
+      { threshold: [0.35, 0.6] }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   const scrollToPricing = () => {
     pricingRef.current?.scrollIntoView({ behavior: 'smooth' });

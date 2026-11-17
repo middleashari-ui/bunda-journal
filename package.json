@@ -15,7 +15,9 @@
     "test:e2e:chromium": "playwright test --project=chromium",
     "test:e2e:webkit": "playwright test --project=webkit",
     "test:visual": "playwright test tests/visual --project=chromium",
-    "test:visual:update": "playwright test tests/visual --project=chromium --update-snapshots"
+    "test:visual:update": "playwright test tests/visual --project=chromium --update-snapshots",
+    "ads:list": "node scripts/ads/render.mjs --list",
+    "ads:render": "node scripts/ads/render.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

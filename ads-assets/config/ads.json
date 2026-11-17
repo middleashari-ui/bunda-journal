@@ -6,64 +6,42 @@
     "serifBold": "ads-assets/fonts/georgiab.ttf",
     "sansBold": "ads-assets/fonts/segoeuib.ttf"
   },
+  "carousel": {
+    "id": "HS2",
+    "ratio": "4:5",
+    "size": "1080x1350",
+    "note": "Tidak dirender oleh render.mjs. Copy & spek ada di BRIEF.md bagian 5.2.",
+    "cards": [
+      { "no": 1, "title": "Rp129.000", "body": "vs photobook custom Rp800.000" },
+      { "no": 2, "title": "Sekali bayar", "body": "Bukan langganan. Akses seumur hidup." },
+      { "no": 3, "title": "100 halaman", "body": "Grafik berat, tendangan, catatan dokter" },
+      { "no": 4, "title": "10 voice detak jantung", "body": "Discan lewat QR, bisa didengar anak nanti" },
+      { "no": 5, "title": "Miliki VIP — Rp129rb", "body": "bundajournal.my.id" }
+    ]
+  },
   "ads": [
     {
       "id": "HS1",
       "angle": "hardsell",
-      "note": "Offer-led. Butuh: 1 shot USG/buku, 1 shot menulis jurnal, 1 screen record app.",
+      "note": "Demo app. Butuh 3 screen record: Beranda, Jurnal (menulis 1 entri), Studio (export PDF).",
       "clips": [
-        { "file": "ads-assets/raw/usg-01.mp4", "start": 0, "duration": 3 },
-        { "file": "ads-assets/raw/journal-01.mp4", "start": 0, "duration": 6 },
-        { "file": "ads-assets/raw/app-studio-01.mp4", "start": 0, "duration": 7, "volume": 0.25 }
+        { "file": "ads-assets/raw/app-beranda-01.mp4", "start": 0, "duration": 3, "fit": "blur", "volume": 0.2 },
+        { "file": "ads-assets/raw/app-jurnal-01.mp4", "start": 0, "duration": 6, "fit": "blur", "volume": 0.2 },
+        { "file": "ads-assets/raw/app-studio-01.mp4", "start": 0, "duration": 7, "fit": "blur", "volume": 0.2 }
       ],
       "hook": { "text": "Buku jurnal bayi di toko Rp150 ribu.", "start": 0.3, "end": 3.4, "size": 58 },
       "lines": [
-        {
-          "text": "Yang ini Rp129 ribu,\nsekali bayar.",
-          "start": 3.6,
-          "end": 7.0,
-          "size": 56
-        },
-        {
-          "text": "100 halaman + 10 voice detak jantung.\nAkses seumur hidup, tanpa langganan.",
-          "start": 7.2,
-          "end": 12.4,
-          "size": 46
-        }
+        { "text": "Yang ini Rp129 ribu,\nsekali bayar.", "start": 3.6, "end": 7.0, "size": 56 },
+        { "text": "100 halaman + 10 voice detak jantung.\nAkses seumur hidup.", "start": 7.2, "end": 12.4, "size": 46 }
       ],
       "cta": "Miliki VIP — Rp129rb",
       "music": "ads-assets/audio/bgm.mp3",
       "musicVolume": 0.16,
-      "sourceVolume": 0.55
-    },
-    {
-      "id": "HS2",
-      "angle": "hardsell",
-      "note": "Price anchoring. Butuh: galeri HP penuh foto, buku hardcover asli, screen record jurnal.",
-      "clips": [
-        { "file": "ads-assets/raw/hp-galeri-01.mp4", "start": 0, "duration": 5 },
-        { "file": "ads-assets/raw/buku-cetak-01.mp4", "start": 0, "duration": 5 },
-        { "file": "ads-assets/raw/app-jurnal-01.mp4", "start": 0, "duration": 6, "volume": 0.2 }
-      ],
-      "hook": { "text": "Photobook custom bisa Rp800 ribu.", "start": 0.3, "end": 3.4, "size": 58 },
-      "lines": [
-        {
-          "text": "Ini Rp129 ribu —\ndan bisa dicetak jadi buku.",
-          "start": 3.6,
-          "end": 8.0,
-          "size": 50
-        },
-        {
-          "text": "Bukan langganan, sekali bayar.\nSetara satu kali USG.",
-          "start": 8.2,
-          "end": 12.4,
-          "size": 50
-        }
-      ],
-      "cta": "Cek paketnya",
-      "music": "ads-assets/audio/bgm.mp3",
-      "musicVolume": 0.16,
-      "sourceVolume": 0.5
+      "sourceVolume": 0.55,
+      "sfx": [
+        { "file": "ads-assets/audio/tap.mp3", "at": 3.55, "volume": 0.5 },
+        { "file": "ads-assets/audio/whoosh.mp3", "at": 12.5, "volume": 0.5 }
+      ]
     },
     {
       "id": "PAIN1",
@@ -72,7 +50,7 @@
       "clips": [
         { "file": "ads-assets/raw/galeri-usg-01.mp4", "start": 0, "duration": 3 },
         { "file": "ads-assets/raw/usg-02.mp4", "start": 0, "duration": 7 },
-        { "file": "ads-assets/raw/app-jurnal-02.mp4", "start": 0, "duration": 6, "volume": 0.2 }
+        { "file": "ads-assets/raw/app-jurnal-02.mp4", "start": 0, "duration": 6, "fit": "blur", "volume": 0.2 }
       ],
       "hook": {
         "text": "Coba ingat — minggu berapa\nkamu dengar detak jantung bayi?",
@@ -89,7 +67,11 @@
       "cta": "Mulai catat hari ini",
       "music": "ads-assets/audio/bgm-sad.mp3",
       "musicVolume": 0.18,
-      "sourceVolume": 0.55
+      "sourceVolume": 0.55,
+      "sfx": [
+        { "file": "ads-assets/audio/detak-jantung.mp3", "at": 0.4, "volume": 0.5 },
+        { "file": "ads-assets/audio/page-turn.mp3", "at": 10.5, "volume": 0.45 }
+      ]
     },
     {
       "id": "PAIN2",
@@ -98,7 +80,7 @@
       "clips": [
         { "file": "ads-assets/raw/ruang-tunggu-01.mp4", "start": 0, "duration": 5 },
         { "file": "ads-assets/raw/dokter-01.mp4", "start": 0, "duration": 6 },
-        { "file": "ads-assets/raw/app-statistik-01.mp4", "start": 0, "duration": 6, "volume": 0.2 }
+        { "file": "ads-assets/raw/app-statistik-01.mp4", "start": 0, "duration": 6, "fit": "blur", "volume": 0.2 }
       ],
       "hook": {
         "text": "Ditanya bidan:\n“berat terakhir berapa?”",
@@ -115,16 +97,19 @@
       "cta": "Rapikan data kehamilanmu",
       "music": "ads-assets/audio/bgm-tense.mp3",
       "musicVolume": 0.16,
-      "sourceVolume": 0.5
+      "sourceVolume": 0.5,
+      "sfx": [
+        { "file": "ads-assets/audio/notif-wa.mp3", "at": 4.2, "volume": 0.45 }
+      ]
     },
     {
       "id": "GAIN1",
       "angle": "gain",
-      "note": "Warisan. Butuh: tangan di perut (golden light), buku linen, voice QR discan.",
+      "note": "Warisan. Buku belum ada: ganti buku dengan lembar PDF + QR voice di app. Kalau dummy buku jadi, tukar pdf-cetak-01 dengan buku-dummy-01.",
       "clips": [
         { "file": "ads-assets/raw/perut-01.mp4", "start": 0, "duration": 6 },
-        { "file": "ads-assets/raw/buku-linen-01.mp4", "start": 0, "duration": 6 },
-        { "file": "ads-assets/raw/voice-qr-01.mp4", "start": 0, "duration": 6, "volume": 0.3 }
+        { "file": "ads-assets/raw/qr-voice-01.mp4", "start": 0, "duration": 6, "fit": "blur", "volume": 0.2 },
+        { "file": "ads-assets/raw/pdf-cetak-01.mp4", "start": 0, "duration": 6 }
       ],
       "hook": {
         "text": "20 tahun lagi, anakmu masih\nbisa dengar detak jantungnya.",
@@ -136,21 +121,24 @@
       "lines": [
         { "text": "Bukan file yang hilang di galeri.", "start": 4.6, "end": 8.2, "size": 50 },
         { "text": "Ini warisan.", "start": 8.4, "end": 10.4, "size": 68 },
-        { "text": "Buku linen hardcover + voice QR.", "start": 10.6, "end": 13.4, "size": 48 }
+        { "text": "Voice QR + halaman siap cetak.", "start": 10.6, "end": 13.4, "size": 48 }
       ],
       "cta": "Buat warisan kecilmu",
       "music": "ads-assets/audio/bgm-warm.mp3",
       "musicVolume": 0.2,
-      "sourceVolume": 0.5
+      "sourceVolume": 0.5,
+      "sfx": [
+        { "file": "ads-assets/audio/detak-jantung.mp3", "at": 3.0, "volume": 0.4 }
+      ]
     },
     {
       "id": "GAIN2",
       "angle": "gain",
       "note": "Tenang & terkendali. Butuh: screen record mode pesawat, tangan di perut, screen record beranda.",
       "clips": [
-        { "file": "ads-assets/raw/app-offline-01.mp4", "start": 0, "duration": 6, "volume": 0.2 },
+        { "file": "ads-assets/raw/app-offline-01.mp4", "start": 0, "duration": 6, "fit": "blur", "volume": 0.2 },
         { "file": "ads-assets/raw/perut-02.mp4", "start": 0, "duration": 5 },
-        { "file": "ads-assets/raw/app-beranda-01.mp4", "start": 0, "duration": 6, "volume": 0.2 }
+        { "file": "ads-assets/raw/app-beranda-01.mp4", "start": 0, "duration": 6, "fit": "blur", "volume": 0.2 }
       ],
       "hook": { "text": "Yang bikin bumil tenang\nbukan USG 4D.", "start": 0.3, "end": 3.6, "size": 56, "y": 0.14 },
       "lines": [

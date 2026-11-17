@@ -1243,6 +1243,9 @@ export default function App() {
             storageSet('bunda_user_email', email);
             notifyUserChanged(email);
             storageSet('bunda_user_tier', tier);
+            // Untuk Meta Purchase di /success: nominal + waktu checkout.
+            storageSet('bunda_last_paid_amount', String(amount));
+            storageSet('bunda_last_paid_at', String(Date.now()));
             if (typeof consent === 'boolean') {
               storageSet('bunda_promo_consent', consent ? 'true' : 'false');
             }

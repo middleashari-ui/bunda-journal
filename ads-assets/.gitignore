@@ -1,0 +1,11 @@
+# footage mentah & hasil render tidak di-commit
+raw/*
+out/*
+audio/*
+.cache/*
+fonts/*
+
+# tapi struktur folder tetap ada
+!raw/.gitkeep
+!out/.gitkeep
+!audio/.gitkeep

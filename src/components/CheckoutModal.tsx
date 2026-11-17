@@ -4,6 +4,7 @@ import { X, CheckCircle2, QrCode, Mail, ArrowRight, ShieldCheck, CreditCard, Spa
 import { PRICING_CONFIG, PlanConfig } from '../config/pricing';
 import { getToken } from '../lib/authClient';
 import { useModalA11y } from '../hooks/useModalA11y';
+import { trackMetaOnce } from '../lib/metaPixel';
 
 import { PAYMENT_PAUSED, PAYMENT_MODE } from '../config/payments';
 
@@ -137,6 +138,23 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       const orderId = String(data.order_id || '');
       const snap = (window as any).snap;
 
+      // Meta: InitiateCheckout — transaksi Midtrans sudah dibuat, user akan membayar.
+      // Tanpa email/nama (jangan kirim PII ke pixel).
+      trackMetaOnce(
+        orderId ? `ic:${orderId}` : `ic:${chargeFor}:${selectedPlan}`,
+        'InitiateCheckout',
+        {
+          value: currentPlanConfig.price,
+          currency: 'IDR',
+          content_name: currentPlanConfig.name,
+          content_ids: [selectedPlan],
+          content_type: 'product',
+          num_items: 1,
+        },
+        6,
+        orderId || undefined
+      );
+
       if (!snap || typeof snap.pay !== 'function') {
         // Fallback buka URL snap redirection jika snap.js belum ke-load
         if (data.redirect_url) {
@@ -168,6 +186,25 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             setSnapError('Pembayaran diterima, tetapi status belum terverifikasi server. Coba lagi beberapa saat lagi.');
             return;
           }
+
+          // Meta: Purchase di titik paling andal — Snap sukses DAN server
+          // sudah bilang is_paid. Dedupe memakai order_id, jadi halaman
+          // /success tidak akan mengirim event kedua.
+          trackMetaOnce(
+            orderId ? `purchase:${orderId}` : `purchase:${chargeFor}:${selectedPlan}`,
+            'Purchase',
+            {
+              value: currentPlanConfig.price,
+              currency: 'IDR',
+              content_name: currentPlanConfig.name,
+              content_ids: [selectedPlan],
+              content_type: 'product',
+              num_items: 1,
+              order_id: orderId || undefined,
+            },
+            720,
+            orderId || undefined
+          );
           if (currentTier === 'essential' && selectedPlan === 'upgrade_vip') {
             onSuccess(chargeFor, 'vip', currentPlanConfig.price);
           } else {

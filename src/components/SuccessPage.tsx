@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Check, ShieldCheck, Sparkles, BookOpen, ArrowRight, Download, RefreshCw } from 'lucide-react';
 import { PWAInstallTutorial } from './PWAInstallTutorial';
 import { notifyUserChanged } from '../lib/appointmentStore';
+import { trackMetaOnce, hasRecentCheckout, getLastPaidAmount } from '../lib/metaPixel';
 
 interface SuccessPageProps {
   onOpenJurnal?: () => void;
@@ -96,6 +97,31 @@ export const SuccessPage: React.FC<SuccessPageProps> = ({
       isMounted = false;
     };
   }, [email]);
+
+  // Meta: Purchase hanya setelah server menyatakan is_paid, dan hanya untuk
+  // checkout yang baru terjadi (< 2 jam) supaya user lama tidak terhitung lagi.
+  useEffect(() => {
+    if (!isPaidVerified || !hasRecentCheckout()) return;
+
+    const isVip = tier === 'vip';
+    const value = getLastPaidAmount(isVip ? 129000 : 49000);
+
+    trackMetaOnce(
+      `purchase:${orderId}`,
+      'Purchase',
+      {
+        value,
+        currency: 'IDR',
+        content_name: isVip ? 'VIP Bundle' : 'Essential Access',
+        content_ids: [isVip ? 'vip' : 'essential'],
+        content_type: 'product',
+        num_items: 1,
+        order_id: orderId,
+      },
+      720,
+      orderId
+    );
+  }, [isPaidVerified, orderId, tier]);
 
   const handleOpenJurnal = () => {
     try {
