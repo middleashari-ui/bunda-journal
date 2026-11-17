@@ -2,7 +2,7 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `c97748ab`,
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `d04003f2`,
 17 Nov 2026; SW v23; health `keyCheck: invalid` — server key production perlu diganti)
 
 ## Baca dulu
@@ -57,6 +57,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `c97748ab`,
 | Auto-backup Drive tidak membuka popup/izin sendiri | `requestDriveToken(false)` return null tanpa token; auto-backup hanya saat app hidden/online |
 | Alarm pengingat toleran keterlambatan 3 jam + cek saat app kembali terlihat | `src/lib/reminderSchedule.ts`, scheduler `App.tsx` |
 | Notifikasi tidak dobel (tag + tanpa fallback `new Notification` saat SW ada) | `src/utils/notifications.ts` |
+| Pop-up pengingat saat app terlihat + tombol Buka Jurnal; klik notifikasi sistem membuka `/#/jurnal` | `ReminderPopup.tsx`, scheduler `App.tsx`, `sw.js` |
 | Catatan harian per hari (tidak membawa teks kemarin) + batas 2 baris di Jurnal & buku | `dailyNoteLimit.ts`, tes e2e |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)

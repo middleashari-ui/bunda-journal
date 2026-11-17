@@ -59,6 +59,7 @@ const PrintBookView = lazyWithRetry(() => import('./components/bookPrint/PrintBo
 import { isJournalLocalOnly } from './config/storage';
 import { maybeAutoBackup } from './lib/driveBackup';
 import { isReminderDue, reminderDayKey } from './lib/reminderSchedule';
+import { ReminderPopup, type ReminderPopupData } from './components/ReminderPopup';
 import { OnboardingModal } from './components/OnboardingModal';
 import { PicModal } from './components/PicModal';
 import { CheckoutModal } from './components/CheckoutModal';
@@ -94,7 +95,31 @@ export default function App() {
     if (logged && hasSession) return true;
     return paid && onboarded && logged;
   });
-  const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    try {
+      const hash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '');
+      if (hash === 'jurnal' || hash === 'studio' || hash === 'profil' || hash === 'home') {
+        return hash as TabType;
+      }
+    } catch {}
+    return 'home';
+  });
+  const [reminderQueue, setReminderQueue] = useState<ReminderPopupData[]>([]);
+
+  // Notifikasi yang diklik membawa hash #/jurnal → langsung buka tab Jurnal.
+  useEffect(() => {
+    const applyHash = () => {
+      try {
+        const hash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '');
+        if (hash === 'jurnal' || hash === 'studio' || hash === 'profil' || hash === 'home') {
+          setIsBookPreviewOpen(false);
+          setActiveTab(hash as TabType);
+        }
+      } catch {}
+    };
+    window.addEventListener('hashchange', applyHash);
+    return () => window.removeEventListener('hashchange', applyHash);
+  }, []);
 
   // Route /print — halaman cetak A4 (dibuka di tab baru dari Studio).
   const [isPrintRoute] = useState<boolean>(() => {
@@ -640,59 +665,73 @@ export default function App() {
         // kecocokan menit persis — alarm tetap muncul saat app dibuka kembali.
         const isDue = (time: string) => isReminderDue(time, now, 180);
 
+        const enqueue = (item: ReminderPopupData) => {
+          setReminderQueue((prev) =>
+            prev.some((existing) => existing.tag === item.tag) ? prev : [...prev, item]
+          );
+        };
+
         const notifyOnce = async (
           key: string,
           title: string,
           body: string,
-          options: { tag?: string; url?: string }
+          options: { tag: string; time?: string }
         ) => {
           if (storageGet(key) === todayDateStr) return false;
-          storageSet(key, todayDateStr);
-          if (reminderSettings.soundEnabled) playGentleChime();
-          const shown = await sendSystemNotification(title, body, {
-            ...options,
-            silent: visible,
-          });
-          if (!shown) {
-            showToast('Izin notifikasi belum aktif. Buka Profil → Uji Notifikasi untuk mengizinkan.');
+
+          // Saat app terlihat: tampilkan pop-up di dalam app (tidak perlu izin
+          // notifikasi dan tidak dobel dengan notifikasi sistem).
+          if (visible) {
+            storageSet(key, todayDateStr);
+            if (reminderSettings.soundEnabled) playGentleChime();
+            enqueue({
+              tag: options.tag,
+              title,
+              message: body,
+              time: options.time,
+            });
+            return true;
           }
+
+          // Saat app di background: coba notifikasi sistem; kalau gagal, jangan
+          // tandai terkirim supaya pop-up muncul saat app dibuka kembali.
+          const shown = await sendSystemNotification(title, body, {
+            tag: options.tag,
+            url: '/#/jurnal',
+          });
+          if (shown) storageSet(key, todayDateStr);
           return shown;
         };
 
         // Vitamin
         if (isDue(reminderSettings.vitaminTime) && !habits.vitamins) {
-          const shown = await notifyOnce(
+          await notifyOnce(
             'bunda_last_vitamin_date',
             'Bunda Journal — Minum vitamin',
             'Asam folat & zat besi penting untuk perkembangan sel darah dan saraf buah hati hari ini.',
-            { tag: 'bunda-vitamin', url: '/' }
+            { tag: 'bunda-vitamin', time: reminderSettings.vitaminTime }
           );
-          if (shown) showToast('Waktunya minum vitamin & nutrisi hari ini!');
         }
 
         // Jurnal
         if (isDue(reminderSettings.journalTime)) {
-          const shown = await notifyOnce(
+          await notifyOnce(
             'bunda_last_journal_date',
             'Bunda Journal — Isi jurnal',
             'Luangkan waktu sejenak untuk mencatat momen manis kehamilan hari ini.',
-            { tag: 'bunda-journal', url: '/' }
+            { tag: 'bunda-journal', time: reminderSettings.journalTime }
           );
-          if (shown) showToast('Waktunya menulis kenangan & jurnal harian!');
         }
 
         // Notifikasi custom
         for (const reminder of reminderSettings.customReminders || []) {
           if (!reminder.enabled || !reminder.title.trim() || !isDue(reminder.time)) continue;
-          const shown = await notifyOnce(
+          await notifyOnce(
             `bunda_last_custom_${reminder.id}_date`,
             `Bunda Journal — ${reminder.title.trim()}`,
             reminder.message.trim() || 'Pengingat dari Bunda Journal.',
-            { tag: `bunda-custom-${reminder.id}`, url: '/' }
+            { tag: `bunda-custom-${reminder.id}`, time: reminder.time }
           );
-          if (shown) {
-            showToast(`${reminder.title.trim()}: ${reminder.message.trim() || 'waktunya ya, Bunda'}`);
-          }
         }
       } finally {
         checking = false;
@@ -1318,6 +1357,20 @@ export default function App() {
             }
           }}
         />
+
+        {/* Pop-up pengingat (saat app terlihat) */}
+        {reminderQueue.length > 0 && (
+          <ReminderPopup
+            reminder={reminderQueue[0]}
+            onClose={() => setReminderQueue((prev) => prev.slice(1))}
+            onOpenJournal={() => {
+              setReminderQueue((prev) => prev.slice(1));
+              setIsBookPreviewOpen(false);
+              setActiveTab('jurnal');
+              try { window.history.pushState({}, '', '#/jurnal'); } catch {}
+            }}
+          />
+        )}
 
         {/* TC05: Mandatory Onboarding Dialog */}
         <OnboardingModal

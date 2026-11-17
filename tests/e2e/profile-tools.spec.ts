@@ -54,6 +54,30 @@ test.describe('Profil — alat bantu & riwayat', () => {
     await expect(page.getByRole('dialog', { name: /Isi otomatis/i })).toHaveCount(0);
   });
 
+  test('pengingat muncul sebagai pop-up saat app dibuka dan membuka Jurnal', async ({ page }) => {
+    await openApp(page);
+    await page.evaluate(() => {
+      const raw = localStorage.getItem('bunda_reminder_settings');
+      const settings = raw ? JSON.parse(raw) : {};
+      const now = new Date();
+      const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      localStorage.setItem(
+        'bunda_reminder_settings',
+        JSON.stringify({ ...settings, enabled: true, journalTime: hhmm, vitaminTime: '23:59' })
+      );
+      localStorage.removeItem('bunda_last_journal_date');
+    });
+
+    await page.reload();
+    const dialog = page.getByRole('dialog', { name: /Isi jurnal/i });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText('Pengingat Bunda');
+
+    await dialog.getByRole('button', { name: 'Buka Jurnal' }).click();
+    await expect(page.locator('#textarea-catatan-harian')).toBeVisible();
+    await expect(page.getByRole('dialog', { name: /Isi jurnal/i })).toHaveCount(0);
+  });
+
   test('notifikasi custom bisa ditambahkan dan disimpan', async ({ page }) => {
     await openApp(page);
     await page.locator('#dev-toolbar').evaluate((el) => el.remove()).catch(() => {});
