@@ -267,15 +267,15 @@ export default function App() {
 
   // Auto-backup harian ke Google Drive milik user (mode lokal).
   // Tidak ada upload ke server Bunda; kalau izin belum ada, diam saja.
+  // Tidak dijalankan 15 detik setelah buka app supaya tidak mengganggu layar;
+  // hanya saat app ditinggalkan atau jaringan kembali online.
   useEffect(() => {
     const run = () => { void maybeAutoBackup(); };
     const onHide = () => { if (document.visibilityState === 'hidden') run(); };
     const onOnline = () => run();
     window.addEventListener('online', onOnline);
     document.addEventListener('visibilitychange', onHide);
-    const first = window.setTimeout(run, 15000);
     return () => {
-      window.clearTimeout(first);
       window.removeEventListener('online', onOnline);
       document.removeEventListener('visibilitychange', onHide);
     };

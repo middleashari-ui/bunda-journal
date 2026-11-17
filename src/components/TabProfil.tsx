@@ -731,6 +731,10 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           />
           Backup otomatis sekali sehari
         </label>
+        <p className="mt-1 text-[10px] text-stone-400 leading-snug">
+          Auto backup tidak membuka popup Google. Izin hanya diminta saat Bunda menekan
+          “Backup sekarang”.
+        </p>
 
         <div className="mt-3 pt-2.5 border-t border-stone-700/60 flex items-center justify-between text-[11px] text-stone-600">
           <span>Penyimpanan Lokal: {journalEntries.length} catatan, {photos.length} foto</span>

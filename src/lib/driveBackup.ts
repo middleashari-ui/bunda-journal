@@ -128,6 +128,10 @@ export async function requestDriveToken(interactive = true): Promise<string | nu
   const cached = readCachedToken();
   if (cached) return cached;
 
+  // Auto-backup TIDAK boleh membuka popup/izin Google. Kalau belum ada token,
+  // lewati diam-diam; user harus menekan "Backup sekarang" untuk memberi izin.
+  if (!interactive) return null;
+
   const clientId = await resolveClientId();
   if (!clientId) throw new Error('google-not-configured');
 
@@ -354,6 +358,8 @@ export async function backupJournalToDrive(options?: {
 export async function maybeAutoBackup(): Promise<BackupResult> {
   if (!isAutoBackupEnabled()) return { ok: false, reason: 'disabled' };
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return { ok: false, reason: 'offline' };
+  // Tanpa token tersimpan, jangan sentuh Google sama sekali (tidak ada popup).
+  if (!readCachedToken()) return { ok: false, reason: 'auth-required' };
   const meta = getBackupMeta();
   if (meta && Date.now() - new Date(meta.at).getTime() < 24 * 60 * 60 * 1000) {
     return { ok: true, skipped: true, meta };

@@ -2,7 +2,7 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3694c05f`,
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `728a5615`,
 17 Nov 2026; SW v23; health `keyCheck: invalid` — server key production perlu diganti)
 
 ## Baca dulu
@@ -54,6 +54,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3694c05f`,
 | Isi otomatis jurnal dengan review (contoh kalimat, bukan catatan asli) | `AutoFillJournalModal`, tombol di Profil |
 | Notifikasi custom (judul, pesan, jam) + semua notifikasi berlogo "Bunda Journal — …" | Profil → Notifikasi Custom, scheduler di `App.tsx` |
 | Nada notifikasi custom (audio dari Bunda) | `public/sounds/bunda-notif.mp3`, `playGentleChime()` |
+| Auto-backup Drive tidak membuka popup/izin sendiri | `requestDriveToken(false)` return null tanpa token; auto-backup hanya saat app hidden/online |
 | Catatan harian per hari (tidak membawa teks kemarin) + batas 2 baris di Jurnal & buku | `dailyNoteLimit.ts`, tes e2e |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)
