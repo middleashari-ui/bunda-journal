@@ -2,7 +2,7 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `a0c8ad93`,
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3cf667b6`,
 17 Nov 2026; SW v26; Worker cron `bunda-reminder-cron` aktif; health `keyCheck: invalid` — server key production perlu diganti)
 
 ## Baca dulu
@@ -61,7 +61,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `a0c8ad93`,
 | Reset penanda pengingat versi lama + tombol "Cek Pengingat Sekarang" | `bunda_reminder_engine=v2`, `TabProfil` |
 | Toleransi pengingat 12 jam + tombol "Tampilkan Contoh Pop-up" | `reminderSchedule.ts`, `TabProfil` |
 | Install PWA cepat (bukan 15 menit) | `public/sw.js` v26: hapus URL yang kena 308 (`/index.html`, `/offline.html`), cache per-file |
-| Web Push saat app ditutup (opt-in, jadwal saja bukan jurnal) | `src/lib/pushNotifications.ts`, `/api/push/*`, Worker `workers/reminder-cron`, `schema_push.sql`; cron teruji `due:1 sent:1`; detail `docs/push-notifications.md` |
+| Web Push saat app ditutup (opt-in, jadwal saja bukan jurnal) | `src/lib/pushNotifications.ts`, `/api/push/*` (termasuk status), Worker `workers/reminder-cron`, `schema_push.sql`; cron teruji `due:1 sent:1`; detail `docs/push-notifications.md` |
 | Catatan harian per hari (tidak membawa teks kemarin) + batas 2 baris di Jurnal & buku | `dailyNoteLimit.ts`, tes e2e |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)

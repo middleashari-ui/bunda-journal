@@ -75,6 +75,7 @@ Cron selalu 1.440 kali/hari berapa pun jumlah user. Yang tumbuh adalah jumlah pu
 ## Uji yang sudah dilakukan
 
 - `POST /api/push/subscribe` + unsubscribe production: 200.
+- `GET /api/push/status` production: 200 (ada/tidaknya perangkat).
 - Worker cron diuji dengan subscription uji dan endpoint yang mengembalikan 200:
   log `{"due":1,"sent":1}` dan `last_sent_date` terisi.
 - Enkripsi Web Push + VAPID berhasil (library `@block65/webcrypto-web-push`).

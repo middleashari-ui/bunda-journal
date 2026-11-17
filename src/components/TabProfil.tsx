@@ -17,7 +17,7 @@ import {
 } from '../lib/driveBackup';
 import { playGentleChime, requestNotificationPermission, sendSystemNotification } from '../utils/notifications';
 import { AutoFillJournalModal } from './AutoFillJournalModal';
-import { disablePush, enablePush, isPushEnabled, isPushSupported } from '../lib/pushNotifications';
+import { disablePush, enablePush, getPushStatus, getServerPushStatus, isPushEnabled, isPushSupported } from '../lib/pushNotifications';
 import { 
   ColorThemeId, 
   APP_COLOR_THEMES, 
@@ -310,6 +310,33 @@ export const TabProfil: React.FC<TabProfilProps> = ({
   const [pushSupported] = useState<boolean>(() => isPushSupported());
   const [pushEnabled, setPushEnabled] = useState<boolean>(() => isPushEnabled());
   const [pushBusy, setPushBusy] = useState(false);
+  const [pushError, setPushError] = useState('');
+  const [pushPermission, setPushPermission] = useState<string>(() => getPushStatus().permission);
+  const [serverPush, setServerPush] = useState<{ exists: boolean; reminders: number } | null>(null);
+  const [pushChecking, setPushChecking] = useState(false);
+
+  const refreshPushStatus = async () => {
+    setPushChecking(true);
+    try {
+      const status = getPushStatus();
+      setPushPermission(status.permission);
+      setPushEnabled(status.enabled);
+      if (status.enabled) {
+        const server = await getServerPushStatus();
+        setServerPush({ exists: server.exists, reminders: server.reminders });
+      } else {
+        setServerPush(null);
+      }
+    } catch (err: any) {
+      setPushError(err?.message || 'Gagal membaca status push.');
+    } finally {
+      setPushChecking(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isPushEnabled()) void refreshPushStatus();
+  }, []);
   const [kicksCount, setKicksCount] = useState(0);
   const [kickStartedAt, setKickStartedAt] = useState<Date | null>(null);
   const [newReminderTitle, setNewReminderTitle] = useState('');
@@ -1183,22 +1210,29 @@ export const TabProfil: React.FC<TabProfilProps> = ({
               onClick={async () => {
                 if (!pushSupported) return;
                 setPushBusy(true);
+                setPushError('');
                 try {
                   if (pushEnabled) {
                     await disablePush();
                     setPushEnabled(false);
+                    setServerPush(null);
                     if (onShowToast) onShowToast('Notifikasi latar belakang dimatikan');
                   } else {
                     if (!reminderSettings.enabled) {
+                      setPushError('Aktifkan pengingat harian dulu.');
                       if (onShowToast) onShowToast('Aktifkan pengingat harian dulu');
                       return;
                     }
                     await enablePush(reminderSettings);
                     setPushEnabled(true);
                     if (onShowToast) onShowToast('Notifikasi latar belakang aktif untuk HP ini');
+                    await refreshPushStatus();
                   }
                 } catch (err: any) {
-                  if (onShowToast) onShowToast(err?.message || 'Gagal mengaktifkan notifikasi latar belakang');
+                  const message = err?.message || 'Gagal mengaktifkan notifikasi latar belakang';
+                  setPushError(message);
+                  setPushPermission(getPushStatus().permission);
+                  if (onShowToast) onShowToast(message);
                 } finally {
                   setPushBusy(false);
                 }
@@ -1222,6 +1256,38 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                 ? 'Aktif. Notifikasi pengingat akan dikirim Worker meski aplikasi ditutup.'
                 : 'Nonaktif. Notifikasi hanya muncul saat aplikasi dibuka.'}
           </p>
+
+          <div className="rounded-xl bg-stone-50 border border-stone-200 px-2.5 py-2 text-[10px] text-stone-700 space-y-0.5">
+            <p>Izin browser: <strong>{pushPermission === 'granted' ? 'aktif' : pushPermission === 'denied' ? 'diblokir' : pushPermission === 'default' ? 'belum diminta' : pushPermission}</strong></p>
+            <p>Service worker: <strong>{typeof navigator !== 'undefined' && navigator.serviceWorker?.controller ? 'aktif' : 'belum aktif'}</strong></p>
+            <p>
+              Server:{' '}
+              <strong>
+                {!pushEnabled
+                  ? 'nonaktif'
+                  : serverPush
+                    ? serverPush.exists
+                      ? `${serverPush.reminders} pengingat tersimpan`
+                      : 'belum terdaftar'
+                    : pushChecking
+                      ? 'memeriksa…'
+                      : 'belum dicek'}
+              </strong>
+            </p>
+          </div>
+
+          {pushError && (
+            <p className="text-[10px] text-rose-600 font-medium leading-snug">{pushError}</p>
+          )}
+
+          <button
+            type="button"
+            onClick={() => { setPushError(''); void refreshPushStatus(); }}
+            disabled={pushChecking}
+            className="w-full py-1.5 px-3 bg-[#FAF8F5] hover:bg-white text-stone-700 border border-stone-200 rounded-xl text-[10px] font-medium disabled:opacity-50 cursor-pointer"
+          >
+            {pushChecking ? 'Memeriksa…' : 'Cek Status Notifikasi'}
+          </button>
         </div>
 
         <div className="border-t border-stone-100 pt-2 flex items-center justify-between text-xs text-stone-700 py-1">

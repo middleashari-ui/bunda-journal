@@ -30,6 +30,45 @@ export function isPushEnabled(): boolean {
   }
 }
 
+export interface PushStatus {
+  supported: boolean;
+  permission: NotificationPermission | 'unsupported';
+  enabled: boolean;
+  deviceId: string;
+}
+
+export function getPushStatus(): PushStatus {
+  const supported = isPushSupported();
+  return {
+    supported,
+    permission: supported && typeof Notification !== 'undefined' ? Notification.permission : 'unsupported',
+    enabled: isPushEnabled(),
+    deviceId: getDeviceId(),
+  };
+}
+
+export interface ServerPushStatus {
+  exists: boolean;
+  reminders: number;
+  tzOffsetMinutes?: number;
+  updatedAt?: string;
+}
+
+export async function getServerPushStatus(): Promise<ServerPushStatus> {
+  const deviceId = getDeviceId();
+  const res = await fetch(`/api/push/status?deviceId=${encodeURIComponent(deviceId)}`, {
+    cache: 'no-store',
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data?.ok) throw new Error(data.error || 'Gagal membaca status push.');
+  return {
+    exists: Boolean(data.exists),
+    reminders: Number(data.reminders || 0),
+    tzOffsetMinutes: data.tzOffsetMinutes,
+    updatedAt: data.updatedAt,
+  };
+}
+
 function getDeviceId(): string {
   try {
     const saved = storageGet(DEVICE_KEY);
