@@ -103,9 +103,9 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
                 )}
               </div>
             </div>
-            <div className="pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+            <div className="pt-2 text-left text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
               <span>{leftPageNum}</span>
-              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Surat Bunda</span>
+              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Surat Bunda</span>
             </div>
           </div>
         </div>
@@ -155,14 +155,14 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
                       style={{ color: theme.textColor }}
                     />
                   ) : (
-                    <span className="font-serif text-sm font-bold text-stone-400">________________</span>
+                    <span className="font-serif text-sm font-bold text-stone-600">________________</span>
                   )}
-                  <span className="text-[8.5px] text-stone-400 italic">Bundamu selamanya</span>
+                  <span className="text-[8.5px] text-stone-600 italic">Bundamu selamanya</span>
                 </div>
               </div>
             </div>
-            <div className="pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
-              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Pesan Bunda</span>
+            <div className="pt-2 text-right text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
+              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Pesan Bunda</span>
               <span>{rightPageNum}</span>
             </div>
           </div>
@@ -205,9 +205,9 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
               )}
             </div>
           </div>
-          <div className="pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+          <div className="pt-2 text-left text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
             <span>{leftPageNum}</span>
-            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Surat Ayah</span>
+            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Surat Ayah</span>
           </div>
         </div>
       </div>
@@ -257,9 +257,9 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
                     style={{ color: theme.textColor }}
                   />
                 ) : (
-                  <span className="font-serif text-sm font-bold text-stone-400">________________</span>
+                  <span className="font-serif text-sm font-bold text-stone-600">________________</span>
                 )}
-                <span className="text-[8.5px] text-stone-400 italic">Ayahmu selamanya</span>
+                <span className="text-[8.5px] text-stone-600 italic">Ayahmu selamanya</span>
               </div>
             </div>
 
@@ -271,14 +271,14 @@ export const Bab5KapsulWaktu: React.FC<Bab5KapsulWaktuProps> = ({
               <span className="font-serif text-[11px] font-bold block tracking-wider uppercase" style={{ color: theme.textColor }}>
                 Jurnal 100 Halaman Selesai
               </span>
-              <p className="text-[9px] text-stone-400 font-sans mt-0.5">
+              <p className="text-[9px] text-stone-600 font-sans mt-0.5">
                 "Setiap detik perjalanan ini terukir abadi untukmu, buah hati tercinta."
               </p>
             </div>
           </div>
 
-          <div className="pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
-            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Pesan Ayah & Segel Buku</span>
+          <div className="pt-2 text-right text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
+            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Pesan Ayah & Segel Buku</span>
             <span>{rightPageNum}</span>
           </div>
         </div>

@@ -2,8 +2,8 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3e6595d2`,
-17 Nov 2026; SW v27; Worker cron `bunda-reminder-cron` aktif; health `keyCheck: invalid` — server key production perlu diganti)
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `271b0fe6`,
+17 Nov 2026; SW v27; Worker cron `bunda-reminder-cron` aktif; payment UI dimatikan otomatis karena health `keyCheck: invalid`)
 
 ## Baca dulu
 
@@ -62,6 +62,8 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3e6595d2`,
 | Install PWA cepat (bukan 15 menit) | `public/sw.js` v27: hapus URL yang kena 308 (`/index.html`, `/offline.html`), cache per-file |
 | Web Push saat app ditutup (default aktif, jadwal saja bukan jurnal) | `src/lib/pushNotifications.ts`, `/api/push/*` (termasuk status), Worker `workers/reminder-cron`, `schema_push.sql`; cron teruji `due:1 sent:1`; detail `docs/push-notifications.md` |
 | Catatan harian per hari (tidak membawa teks kemarin) + batas 2 baris di Jurnal & buku | `dailyNoteLimit.ts`, tes e2e |
+| Palet tema buku digelapkan untuk kontras teks/cetak | `src/types/bookPrint.ts`, `text-stone-400 → 600` di bookPrint; visual baseline lulus |
+| Payment UI fail-safe: tombol bayar nonaktif kalau `/api/payments/health` tidak ok | `LandingPage` prop `paymentUnavailable`, `App.tsx` |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)
 
@@ -83,9 +85,9 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3e6595d2`,
    Kode backup sudah siap (update file hari yang sama).
 2. **Tes restore backup di HP asli** — ekspor lalu impor ulang; pastikan foto/bab
    IndexedDB ikut kembali. Tidak bisa diotomatiskan dari desktop.
-3. **Aksesibilitas lanjutan** — audit axe selesai, focus trap + Escape dan roving
-   tabindex sudah ada. Sisa satu keputusan desain: kontras palet tema buku di
-   `/print` (703 node; lihat `docs/accessibility-audit.md`).
+3. **Aksesibilitas lanjutan** — palet tema buku sudah digelapkan dan baseline
+   visual lulus; audit axe `/print` penuh (100 halaman) sebaiknya diulang per
+   4 halaman untuk memastikan sisa kontras. Lihat `docs/accessibility-audit.md`.
 4. **Ganti MIDTRANS_SERVER_KEY production** — charge production masih 401
    `Unauthorized` dari Midtrans. Ambil server key production yang benar di
    dashboard Midtrans → Settings → Access Keys, lalu:

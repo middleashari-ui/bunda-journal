@@ -200,8 +200,8 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                           </>
                         ) : (
                           <>
-                            <span className="font-serif font-bold text-stone-400 block">Kandidat {i + 1}: ________________________</span>
-                            <span className="text-[9px] text-stone-400 italic block">Makna: _____________________________________________</span>
+                            <span className="font-serif font-bold text-stone-600 block">Kandidat {i + 1}: ________________________</span>
+                            <span className="text-[9px] text-stone-600 italic block">Makna: _____________________________________________</span>
                           </>
                         )}
                       </div>
@@ -233,15 +233,15 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                       />
                     </>
                   ) : (
-                    <div className="py-2 text-stone-400 font-serif">_________________________________</div>
+                    <div className="py-2 text-stone-600 font-serif">_________________________________</div>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+            <div className="pt-2 text-left text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
               <span>{leftPageNum}</span>
-              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Ide Nama</span>
+              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Ide Nama</span>
             </div>
           </div>
         </div>
@@ -278,11 +278,11 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                     />
                   ) : (
                     <div className="w-full h-36 h-44 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
-                      <Camera className="w-6 h-6 text-stone-400 mb-1 group-hover:scale-110 transition-transform" />
+                      <Camera className="w-6 h-6 text-stone-600 mb-1 group-hover:scale-110 transition-transform" />
                       <span className="text-[10px] font-semibold text-stone-600 block">
                         Tempel Foto Box Bayi / Sudut Kamar
                       </span>
-                      <span className="text-[8.5px] text-stone-400 mt-0.5">
+                      <span className="text-[8.5px] text-stone-600 mt-0.5">
                         (Ketuk untuk pilih foto dekorasi kamar)
                       </span>
                     </div>
@@ -308,15 +308,15 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                       ) : (
                         <Square className="w-3.5 h-3.5 text-stone-300 shrink-0" />
                       )}
-                      <span className={item.checked ? 'text-stone-850 font-medium' : 'text-stone-400 line-through'}>{item.label}</span>
+                      <span className={item.checked ? 'text-stone-850 font-medium' : 'text-stone-600 line-through'}>{item.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div className="pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
-              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Pojok Kamar</span>
+            <div className="pt-2 text-right text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
+              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Pojok Kamar</span>
               <span>{rightPageNum}</span>
             </div>
           </div>
@@ -355,11 +355,11 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                         onClick={() => toggleCheck(clothesList, setClothesList, i, 'done')}
                         className="flex items-center justify-between w-full border-b border-stone-100 pb-1 cursor-pointer hover:bg-stone-50 text-left"
                       >
-                        <span className={row.done ? 'text-stone-850 font-medium' : 'text-stone-400'}>{row.name}</span>
+                        <span className={row.done ? 'text-stone-850 font-medium' : 'text-stone-600'}>{row.name}</span>
                         {row.done ? (
                           <span className="text-[9px] font-bold text-[#556B2F] px-1.5 py-0.2 bg-[#556B2F]/10 rounded-sm">Sudah</span>
                         ) : (
-                          <span className="text-[9px] text-stone-400 px-1.5 py-0.2 bg-stone-100 rounded-sm">Belum</span>
+                          <span className="text-[9px] text-stone-600 px-1.5 py-0.2 bg-stone-100 rounded-sm">Belum</span>
                         )}
                       </button>
                     ))}
@@ -379,11 +379,11 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                         onClick={() => toggleCheck(bathList, setBathList, i, 'done')}
                         className="flex items-center justify-between w-full border-b border-stone-100 pb-1 cursor-pointer hover:bg-stone-50 text-left"
                       >
-                        <span className={row.done ? 'text-stone-850 font-medium' : 'text-stone-400'}>{row.name}</span>
+                        <span className={row.done ? 'text-stone-850 font-medium' : 'text-stone-600'}>{row.name}</span>
                         {row.done ? (
                           <span className="text-[9px] font-bold text-[#556B2F] px-1.5 py-0.2 bg-[#556B2F]/10 rounded-sm">Sudah</span>
                         ) : (
-                          <span className="text-[9px] text-stone-400 px-1.5 py-0.2 bg-stone-100 rounded-sm">Belum</span>
+                          <span className="text-[9px] text-stone-600 px-1.5 py-0.2 bg-stone-100 rounded-sm">Belum</span>
                         )}
                       </button>
                     ))}
@@ -392,9 +392,9 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
               </div>
             </div>
 
-            <div className="pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+            <div className="pt-2 text-left text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
               <span>{leftPageNum}</span>
-              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Belanja Pakaian</span>
+              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Belanja Pakaian</span>
             </div>
           </div>
         </div>
@@ -425,11 +425,11 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                         onClick={() => toggleCheck(diaperList, setDiaperList, i, 'done')}
                         className="flex items-center justify-between w-full border-b border-stone-100 pb-1 cursor-pointer hover:bg-stone-50 text-left"
                       >
-                        <span className={row.done ? 'text-stone-850 font-medium' : 'text-stone-400'}>{row.name}</span>
+                        <span className={row.done ? 'text-stone-850 font-medium' : 'text-stone-600'}>{row.name}</span>
                         {row.done ? (
                           <span className="text-[9px] font-bold text-[#556B2F] px-1.5 py-0.2 bg-[#556B2F]/10 rounded-sm">Sudah</span>
                         ) : (
-                          <span className="text-[9px] text-stone-400 px-1.5 py-0.2 bg-stone-100 rounded-sm">Belum</span>
+                          <span className="text-[9px] text-stone-600 px-1.5 py-0.2 bg-stone-100 rounded-sm">Belum</span>
                         )}
                       </button>
                     ))}
@@ -449,11 +449,11 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                         onClick={() => toggleCheck(feedingList, setFeedingList, i, 'done')}
                         className="flex items-center justify-between w-full border-b border-stone-100 pb-1 cursor-pointer hover:bg-stone-50 text-left"
                       >
-                        <span className={row.done ? 'text-stone-850 font-medium' : 'text-stone-400'}>{row.name}</span>
+                        <span className={row.done ? 'text-stone-850 font-medium' : 'text-stone-600'}>{row.name}</span>
                         {row.done ? (
                           <span className="text-[9px] font-bold text-[#556B2F] px-1.5 py-0.2 bg-[#556B2F]/10 rounded-sm">Sudah</span>
                         ) : (
-                          <span className="text-[9px] text-stone-400 px-1.5 py-0.2 bg-stone-100 rounded-sm">Belum</span>
+                          <span className="text-[9px] text-stone-600 px-1.5 py-0.2 bg-stone-100 rounded-sm">Belum</span>
                         )}
                       </button>
                     ))}
@@ -462,8 +462,8 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
               </div>
             </div>
 
-            <div className="pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
-              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Belanja Popok & ASI</span>
+            <div className="pt-2 text-right text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
+              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Belanja Popok & ASI</span>
               <span>{rightPageNum}</span>
             </div>
           </div>
@@ -506,7 +506,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                       ) : (
                         <Square className="w-3.5 h-3.5 text-stone-300 shrink-0" />
                       )}
-                      <span className={row.checked ? 'text-stone-850 font-medium' : 'text-stone-400 line-through'}>{row.text}</span>
+                      <span className={row.checked ? 'text-stone-850 font-medium' : 'text-stone-600 line-through'}>{row.text}</span>
                     </button>
                   ))}
                 </div>
@@ -530,7 +530,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                       ) : (
                         <Square className="w-3.5 h-3.5 text-stone-300 shrink-0" />
                       )}
-                      <span className={row.checked ? 'text-stone-850 font-medium' : 'text-stone-400 line-through'}>{row.text}</span>
+                      <span className={row.checked ? 'text-stone-850 font-medium' : 'text-stone-600 line-through'}>{row.text}</span>
                     </button>
                   ))}
                 </div>
@@ -538,9 +538,9 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
             </div>
           </div>
 
-          <div className="pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+          <div className="pt-2 text-left text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
             <span>{leftPageNum}</span>
-            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Tas Bunda & Ayah</span>
+            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Tas Bunda & Ayah</span>
           </div>
         </div>
       </div>
@@ -576,7 +576,7 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
                       ) : (
                         <Square className="w-3.5 h-3.5 text-stone-300 shrink-0" />
                       )}
-                      <span className={row.checked ? 'text-stone-850 font-medium' : 'text-stone-400 line-through'}>{row.text}</span>
+                      <span className={row.checked ? 'text-stone-850 font-medium' : 'text-stone-600 line-through'}>{row.text}</span>
                     </button>
                   ))}
                 </div>
@@ -595,8 +595,8 @@ export const Bab3Persiapan: React.FC<Bab3PersiapanProps> = ({
             </div>
           </div>
 
-          <div className="pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
-            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Tas Buah Hati</span>
+          <div className="pt-2 text-right text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
+            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Tas Buah Hati</span>
             <span>{rightPageNum}</span>
           </div>
         </div>

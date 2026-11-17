@@ -650,7 +650,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-stone-400 absolute right-1.5 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-stone-600 absolute right-1.5 pointer-events-none" />
             </div>
 
             {/* Indikator Halaman (Lembar 1/50) */}
@@ -705,7 +705,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
               <span className="text-sm font-semibold tracking-tight text-stone-100">
                 {lockToast.message}
               </span>
-              <span className="text-[11px] text-stone-400 font-sans">
+              <span className="text-[11px] text-stone-600 font-sans">
                 {lockToast.isLocked 
                   ? 'Input dan catatan terkunci dari ketikan tidak sengaja.' 
                   : 'Ketuk pada teks atau catatan mana saja untuk mengubah isi.'}
@@ -724,7 +724,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
             {/* Drawer Header with Search Bar replacing duplicate hamburger icon */}
             <div className="flex items-center gap-2 pb-3 border-b border-stone-800 mb-3">
               <div className="flex-1 relative flex items-center">
-                <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 pointer-events-none" />
+                <Search className="w-3.5 h-3.5 text-stone-600 absolute left-2.5 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Cari halaman atau bab..." aria-label="Cari halaman atau bab"
@@ -735,7 +735,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
                 {searchQuery && (
                   <button 
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2 text-stone-400 hover:text-stone-200 cursor-pointer"
+                    className="absolute right-2 text-stone-600 hover:text-stone-200 cursor-pointer"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -743,7 +743,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
               </div>
               <button 
                 onClick={() => setIsMenuOpen(false)}
-                className="w-7 h-7 rounded-lg bg-stone-800 hover:bg-stone-700 flex items-center justify-center text-stone-400 hover:text-white cursor-pointer shrink-0"
+                className="w-7 h-7 rounded-lg bg-stone-800 hover:bg-stone-700 flex items-center justify-center text-stone-600 hover:text-white cursor-pointer shrink-0"
                 title="Tutup Menu"
               >
                 <X className="w-4 h-4" />
@@ -757,7 +757,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
                   Hasil Pencarian:
                 </span>
                 {filteredChapters.length === 0 ? (
-                  <p className="text-xs text-stone-400 italic">Tidak ditemukan bab atau topik yang cocok.</p>
+                  <p className="text-xs text-stone-600 italic">Tidak ditemukan bab atau topik yang cocok.</p>
                 ) : (
                   <div className="space-y-1.5 max-h-48 overflow-y-auto no-scrollbar">
                     {filteredChapters.map(ch => {
@@ -806,7 +806,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
                     <span className="font-semibold block text-xs">
                       {isDocumentLocked ? 'Kunci Dokumen: Aktif' : 'Mode Edit: Aktif'}
                     </span>
-                    <span className="text-[10px] text-stone-400 block font-light">
+                    <span className="text-[10px] text-stone-600 block font-light">
                       {isDocumentLocked ? 'Halaman terkunci (baca saja)' : 'Klik kolom untuk mengetik'}
                     </span>
                   </div>
@@ -822,7 +822,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
             {/* 5 Theme Switcher - Horizontal Slider Container */}
             <div className="mb-3">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 flex items-center gap-1.5">
                   <Palette className="w-3.5 h-3.5 text-[#556B2F]" />
                   Pilihan Tema Buku
                 </span>
@@ -846,7 +846,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
                       className={`min-w-[130px] max-w-[130px] shrink-0 p-2.5 rounded-xl text-left border transition-all cursor-pointer flex flex-col justify-between ${
                         isSelected
                           ? 'bg-stone-800 border-white text-white shadow-sm ring-1 ring-white/20'
-                          : 'bg-stone-850/80 border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-200'
+                          : 'bg-stone-850/80 border-stone-800 text-stone-600 hover:bg-stone-800 hover:text-stone-200'
                       }`}
                     >
                       <div className="flex items-center justify-between w-full mb-1.5">
@@ -862,7 +862,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
                       </div>
                       <div>
                         <p className="text-xs font-serif font-bold text-stone-100 truncate">{thm.name}</p>
-                        <p className="text-[8.5px] text-stone-400 font-light truncate">{thm.subtitle}</p>
+                        <p className="text-[8.5px] text-stone-600 font-light truncate">{thm.subtitle}</p>
                       </div>
                     </button>
                   );
@@ -903,7 +903,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
 
             {/* Lompat Bab Section */}
             <div className="mt-auto pt-3 border-t border-stone-800">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 flex items-center gap-1.5 mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 flex items-center gap-1.5 mb-2">
                 <Layers className="w-3.5 h-3.5 text-[#556B2F]" />
                 Daftar Bab & Halaman
               </span>
@@ -957,7 +957,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
               </div>
               <button 
                 onClick={() => setScanModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:text-white cursor-pointer"
+                className="w-7 h-7 rounded-full bg-stone-800 flex items-center justify-center text-stone-600 hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -971,7 +971,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
                     ? 'Semua Halaman Lengkap' 
                     : `Ditemukan ${emptyPagesList.length} Halaman Belum Terisi`}
                 </p>
-                <p className="text-[10px] text-stone-400 font-light">
+                <p className="text-[10px] text-stone-600 font-light">
                   {100 - emptyPagesList.length} dari 100 halaman sudah terisi rapi
                 </p>
               </div>
@@ -985,10 +985,10 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
             {/* List of Empty Pages */}
             <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 py-1 pr-1">
               {emptyPagesList.length === 0 ? (
-                <div className="text-center py-8 text-stone-400 space-y-2">
+                <div className="text-center py-8 text-stone-600 space-y-2">
                   <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
                   <p className="text-sm font-serif font-bold text-stone-200">Buku siap dicetak</p>
-                  <p className="text-xs text-stone-400 max-w-xs mx-auto font-light">
+                  <p className="text-xs text-stone-600 max-w-xs mx-auto font-light">
                     Semua foto dan catatan Bunda sudah siap dicetak.
                   </p>
                 </div>
@@ -1004,7 +1004,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
                       </span>
                       <div className="truncate">
                         <span className="text-xs font-semibold text-stone-200 block truncate">{item.chapter}</span>
-                        <span className="text-[10px] text-stone-400 block truncate font-light">{item.description}</span>
+                        <span className="text-[10px] text-stone-600 block truncate font-light">{item.description}</span>
                       </div>
                     </div>
 
@@ -1053,13 +1053,13 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
               </div>
               <button 
                 onClick={() => setIsDownloadModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:text-white cursor-pointer"
+                className="w-7 h-7 rounded-full bg-stone-800 flex items-center justify-center text-stone-600 hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-stone-400 mb-4 font-light leading-relaxed">
+            <p className="text-xs text-stone-600 mb-4 font-light leading-relaxed">
               Format ukuran pas A4 (<span className="text-amber-200 font-sans">210mm x 297mm</span>) menggunakan rendering <span className="text-stone-300 font-medium">Full Linen</span> dengan margin area aman jilidan cetak hardcover.
             </p>
 
@@ -1085,7 +1085,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
 
             <button
               onClick={() => setIsDownloadModalOpen(false)}
-              className="w-full py-2 bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-stone-200 font-medium rounded-xl text-xs transition-colors cursor-pointer"
+              className="w-full py-2 bg-stone-800 hover:bg-stone-700 text-stone-600 hover:text-stone-200 font-medium rounded-xl text-xs transition-colors cursor-pointer"
             >
               Tutup
             </button>
@@ -1106,7 +1106,7 @@ export const PrintBookStudio: React.FC<PrintBookStudioProps> = ({
               </div>
               <button 
                 onClick={() => setIsBottomChapterOpen(false)}
-                className="w-7 h-7 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:text-white cursor-pointer"
+                className="w-7 h-7 rounded-full bg-stone-800 flex items-center justify-center text-stone-600 hover:text-white cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>

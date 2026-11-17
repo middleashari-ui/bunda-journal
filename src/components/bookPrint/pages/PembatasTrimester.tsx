@@ -82,15 +82,15 @@ export const PembatasTrimester: React.FC<PembatasTrimesterProps> = ({
           </div>
 
           <div className="pb-2 pb-4">
-            <span className="text-[9px] uppercase tracking-widest text-stone-400 font-sans">
+            <span className="text-[9px] uppercase tracking-widest text-stone-600 font-sans">
               {trimesterMeta.subtitle}
             </span>
           </div>
         </div>
 
-        <div className="pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+        <div className="pt-2 text-left text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
           <span>{leftPageNum}</span>
-          <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Pembatas Trimester</span>
+          <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Pembatas Trimester</span>
         </div>
       </div>
 
@@ -180,8 +180,8 @@ export const PembatasTrimester: React.FC<PembatasTrimesterProps> = ({
             </div>
           </div>
 
-          <div className="pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
-            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">{trimesterMeta.title}</span>
+          <div className="pt-2 text-right text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
+            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">{trimesterMeta.title}</span>
             <span>{rightPageNum}</span>
           </div>
         </div>

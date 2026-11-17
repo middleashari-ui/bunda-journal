@@ -154,11 +154,11 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                     />
                   ) : (
                     <div className="w-full h-36 h-44 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
-                      <Camera className="w-6 h-6 text-stone-400 mb-1 group-hover:scale-110 transition-transform" />
+                      <Camera className="w-6 h-6 text-stone-600 mb-1 group-hover:scale-110 transition-transform" />
                       <span className="text-[10px] font-semibold text-stone-600 block">
                         Tempel Foto Test Pack Garis Dua
                       </span>
-                      <span className="text-[8.5px] text-stone-400 mt-0.5">
+                      <span className="text-[8.5px] text-stone-600 mt-0.5">
                         (Ketuk untuk pilih foto dari galeri)
                       </span>
                     </div>
@@ -173,7 +173,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
               {/* Discovery Metadata (Interactive / Editable) */}
               <div className="grid grid-cols-1 grid-cols-2 gap-2 mb-3 text-[10.5px]">
                 <div className="bg-white p-2 border rounded-xs" style={{ borderColor: theme.borderColor }}>
-                  <span className="text-[8px] text-stone-400 uppercase tracking-wider block font-medium">Hari & Tanggal:</span>
+                  <span className="text-[8px] text-stone-600 uppercase tracking-wider block font-medium">Hari & Tanggal:</span>
                   {isFillMode ? (
                     <input 
                       type="text" 
@@ -183,12 +183,12 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                       className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none border-b border-transparent hover:border-stone-300 focus:border-[#556B2F]"
                     />
                   ) : (
-                    <span className="font-serif text-stone-400">________________________</span>
+                    <span className="font-serif text-stone-600">________________________</span>
                   )}
                 </div>
 
                 <div className="bg-white p-2 border rounded-xs" style={{ borderColor: theme.borderColor }}>
-                  <span className="text-[8px] text-stone-400 uppercase tracking-wider block font-medium">Waktu & Tempat:</span>
+                  <span className="text-[8px] text-stone-600 uppercase tracking-wider block font-medium">Waktu & Tempat:</span>
                   {isFillMode ? (
                     <input 
                       type="text" 
@@ -198,7 +198,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                       className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none border-b border-transparent hover:border-stone-300 focus:border-[#556B2F]"
                     />
                   ) : (
-                    <span className="font-serif text-stone-400">________________________</span>
+                    <span className="font-serif text-stone-600">________________________</span>
                   )}
                 </div>
               </div>
@@ -226,9 +226,9 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
               </div>
             </div>
 
-            <div className="pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+            <div className="pt-2 text-left text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
               <span>3</span>
-              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Awal Mula Kisah</span>
+              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Awal Mula Kisah</span>
             </div>
           </div>
         </div>
@@ -303,8 +303,8 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
               </div>
             </div>
 
-            <div className="pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
-              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Reaksi Keluarga</span>
+            <div className="pt-2 text-right text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
+              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Reaksi Keluarga</span>
               <span>4</span>
             </div>
           </div>
@@ -366,11 +366,11 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                   />
                 ) : (
                   <div className="w-full h-36 h-44 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
-                    <Camera className="w-6 h-6 text-stone-400 mb-1 group-hover:scale-110 transition-transform" />
+                    <Camera className="w-6 h-6 text-stone-600 mb-1 group-hover:scale-110 transition-transform" />
                     <span className="text-[10px] font-semibold text-stone-600 block">
                       Tempel Foto USG Kantung Janin Pertama
                     </span>
-                    <span className="text-[8.5px] text-stone-400 mt-0.5">
+                    <span className="text-[8.5px] text-stone-600 mt-0.5">
                       (Gestational Sac 5-7W • Ketuk untuk upload)
                     </span>
                   </div>
@@ -385,7 +385,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
             {/* Clinic Info Grid (Interactive / Editable) */}
             <div className="grid grid-cols-1 grid-cols-3 gap-2 mb-3 text-[10px]">
               <div className="bg-white p-2 border rounded-xs" style={{ borderColor: theme.borderColor }}>
-                <span className="text-[8px] text-stone-400 uppercase block font-medium">Rumah Sakit:</span>
+                <span className="text-[8px] text-stone-600 uppercase block font-medium">Rumah Sakit:</span>
                 {isFillMode ? (
                   <input 
                     type="text" 
@@ -395,12 +395,12 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                     className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none"
                   />
                 ) : (
-                  <span className="text-stone-400 font-serif">______________</span>
+                  <span className="text-stone-600 font-serif">______________</span>
                 )}
               </div>
 
               <div className="bg-white p-2 border rounded-xs" style={{ borderColor: theme.borderColor }}>
-                <span className="text-[8px] text-stone-400 uppercase block font-medium">Dokter Obgyn:</span>
+                <span className="text-[8px] text-stone-600 uppercase block font-medium">Dokter Obgyn:</span>
                 {isFillMode ? (
                   <input 
                     type="text" 
@@ -410,12 +410,12 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                     className="w-full font-serif font-bold text-stone-850 bg-transparent outline-none"
                   />
                 ) : (
-                  <span className="text-stone-400 font-serif">______________</span>
+                  <span className="text-stone-600 font-serif">______________</span>
                 )}
               </div>
 
               <div className="bg-white p-2 border rounded-xs" style={{ borderColor: theme.borderColor }}>
-                <span className="text-[8px] text-stone-400 uppercase block font-medium">Detak Jantung:</span>
+                <span className="text-[8px] text-stone-600 uppercase block font-medium">Detak Jantung:</span>
                 {isFillMode ? (
                   <input 
                     type="text" 
@@ -425,7 +425,7 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
                     className="w-full font-serif font-bold text-[#556B2F] bg-transparent outline-none"
                   />
                 ) : (
-                  <span className="text-stone-400 font-serif">______________</span>
+                  <span className="text-stone-600 font-serif">______________</span>
                 )}
               </div>
             </div>
@@ -453,9 +453,9 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
             </div>
           </div>
 
-          <div className="pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+          <div className="pt-2 text-left text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
             <span>5</span>
-            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">USG Kantung Janin</span>
+            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">USG Kantung Janin</span>
           </div>
         </div>
       </div>
@@ -545,8 +545,8 @@ export const Bab1AwalMula: React.FC<Bab1AwalMulaProps> = ({
             </div>
           </div>
 
-          <div className="pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
-            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Cerita Ngidam</span>
+          <div className="pt-2 text-right text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
+            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Cerita Ngidam</span>
             <span>6</span>
           </div>
         </div>

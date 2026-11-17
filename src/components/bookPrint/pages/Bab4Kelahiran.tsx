@@ -140,7 +140,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
               <div className="space-y-3 mb-3">
                 <div className="grid grid-cols-1 grid-cols-2 gap-2 text-[10px]">
                   <div className="bg-white p-2 border rounded-xs" style={{ borderColor: theme.borderColor }}>
-                    <span className="text-[8px] text-stone-400 uppercase block font-medium">Kontraksi Pertama:</span>
+                    <span className="text-[8px] text-stone-600 uppercase block font-medium">Kontraksi Pertama:</span>
                     {isFillMode ? (
                       <input 
                         type="text" 
@@ -156,7 +156,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                   </div>
 
                   <div className="bg-white p-2 border rounded-xs" style={{ borderColor: theme.borderColor }}>
-                    <span className="text-[8px] text-stone-400 uppercase block font-medium">Tiba di Rumah Sakit:</span>
+                    <span className="text-[8px] text-stone-600 uppercase block font-medium">Tiba di Rumah Sakit:</span>
                     {isFillMode ? (
                       <input 
                         type="text" 
@@ -195,9 +195,9 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
               </div>
             </div>
 
-            <div className="pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+            <div className="pt-2 text-left text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
               <span>{leftPageNum}</span>
-              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Proses Persalinan</span>
+              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Proses Persalinan</span>
             </div>
           </div>
         </div>
@@ -234,11 +234,11 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                     />
                   ) : (
                     <div className="w-full h-40 h-48 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
-                      <Camera className="w-6 h-6 text-stone-400 mb-1 group-hover:scale-110 transition-transform" />
+                      <Camera className="w-6 h-6 text-stone-600 mb-1 group-hover:scale-110 transition-transform" />
                       <span className="text-[10px] font-semibold text-stone-600 block">
                         Tempel Foto Momen IMD / Pelukan Pertama
                       </span>
-                      <span className="text-[8.5px] text-stone-400 mt-0.5">
+                      <span className="text-[8.5px] text-stone-600 mt-0.5">
                         (Ketuk untuk pilih foto bayi baru lahir)
                       </span>
                     </div>
@@ -272,8 +272,8 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
               </div>
             </div>
 
-            <div className="pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
-              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Detik Kelahiran</span>
+            <div className="pt-2 text-right text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
+              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Detik Kelahiran</span>
               <span>{rightPageNum}</span>
             </div>
           </div>
@@ -301,7 +301,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
               {/* Certificate Style Box */}
               <div className="bg-white p-3.5 border-2 shadow-xs space-y-2.5 rounded-xs" style={{ borderColor: theme.primaryColor }}>
                 <div className="text-center pb-2 border-b border-stone-200">
-                  <span className="text-[8px] uppercase tracking-widest text-stone-400 font-sans block">Nama Lengkap Resmi:</span>
+                  <span className="text-[8px] uppercase tracking-widest text-stone-600 font-sans block">Nama Lengkap Resmi:</span>
                   {isFillMode ? (
                     <input 
                       type="text"
@@ -312,13 +312,13 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                       style={{ color: theme.textColor }}
                     />
                   ) : (
-                    <div className="font-serif text-lg text-stone-400">___________________________</div>
+                    <div className="font-serif text-lg text-stone-600">___________________________</div>
                   )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
                   <div>
-                    <span className="text-[7.5px] text-stone-400 block font-medium">Tanggal Lahir:</span>
+                    <span className="text-[7.5px] text-stone-600 block font-medium">Tanggal Lahir:</span>
                     {isFillMode ? (
                       <input 
                         type="text" 
@@ -331,7 +331,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                   </div>
 
                   <div>
-                    <span className="text-[7.5px] text-stone-400 block font-medium">Pukul Kelahiran:</span>
+                    <span className="text-[7.5px] text-stone-600 block font-medium">Pukul Kelahiran:</span>
                     {isFillMode ? (
                       <input 
                         type="text" 
@@ -344,7 +344,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                   </div>
 
                   <div>
-                    <span className="text-[7.5px] text-stone-400 block font-medium">Berat Badan:</span>
+                    <span className="text-[7.5px] text-stone-600 block font-medium">Berat Badan:</span>
                     {isFillMode ? (
                       <input 
                         type="text" 
@@ -357,7 +357,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                   </div>
 
                   <div>
-                    <span className="text-[7.5px] text-stone-400 block font-medium">Panjang Badan:</span>
+                    <span className="text-[7.5px] text-stone-600 block font-medium">Panjang Badan:</span>
                     {isFillMode ? (
                       <input 
                         type="text" 
@@ -370,7 +370,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                   </div>
 
                   <div>
-                    <span className="text-[7.5px] text-stone-400 block font-medium">Lingkar Kepala:</span>
+                    <span className="text-[7.5px] text-stone-600 block font-medium">Lingkar Kepala:</span>
                     {isFillMode ? (
                       <input 
                         type="text" 
@@ -383,7 +383,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                   </div>
 
                   <div>
-                    <span className="text-[7.5px] text-stone-400 block font-medium">Golongan Darah:</span>
+                    <span className="text-[7.5px] text-stone-600 block font-medium">Golongan Darah:</span>
                     {isFillMode ? (
                       <input 
                         type="text" 
@@ -403,9 +403,9 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
               </div>
             </div>
 
-            <div className="pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+            <div className="pt-2 text-left text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
               <span>{leftPageNum}</span>
-              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Biodata Lahir</span>
+              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Biodata Lahir</span>
             </div>
           </div>
         </div>
@@ -439,7 +439,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                       <>
                         <Footprints className="w-7 h-7 text-stone-300 mb-2" />
                         <span className="text-[8.5px] uppercase tracking-wider text-stone-500 font-semibold">Cap Telapak Kaki Kiri</span>
-                        <span className="text-[7.5px] text-stone-400 mt-0.5">(Unggah foto cap)</span>
+                        <span className="text-[7.5px] text-stone-600 mt-0.5">(Unggah foto cap)</span>
                       </>
                     )}
                   </div>
@@ -460,7 +460,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                       <>
                         <Footprints className="w-7 h-7 text-stone-300 mb-2" />
                         <span className="text-[8.5px] uppercase tracking-wider text-stone-500 font-semibold">Cap Telapak Kaki Kanan</span>
-                        <span className="text-[7.5px] text-stone-400 mt-0.5">(Unggah foto cap)</span>
+                        <span className="text-[7.5px] text-stone-600 mt-0.5">(Unggah foto cap)</span>
                       </>
                     )}
                   </div>
@@ -474,8 +474,8 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
               </div>
             </div>
 
-            <div className="pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
-              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Jejak Kaki</span>
+            <div className="pt-2 text-right text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
+              <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Jejak Kaki</span>
               <span>{rightPageNum}</span>
             </div>
           </div>
@@ -503,7 +503,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
               {/* Box to tape baby's wristband */}
               <div className="bg-white border-2 border-dashed p-3 text-center relative rounded-xs" style={{ borderColor: theme.borderColor }}>
                 <div className="washi-tape" style={{ position: 'absolute', width: '32mm', height: '8mm', backgroundColor: theme.washiBg, transform: 'rotate(-2deg)', top: '-4mm', left: '50%', marginLeft: '-16mm', zIndex: 10 }} />
-                <FileText className="w-5 h-5 mx-auto text-stone-400 mb-1" />
+                <FileText className="w-5 h-5 mx-auto text-stone-600 mb-1" />
                 <span className="text-[9px] uppercase tracking-widest text-stone-500 font-bold block">
                   Tempel Gelang Identitas Bayi Rumah Sakit
                 </span>
@@ -519,7 +519,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                   {babyWristbandPhoto ? (
                     <img src={babyWristbandPhoto} alt="Gelang Bayi" className="h-16 mx-auto object-contain" />
                   ) : (
-                    <div className="h-14 border border-stone-200 bg-stone-50/50 flex flex-col items-center justify-center text-[8.5px] text-stone-400 hover:text-stone-600">
+                    <div className="h-14 border border-stone-200 bg-stone-50/50 flex flex-col items-center justify-center text-[8.5px] text-stone-600 hover:text-stone-600">
                       <span>Area Foto Gelang Bayi</span>
                     </div>
                   )}
@@ -529,7 +529,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
               {/* Box to tape mom's wristband */}
               <div className="bg-white border-2 border-dashed p-3 text-center relative rounded-xs" style={{ borderColor: theme.borderColor }}>
                 <div className="washi-tape" style={{ position: 'absolute', width: '32mm', height: '8mm', backgroundColor: theme.washiBg, transform: 'rotate(2deg)', top: '-4mm', left: '50%', marginLeft: '-16mm', zIndex: 10 }} />
-                <FileText className="w-5 h-5 mx-auto text-stone-400 mb-1" />
+                <FileText className="w-5 h-5 mx-auto text-stone-600 mb-1" />
                 <span className="text-[9px] uppercase tracking-widest text-stone-500 font-bold block">
                   Tempel Gelang Identitas Bunda Rumah Sakit
                 </span>
@@ -545,7 +545,7 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                   {momWristbandPhoto ? (
                     <img src={momWristbandPhoto} alt="Gelang Bunda" className="h-16 mx-auto object-contain" />
                   ) : (
-                    <div className="h-14 border border-stone-200 bg-stone-50/50 flex flex-col items-center justify-center text-[8.5px] text-stone-400 hover:text-stone-600">
+                    <div className="h-14 border border-stone-200 bg-stone-50/50 flex flex-col items-center justify-center text-[8.5px] text-stone-600 hover:text-stone-600">
                       <span>Area Foto Gelang Bunda</span>
                     </div>
                   )}
@@ -554,9 +554,9 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
             </div>
           </div>
 
-          <div className="pt-2 text-left text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+          <div className="pt-2 text-left text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
             <span>{leftPageNum}</span>
-            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Gelang RS</span>
+            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Gelang RS</span>
           </div>
         </div>
       </div>
@@ -588,11 +588,11 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
                   <img src={familyPhoto} alt="Foto Keluarga" className="w-full h-40 h-48 object-cover border border-stone-200" />
                 ) : (
                   <div className="w-full h-40 h-48 bg-stone-50 group-hover:bg-amber-50/50 transition-colors border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-3 text-center">
-                    <Camera className="w-6 h-6 text-stone-400 mb-1 group-hover:scale-110 transition-transform" />
+                    <Camera className="w-6 h-6 text-stone-600 mb-1 group-hover:scale-110 transition-transform" />
                     <span className="text-[10px] font-semibold text-stone-600 block">
                       Tempel Foto Bertiga: Ayah, Bunda & Buah Hati
                     </span>
-                    <span className="text-[8.5px] text-stone-400 mt-0.5">
+                    <span className="text-[8.5px] text-stone-600 mt-0.5">
                       (Momen pulang ke rumah tercinta)
                     </span>
                   </div>
@@ -609,8 +609,8 @@ export const Bab4Kelahiran: React.FC<Bab4KelahiranProps> = ({
             </div>
           </div>
 
-          <div className="pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
-            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Foto Keluarga</span>
+          <div className="pt-2 text-right text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
+            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Foto Keluarga</span>
             <span>{rightPageNum}</span>
           </div>
         </div>

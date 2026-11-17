@@ -68,13 +68,13 @@ Lighthouse landing: aksesibilitas **0.80 → 1.00** (target; lihat bagian verifi
 
 ## Catatan & batasan
 
-1. **`/print` punya 703 node kontras rendah**, semuanya berasal dari palet tema buku
-   (contoh: aksen `#C87A64` di atas kertas `#FAF9F7` = 3.1:1; label mikro
-   `stone-400` 8 px = 2.45:1). Tidak ada masalah struktur: semua tombol/input di
-   100 halaman sudah punya nama. Ini keputusan desain buku — kalau ingin lolos
-   WCAG, aksen tema perlu digelapkan (mis. `#A85A44`) dan baseline visual buku
-   diperbarui. Jangan diubah tanpa persetujuan karena mengubah tampilan cetak.
-   Audit dilakukan per 4 halaman (100 halaman sekaligus membuat axe > 60 detik).
+1. **Palet tema buku sudah digelapkan (17 Nov 2026)** untuk mengurangi kontras
+   rendah di `/print`: aksen terakota dan `mutedText` dibuat lebih gelap,
+   `text-stone-400` di komponen buku diganti `text-stone-600`. Baseline visual
+   buku tetap lulus. Audit axe penuh 100 halaman sebaiknya diulang per 4 halaman.
+2. **`/print` sebelum perubahan** memiliki 703 node kontras rendah dari palet tema
+   (aksen `#C87A64` di kertas cream = 3.1:1; label mikro 8 px = 2.45:1). Tidak ada
+   masalah struktur: semua tombol/input di 100 halaman sudah punya nama.
 2. **Focus trap & Escape sudah ditambahkan** lewat `src/hooks/useModalA11y.ts`:
    fokus awal masuk ke modal, Tab/Shift+Tab berputar, Escape menutup (kecuali
    onboarding yang wajib), dan fokus kembali ke tombol pemicu. Berlaku untuk

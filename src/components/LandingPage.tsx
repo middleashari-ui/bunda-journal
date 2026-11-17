@@ -24,9 +24,11 @@ interface LandingPageProps {
   onLoginClick?: () => void;
   onRegisterClick?: () => void;
   isPaid?: boolean;
+  paymentUnavailable?: boolean;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartCheckout, onLoginClick, onRegisterClick, isPaid = false }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartCheckout, onLoginClick, onRegisterClick, isPaid = false, paymentUnavailable = false }) => {
+  const paymentsPaused = PAYMENT_PAUSED || paymentUnavailable;
   const [isPaidPreview, setIsPaidPreview] = useState<boolean>(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -144,11 +146,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                   onEnterApp();
                 }
               }}
-              disabled={!isPaid && PAYMENT_PAUSED}
-              title={!isPaid && PAYMENT_PAUSED ? 'Pembayaran sedang diperbaiki' : undefined}
+              disabled={!isPaid && paymentsPaused}
+              title={!isPaid && paymentsPaused ? 'Pembayaran sedang diperbaiki' : undefined}
               className="h-[32px] px-4 rounded-[8px] border border-[#E5E5E5] bg-white text-[13px] font-medium hover:bg-[#111] hover:text-white hover:border-[#111] transition-all cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[#111] disabled:hover:border-[#E5E5E5]"
             >
-              {isPaid ? 'Buka Aplikasi' : PAYMENT_PAUSED ? 'VIP Segera Hadir' : 'Miliki VIP 129rb'}
+              {isPaid ? 'Buka Aplikasi' : paymentsPaused ? 'VIP Segera Hadir' : 'Miliki VIP 129rb'}
             </button>
           </div>
         </div>
@@ -183,11 +185,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
             <div className="flex items-center gap-3 mb-10">
               <button 
                 onClick={onStartCheckout ? () => onStartCheckout(129000) : onEnterApp}
-                disabled={PAYMENT_PAUSED}
-                title={PAYMENT_PAUSED ? 'Pembayaran sedang diperbaiki' : undefined}
+                disabled={paymentsPaused}
+                title={paymentsPaused ? 'Pembayaran sedang diperbaiki' : undefined}
                 className="h-[40px] px-5 rounded-[8px] bg-[#111] text-white text-[13px] font-medium flex items-center gap-2 hover:bg-black transition-colors cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#111]"
               >
-                {PAYMENT_PAUSED ? 'VIP Segera Hadir' : 'Miliki VIP — Rp 129rb'} <ArrowRight className="w-3.5 h-3.5" />
+                {paymentsPaused ? 'VIP Segera Hadir' : 'Miliki VIP — Rp 129rb'} <ArrowRight className="w-3.5 h-3.5" />
               </button>
               <button 
                 onClick={() => setIsPreviewModalOpen(true)}
@@ -506,11 +508,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                 </ul>
                 <button 
                   onClick={onStartCheckout ? () => onStartCheckout(129000) : onEnterApp}
-                  disabled={PAYMENT_PAUSED}
-                  title={PAYMENT_PAUSED ? 'Pembayaran sedang diperbaiki' : undefined}
+                  disabled={paymentsPaused}
+                  title={paymentsPaused ? 'Pembayaran sedang diperbaiki' : undefined}
                   className="mt-auto h-[44px] rounded-[8px] bg-white text-[#111] text-[13px] font-semibold flex items-center justify-center gap-2 hover:bg-[#FAFAF9] transition-colors cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
                 >
-                  {PAYMENT_PAUSED ? 'VIP Segera Hadir' : 'Miliki VIP — Rp 129rb'} <ArrowRight className="w-3.5 h-3.5" />
+                  {paymentsPaused ? 'VIP Segera Hadir' : 'Miliki VIP — Rp 129rb'} <ArrowRight className="w-3.5 h-3.5" />
                 </button>
                 <div className="mt-3 text-[10px] text-white/50 text-center">
                   Bayar sekali seumur hidup, bukan langganan
@@ -550,11 +552,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterApp, onStartChe
                 </ul>
                 <button 
                   onClick={onStartCheckout ? () => onStartCheckout(249000) : onEnterApp}
-                  disabled={PAYMENT_PAUSED}
-                  title={PAYMENT_PAUSED ? 'Pembayaran sedang diperbaiki' : undefined}
+                  disabled={paymentsPaused}
+                  title={paymentsPaused ? 'Pembayaran sedang diperbaiki' : undefined}
                   className="mt-auto h-[44px] rounded-[8px] border border-[#556B2F] text-[#556B2F] bg-white text-[13px] font-semibold hover:bg-[#556B2F] hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-[#556B2F]"
                 >
-                  {PAYMENT_PAUSED ? 'Cetak Fisik Segera Hadir' : 'Pesan Cetak Fisik — Rp 249rb'}
+                  {paymentsPaused ? 'Cetak Fisik Segera Hadir' : 'Pesan Cetak Fisik — Rp 249rb'}
                 </button>
                 <div className="mt-3 text-[10px] text-stone-600 text-center">
                   Siap kirim setelah kehamilan selesai

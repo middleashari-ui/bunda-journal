@@ -153,8 +153,8 @@ export const IntroPages: React.FC<IntroPagesProps> = ({ theme, userProfile, isFi
             </div>
           </div>
 
-          <div className="pt-2 text-right text-[9px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
-            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">Pengantar</span>
+          <div className="pt-2 text-right text-[9px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
+            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">Pengantar</span>
             <span>2</span>
           </div>
         </div>

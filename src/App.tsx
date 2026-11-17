@@ -146,6 +146,21 @@ export default function App() {
   const [isPaid, setIsPaid] = useState<boolean>(() => {
     return storageGet('bunda_is_paid') === 'true';
   });
+  const [paymentHealthy, setPaymentHealthy] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/payments/health', { cache: 'no-store' })
+      .then(async (res) => {
+        const data = await res.json().catch(() => null);
+        // Endpoint 404 di dev / jaringan gagal: jangan blokir pembayaran.
+        if (alive) setPaymentHealthy(res.ok ? Boolean(data?.ok) : null);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  const paymentsUnavailable = PAYMENT_PAUSED || paymentHealthy === false;
 
   // User Membership Tier: 'essential' | 'vip' (Diambil dari Supabase & fallback lokal)
   const [userTier, setUserTier] = useState<'essential' | 'vip'>(() => {
@@ -1011,8 +1026,8 @@ export default function App() {
   }, []);
 
   const openCheckout = (plan: 'essential' | 'vip' | 'hardcover' | 'upgrade_vip' = 'essential') => {
-    if (PAYMENT_PAUSED) {
-      showToast('Pembayaran sedang diperbaiki. VIP segera hadir.');
+    if (paymentsUnavailable) {
+      showToast('Pembayaran sedang tidak tersedia. Coba lagi nanti.');
       return;
     }
     setCheckoutDefaultPlan(plan);
@@ -1146,13 +1161,14 @@ export default function App() {
         ) : !isLoggedIn ? (
           <LandingPage 
             isPaid={isPaid}
+            paymentUnavailable={paymentsUnavailable}
             onLoginClick={() => { setLoginMode('login'); setIsLoginOpen(true); }}
             onRegisterClick={() => { setLoginMode('register'); setIsLoginOpen(true); }}
             onStartCheckout={(amount) => {
               openCheckout(amount === 129000 ? 'vip' : amount === 249000 ? 'hardcover' : 'essential');
             }}
             onEnterApp={() => {
-              if (!isPaid && !PAYMENT_PAUSED) {
+              if (!isPaid && !paymentsUnavailable) {
                 setIsCheckoutOpen(true);
                 return;
               }

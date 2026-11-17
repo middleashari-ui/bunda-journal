@@ -399,7 +399,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                 className="border bg-white px-2 py-1 text-[10px] flex items-center min-w-[130px] min-w-[150px] rounded-sm"
                 style={{ borderColor: theme.borderColor }}
               >
-                <span className="text-stone-400 mr-1.5 shrink-0">Tanggal:</span>
+                <span className="text-stone-600 mr-1.5 shrink-0">Tanggal:</span>
                 <input 
                   type="text"
                   aria-label={`Tanggal minggu ${week}`}
@@ -442,7 +442,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                         style={{ color: dayObj.isSunday ? theme.secondaryColor : theme.mutedText }}
                       >
                         <span>{dayObj.label}</span>
-                        <span className="font-normal normal-case text-[6.5px] text-stone-400">
+                        <span className="font-normal normal-case text-[6.5px] text-stone-600">
                           {fmtDayMonth(weekDates[idx] || null)}
                         </span>
                       </span>
@@ -761,9 +761,9 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
           </div>
 
           {/* Footer Page Number */}
-          <div className="mt-auto pt-2 text-left text-[10px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
+          <div className="mt-auto pt-2 text-left text-[10px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
             <span>{leftPageNum}</span>
-            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">
+            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">
               Bunda Journal • Week {week}
             </span>
           </div>
@@ -842,7 +842,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                   </>
                 ) : (
                   <>
-                    <Camera className="w-5 h-5 text-stone-400 mb-1" />
+                    <Camera className="w-5 h-5 text-stone-600 mb-1" />
                     <span className="text-[9px] font-medium text-stone-500 uppercase tracking-wider text-center px-2">
                       Tambah Foto USG / Perut W{week}
                     </span>
@@ -876,7 +876,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     onChange={(e) => handleMomStatChange('weight', e.target.value)}
                     className="w-full text-[9px] font-serif font-bold text-stone-800 bg-transparent pr-4 focus:outline-hidden"
                   />
-                  <span className="absolute right-1 text-[8px] text-stone-400 pointer-events-none">kg</span>
+                  <span className="absolute right-1 text-[8px] text-stone-600 pointer-events-none">kg</span>
                 </div>
               </div>
 
@@ -898,7 +898,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     onChange={(e) => handleMomStatChange('waist', e.target.value)}
                     className="w-full text-[9px] font-serif font-bold text-stone-800 bg-transparent pr-4 focus:outline-hidden"
                   />
-                  <span className="absolute right-1 text-[8px] text-stone-400 pointer-events-none">cm</span>
+                  <span className="absolute right-1 text-[8px] text-stone-600 pointer-events-none">cm</span>
                 </div>
               </div>
 
@@ -920,7 +920,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                     onChange={(e) => handleMomStatChange('bloodPressure', e.target.value)}
                     className="w-full text-[8.5px] font-serif font-bold text-stone-800 bg-transparent pr-6 focus:outline-hidden"
                   />
-                  <span className="absolute right-1 text-[7.5px] text-stone-400 pointer-events-none">mmHg</span>
+                  <span className="absolute right-1 text-[7.5px] text-stone-600 pointer-events-none">mmHg</span>
                 </div>
               </div>
             </div>
@@ -932,7 +932,7 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                 style={{ backgroundColor: theme.headerBg, borderColor: theme.borderColor, color: theme.textColor }}
               >
                 <span>Catatan Dokter / Pertanyaan Konsul</span>
-                <Edit2 className="w-2.5 h-2.5 text-stone-400" />
+                <Edit2 className="w-2.5 h-2.5 text-stone-600" />
               </div>
               <textarea 
                 rows={3}
@@ -947,8 +947,8 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
           </div>
 
           {/* Footer Page Number */}
-          <div className="mt-auto pt-2 text-right text-[10px] font-sans text-stone-400 border-t border-stone-200 flex justify-between items-center">
-            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-400">
+          <div className="mt-auto pt-2 text-right text-[10px] font-sans text-stone-600 border-t border-stone-200 flex justify-between items-center">
+            <span className="text-[8px] font-serif uppercase tracking-widest text-stone-600">
               Dokumentasi Foto & Medis
             </span>
             <span>{rightPageNum}</span>
