@@ -21,7 +21,7 @@ describe('jadwal pengingat', () => {
 
   it('belum jatuh tempo atau sudah terlalu lama', () => {
     expect(isReminderDue('11:10', at(11, 9))).toBe(false);
-    expect(isReminderDue('11:10', at(14, 11))).toBe(false);
+    expect(isReminderDue('11:10', at(23, 30))).toBe(false);
     expect(isReminderDue('', at(11, 10))).toBe(false);
   });
 

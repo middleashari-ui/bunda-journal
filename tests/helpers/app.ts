@@ -94,6 +94,12 @@ export async function seedApp(
       localStorage.setItem('bunda_week', String(week));
       localStorage.setItem('bunda_onboarding_done', 'true');
       localStorage.setItem('bunda_pwa_tutorial_dismissed', 'true');
+      // Fixture: pengingat aktif tapi jauh dari jam tes supaya tidak ada pop-up
+      // yang menghalangi klik. Tes khusus pop-up mengatur jamnya sendiri.
+      localStorage.setItem(
+        'bunda_reminder_settings',
+        JSON.stringify({ enabled: true, vitaminTime: '23:59', journalTime: '23:59', waterIntervalHours: 2, soundEnabled: false })
+      );
       // Fixture sudah memakai konvensi hari baru (Sen=0). Tanpa ini, migrasi
       // skema v1 akan menganggap data fixture sebagai format lama dan menggesernya.
       localStorage.setItem('bunda_schema_version', '1');

@@ -1014,6 +1014,25 @@ export const TabProfil: React.FC<TabProfilProps> = ({
               Cek Pengingat Sekarang
             </button>
 
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event('bunda_demo_reminder'))}
+              className="w-full py-1.5 px-3 bg-[#556B2F]/10 hover:bg-[#556B2F]/15 text-[#556B2F] border border-[#556B2F]/25 rounded-xl text-[11px] font-semibold transition-all cursor-pointer"
+            >
+              Tampilkan Contoh Pop-up
+            </button>
+
+            <p className="text-[10px] text-stone-600">
+              Izin notifikasi:{' '}
+              {typeof Notification === 'undefined'
+                ? 'tidak didukung'
+                : Notification.permission === 'granted'
+                  ? 'aktif'
+                  : Notification.permission === 'denied'
+                    ? 'diblokir — izinkan di pengaturan browser'
+                    : 'belum diminta — tekan Uji Notifikasi'}
+            </p>
+
             {/* Custom notifications */}
             <div className="pt-2 border-t border-stone-200/60 space-y-2">
               <div className="flex items-center justify-between">

@@ -2,7 +2,7 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `8d6bd668`,
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `575b5d64`,
 17 Nov 2026; SW v23; health `keyCheck: invalid` — server key production perlu diganti)
 
 ## Baca dulu
@@ -59,6 +59,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `8d6bd668`,
 | Notifikasi tidak dobel (tag + tanpa fallback `new Notification` saat SW ada) | `src/utils/notifications.ts` |
 | Pop-up pengingat saat app terlihat + tombol Buka Jurnal; klik notifikasi sistem membuka `/#/jurnal` | `ReminderPopup.tsx`, scheduler `App.tsx`, `sw.js` |
 | Reset penanda pengingat versi lama + tombol "Cek Pengingat Sekarang" | `bunda_reminder_engine=v2`, `TabProfil` |
+| Toleransi pengingat 12 jam + tombol "Tampilkan Contoh Pop-up" | `reminderSchedule.ts`, `TabProfil` |
 | Catatan harian per hari (tidak membawa teks kemarin) + batas 2 baris di Jurnal & buku | `dailyNoteLimit.ts`, tes e2e |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)

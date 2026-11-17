@@ -15,7 +15,7 @@ export function minutesOfDay(value: string): number | null {
 export function isReminderDue(
   time: string,
   now: Date = new Date(),
-  graceMinutes = 180
+  graceMinutes = 720
 ): boolean {
   const target = minutesOfDay(time);
   if (target === null) return false;

@@ -78,6 +78,19 @@ test.describe('Profil — alat bantu & riwayat', () => {
     await expect(page.getByRole('dialog', { name: /Isi jurnal/i })).toHaveCount(0);
   });
 
+  test('tombol contoh menampilkan pop-up pengingat', async ({ page }) => {
+    await openApp(page);
+    await page.locator('#dev-toolbar').evaluate((el) => el.remove()).catch(() => {});
+    await page.getByRole('button', { name: 'Profil', exact: true }).click();
+
+    await page.getByRole('button', { name: 'Tampilkan Contoh Pop-up' }).click();
+    const dialog = page.getByRole('dialog', { name: /Contoh pengingat/i });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText('tampilan pengingat di HP Bunda sudah benar');
+    await dialog.getByRole('button', { name: 'Nanti' }).click();
+    await expect(page.getByRole('dialog', { name: /Contoh pengingat/i })).toHaveCount(0);
+  });
+
   test('notifikasi custom bisa ditambahkan dan disimpan', async ({ page }) => {
     await openApp(page);
     await page.locator('#dev-toolbar').evaluate((el) => el.remove()).catch(() => {});

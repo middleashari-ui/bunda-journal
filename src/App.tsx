@@ -519,8 +519,23 @@ export default function App() {
   // Tombol "Cek Pengingat Sekarang" di Profil memicu pemeriksaan ulang.
   useEffect(() => {
     const onCheck = () => setReminderCheckNonce((n) => n + 1);
+    const onDemo = () => {
+      setReminderQueue((prev) => [
+        ...prev.filter((item) => item.tag !== 'demo'),
+        {
+          tag: 'demo',
+          title: 'Bunda Journal — Contoh pengingat',
+          message: 'Ini contoh pop-up pengingat. Kalau ini muncul, tampilan pengingat di HP Bunda sudah benar.',
+          time: '',
+        },
+      ]);
+    };
     window.addEventListener('bunda_check_reminders', onCheck);
-    return () => window.removeEventListener('bunda_check_reminders', onCheck);
+    window.addEventListener('bunda_demo_reminder', onDemo);
+    return () => {
+      window.removeEventListener('bunda_check_reminders', onCheck);
+      window.removeEventListener('bunda_demo_reminder', onDemo);
+    };
   }, []);
 
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -682,10 +697,10 @@ export default function App() {
         const todayDateStr = reminderDayKey(now);
         const visible = document.visibilityState === 'visible';
 
-        // Jadwal dianggap jatuh tempo kalau menitnya sudah lewat (maks. 3 jam).
+        // Jadwal dianggap jatuh tempo kalau menitnya sudah lewat (maks. 12 jam).
         // Android menahan timer saat app di latar belakang, jadi jangan pakai
         // kecocokan menit persis — alarm tetap muncul saat app dibuka kembali.
-        const isDue = (time: string) => isReminderDue(time, now, 180);
+        const isDue = (time: string) => isReminderDue(time, now, 720);
 
         const enqueue = (item: ReminderPopupData) => {
           setReminderQueue((prev) =>
