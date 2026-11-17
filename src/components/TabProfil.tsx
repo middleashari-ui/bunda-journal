@@ -13,6 +13,8 @@ import {
   setAutoBackupEnabled,
   listDriveBackups,
   downloadBackup,
+  checkDriveAccess,
+  clearDriveToken,
   DriveBackupMeta,
 } from '../lib/driveBackup';
 import { playGentleChime, requestNotificationPermission, sendSystemNotification } from '../utils/notifications';
@@ -191,6 +193,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
   // ---- Backup ke Google Drive milik user ----
   const [autoBackup, setAutoBackupState] = useState<boolean>(() => isAutoBackupEnabled());
   const [isDriveBusy, setIsDriveBusy] = useState(false);
+  const [isDriveChecking, setIsDriveChecking] = useState(false);
 
   const driveErrorMessage = (reason?: string): string => {
     switch (reason) {
@@ -203,6 +206,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
         return 'Izin Google Drive dibutuhkan. Coba lagi lalu setujui akses.';
       case 'access_denied':
       case 'drive-403':
+      case 'drive-folder-403':
       case 'drive-update-403':
       case 'drive-create-403':
         return 'Google menolak akses Drive (403). Tambahkan email Bunda sebagai test user di Google Cloud, atau publikasikan aplikasi OAuth.';
@@ -234,6 +238,21 @@ export const TabProfil: React.FC<TabProfilProps> = ({
       if (onShowToast) onShowToast(driveErrorMessage(err?.message));
     } finally {
       setIsDriveBusy(false);
+    }
+  };
+
+  const handleDriveCheck = async () => {
+    if (isDriveChecking) return;
+    setIsDriveChecking(true);
+    try {
+      const res = await checkDriveAccess();
+      if (res.ok) {
+        if (onShowToast) onShowToast('Google Drive siap dipakai (folder Bunda Journal)');
+      } else if (onShowToast) {
+        onShowToast(driveErrorMessage(res.reason));
+      }
+    } finally {
+      setIsDriveChecking(false);
     }
   };
 
@@ -772,6 +791,27 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           Auto backup tidak membuka popup Google. Izin hanya diminta saat Bunda menekan
           “Backup sekarang”.
         </p>
+
+        <div className="mt-2 flex items-center gap-2 text-[10px]">
+          <button
+            type="button"
+            onClick={handleDriveCheck}
+            disabled={isDriveChecking}
+            className="flex-1 py-1.5 rounded-lg border border-stone-700 text-stone-300 hover:bg-stone-800 disabled:opacity-50 cursor-pointer"
+          >
+            {isDriveChecking ? 'Memeriksa izin…' : 'Tes Izin Google Drive'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              clearDriveToken();
+              if (onShowToast) onShowToast('Izin Google Drive dilupakan. Backup berikutnya akan meminta izin ulang.');
+            }}
+            className="px-2.5 py-1.5 rounded-lg border border-stone-700 text-stone-400 hover:bg-stone-800 cursor-pointer"
+          >
+            Lupakan izin
+          </button>
+        </div>
 
         <div className="mt-3 pt-2.5 border-t border-stone-700/60 flex items-center justify-between text-[11px] text-stone-600">
           <span>Penyimpanan Lokal: {journalEntries.length} catatan, {photos.length} foto</span>

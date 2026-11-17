@@ -1,8 +1,11 @@
 # Google Cloud — konfigurasi untuk backup Drive
 
+Project Google yang dipakai aplikasi: **165573930868**
+(Client ID `165573930868-104o4nhb5cqbsq8nvmokin08rfi9kof3.apps.googleusercontent.com`).
+
 Diisi di Google Cloud Console (project yang sama dengan login Google).
 Tanpa ini, tombol **Backup sekarang** di Profil akan menampilkan
-"Google Drive belum dikonfigurasi".
+"Google Drive belum dikonfigurasi" atau Google menolak dengan `403 access_denied`.
 
 ## 1. API
 
@@ -18,7 +21,10 @@ Tanpa ini, tombol **Backup sekarang** di Profil akan menampilkan
   - `.../auth/userinfo.profile`
   - `https://www.googleapis.com/auth/drive.file`  ← **wajib untuk backup**
 - Selama status masih **Testing**, hanya akun yang ditambahkan di
-  *Test users* yang bisa memberi izin.
+  *Test users* yang bisa memberi izin. Tambahkan:
+  - `middleashari@gmail.com`
+  - tambahkan email Bunda lain yang akan memakai fitur ini (maks. 100 test user).
+- Simpan, lalu tunggu 1–5 menit. Perubahan test user tidak perlu deploy ulang.
 
 ## 3. OAuth Client (Web application)
 
@@ -45,9 +51,20 @@ ke browser supaya Google Identity Services bisa memulai alur Drive.
 ## 5. Verifikasi cepat
 
 1. Buka `http://localhost:5173/api/google-config` → harus `{"ok":true,"clientId":"..."}`.
-2. Profil → Backup sekarang → popup Google muncul → setujui.
-3. File `bunda-backup-YYYY-MM-DD.json` muncul di folder **Bunda Journal** pada Drive.
-4. Pulihkan dari Drive → pilih file → data masuk → kartu "Pemulihan Data Terakhir" tersedia.
+2. Di HP/aplikasi: Profil → **Lupakan izin** (menghapus token lama), lalu
+   **Tes Izin Google Drive** → popup Google muncul → setujui.
+3. Profil → **Backup sekarang** → file `bunda-backup-YYYY-MM-DD.json` muncul di
+   folder **Bunda Journal** pada Drive.
+4. Klik Backup lagi di hari yang sama → file yang sama harus ter-update, bukan
+   bertambah.
+5. Pulihkan dari Drive → pilih file → data masuk → kartu "Pemulihan Data Terakhir" tersedia.
+
+Kalau `Tes Izin Google Drive` gagal:
+- `403 access_denied` → email yang sedang login di Google **belum** ada di Test
+  users, atau app belum di-Publish.
+- `popup_closed` → popup ditutup; ulangi dan setujui.
+- `google-not-configured` → `GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_ID` tidak cocok.
+- Hapus izin lama di `myaccount.google.com/permissions` lalu coba lagi.
 
 ## 6. Kalau mau rilis ke publik
 

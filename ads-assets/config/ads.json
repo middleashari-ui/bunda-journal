@@ -76,11 +76,14 @@
     {
       "id": "PAIN2",
       "angle": "pain",
-      "note": "Panik di ruang periksa. Butuh: POV ruang tunggu/klinik, catatan dokter, screen record statistik.",
+      "note": "Pilot v2 — pakai footage klinik yang ada: bidan, layar USG, screenshot app.",
+      "logo": null,
       "clips": [
-        { "file": "ads-assets/raw/ruang-tunggu-01.mp4", "start": 0, "duration": 5 },
-        { "file": "ads-assets/raw/dokter-01.mp4", "start": 0, "duration": 6 },
-        { "file": "ads-assets/raw/app-statistik-01.mp4", "start": 0, "duration": 6, "fit": "blur", "volume": 0.2 }
+        { "file": "ads-assets/raw/bidan-01.mp4", "start": 2.6, "duration": 4.0, "volume": 0.3 },
+        { "file": "ads-assets/raw/bidan-01.mp4", "start": 16.0, "duration": 3.4, "volume": 0.3 },
+        { "file": "ads-assets/raw/app-stats-card.png", "duration": 3.0 },
+        { "file": "ads-assets/raw/app-jurnal-card.png", "duration": 3.2 },
+        { "file": "ads-assets/raw/usg-screen-01.mp4", "start": 3.2, "duration": 3.4, "fit": "blur" }
       ],
       "hook": {
         "text": "Ditanya bidan:\n“berat terakhir berapa?”",
@@ -90,16 +93,16 @@
         "y": 0.13
       },
       "lines": [
-        { "text": "Catatan tercecer di Notes, WA, buku kecil.", "start": 3.8, "end": 7.6, "size": 46 },
-        { "text": "Tensi, lingkar, catatan dokter — satu layar.", "start": 7.8, "end": 11.0, "size": 46 },
-        { "text": "Jadwal USG + tombol WA suami.", "start": 11.2, "end": 13.2, "size": 44 }
+        { "text": "Catatan tercecer di Notes, WA, buku kecil.", "start": 3.8, "end": 7.2, "size": 46, "box": true, "boxColor": "0x141414@0.55", "y": 0.66 },
+        { "text": "Tensi, lingkar, catatan dokter — satu layar.", "start": 7.5, "end": 10.3, "size": 40, "box": true, "boxColor": "0x141414@0.6", "y": 0.785 },
+        { "text": "Foto USG & catatan dokter, tersimpan rapi.", "start": 10.6, "end": 13.4, "size": 40, "box": true, "boxColor": "0x141414@0.6", "y": 0.785 }
       ],
       "cta": "Rapikan data kehamilanmu",
       "music": "ads-assets/audio/bgm-tense.mp3",
       "musicVolume": 0.16,
       "sourceVolume": 0.5,
       "sfx": [
-        { "file": "ads-assets/audio/notif-wa.mp3", "at": 4.2, "volume": 0.45 }
+        { "file": "public/sounds/bunda-notif.mp3", "at": 4.1, "volume": 0.5 }
       ]
     },
     {

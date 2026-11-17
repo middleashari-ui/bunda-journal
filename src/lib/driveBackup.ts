@@ -409,3 +409,15 @@ export async function downloadBackup(fileId: string): Promise<{ ok: boolean; rea
 export function hasSessionForDrive(): boolean {
   return !!getToken();
 }
+
+/** Uji izin + folder Drive tanpa mengunggah data. */
+export async function checkDriveAccess(): Promise<{ ok: boolean; reason?: string; folderId?: string }> {
+  try {
+    const token = await requestDriveToken(true);
+    if (!token) return { ok: false, reason: 'auth-required' };
+    const folderId = await ensureFolder(token);
+    return { ok: true, folderId };
+  } catch (err: any) {
+    return { ok: false, reason: err?.message || 'drive-check-failed' };
+  }
+}

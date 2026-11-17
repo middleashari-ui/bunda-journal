@@ -2,7 +2,7 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `271b0fe6`,
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `2867447e`,
 17 Nov 2026; SW v27; Worker cron `bunda-reminder-cron` aktif; payment UI dimatikan otomatis karena health `keyCheck: invalid`)
 
 ## Baca dulu
@@ -64,6 +64,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `271b0fe6`,
 | Catatan harian per hari (tidak membawa teks kemarin) + batas 2 baris di Jurnal & buku | `dailyNoteLimit.ts`, tes e2e |
 | Palet tema buku digelapkan untuk kontras teks/cetak | `src/types/bookPrint.ts`, `text-stone-400 → 600` di bookPrint; visual baseline lulus |
 | Payment UI fail-safe: tombol bayar nonaktif kalau `/api/payments/health` tidak ok | `LandingPage` prop `paymentUnavailable`, `App.tsx` |
+| Diagnosa Google Drive: "Tes Izin Google Drive", "Lupakan izin", update file hari yang sama | `driveBackup.checkDriveAccess`, `TabProfil` |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)
 
@@ -81,8 +82,9 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `271b0fe6`,
 
 1. **Google Drive OAuth** — backup/restore Drive masih `403 access_denied`
    karena OAuth app di Google Cloud masih mode Testing / email belum jadi test
-   user. Tambahkan `middleashari@gmail.com` sebagai Test user atau publish app.
-   Kode backup sudah siap (update file hari yang sama).
+   user. Ikuti `docs/google-drive-setup.md`: tambahkan `middleashari@gmail.com`
+   sebagai Test user atau publish app, lalu di Profil tekan **Lupakan izin** →
+   **Tes Izin Google Drive**. Kode backup sudah siap.
 2. **Tes restore backup di HP asli** — ekspor lalu impor ulang; pastikan foto/bab
    IndexedDB ikut kembali. Tidak bisa diotomatiskan dari desktop.
 3. **Aksesibilitas lanjutan** — palet tema buku sudah digelapkan dan baseline
