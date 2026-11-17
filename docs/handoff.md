@@ -16,9 +16,8 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3e6595d2`,
 
 ## Kondisi sekarang
 
-- Production berjalan dari `main`; commit terakhir sebelum sesi 16 Nov: `d01c325`
-  (rate limit API sensitif + gerbang ekspor diverifikasi server).
-- Test: `npm run test:unit` → **81 tes / 11 file**; E2E utama + checkout **23**;
+- Production berjalan dari `main`; commit terakhir: `9b90518` (push default aktif).
+- Test: `npm run test:unit` → **90 tes / 13 file**; E2E Chromium **32** lulus;
   E2E Ruang Iklan **12/12** (6 Chromium + 6 WebKit).
 - Bundle awal tetap di-code-split: `index` ±625 KB, `AdsApp` 212 KB dimuat hanya di `/ads`.
 - `npm run audit:storage` → **58 pemanggilan** di satu file arsip
@@ -55,12 +54,12 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3e6595d2`,
 | Notifikasi custom (judul, pesan, jam) + semua notifikasi berlogo "Bunda Journal — …" | Profil → Notifikasi Custom, scheduler di `App.tsx` |
 | Nada notifikasi custom (audio dari Bunda) | `public/sounds/bunda-notif.mp3`, `playGentleChime()` |
 | Auto-backup Drive tidak membuka popup/izin sendiri | `requestDriveToken(false)` return null tanpa token; auto-backup hanya saat app hidden/online |
-| Alarm pengingat toleran keterlambatan 3 jam + cek saat app kembali terlihat | `src/lib/reminderSchedule.ts`, scheduler `App.tsx` |
+| Alarm pengingat toleran keterlambatan 12 jam + cek saat app kembali terlihat | `src/lib/reminderSchedule.ts`, scheduler `App.tsx` |
 | Notifikasi tidak dobel (tag + tanpa fallback `new Notification` saat SW ada) | `src/utils/notifications.ts` |
 | Pop-up pengingat saat app terlihat + tombol Buka Jurnal; klik notifikasi sistem membuka `/#/jurnal` | `ReminderPopup.tsx`, scheduler `App.tsx`, `sw.js` |
 | Reset penanda pengingat versi lama + tombol "Cek Pengingat Sekarang" | `bunda_reminder_engine=v2`, `TabProfil` |
 | Toleransi pengingat 12 jam + tombol "Tampilkan Contoh Pop-up" | `reminderSchedule.ts`, `TabProfil` |
-| Install PWA cepat (bukan 15 menit) | `public/sw.js` v26: hapus URL yang kena 308 (`/index.html`, `/offline.html`), cache per-file |
+| Install PWA cepat (bukan 15 menit) | `public/sw.js` v27: hapus URL yang kena 308 (`/index.html`, `/offline.html`), cache per-file |
 | Web Push saat app ditutup (default aktif, jadwal saja bukan jurnal) | `src/lib/pushNotifications.ts`, `/api/push/*` (termasuk status), Worker `workers/reminder-cron`, `schema_push.sql`; cron teruji `due:1 sent:1`; detail `docs/push-notifications.md` |
 | Catatan harian per hari (tidak membawa teks kemarin) + batas 2 baris di Jurnal & buku | `dailyNoteLimit.ts`, tes e2e |
 
@@ -78,21 +77,28 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3e6595d2`,
 
 ## Yang belum selesai (urut prioritas)
 
-1. **Tes restore backup di HP asli** — ekspor lalu impor ulang; pastikan foto/bab
+1. **Google Drive OAuth** — backup/restore Drive masih `403 access_denied`
+   karena OAuth app di Google Cloud masih mode Testing / email belum jadi test
+   user. Tambahkan `middleashari@gmail.com` sebagai Test user atau publish app.
+   Kode backup sudah siap (update file hari yang sama).
+2. **Tes restore backup di HP asli** — ekspor lalu impor ulang; pastikan foto/bab
    IndexedDB ikut kembali. Tidak bisa diotomatiskan dari desktop.
-2. **Aksesibilitas lanjutan** — audit axe selesai, focus trap + Escape dan roving
+3. **Aksesibilitas lanjutan** — audit axe selesai, focus trap + Escape dan roving
    tabindex sudah ada. Sisa satu keputusan desain: kontras palet tema buku di
    `/print` (703 node; lihat `docs/accessibility-audit.md`).
-3. **Ganti MIDTRANS_SERVER_KEY production** — charge production masih 401
-   `Unauthorized` dari Midtrans (kunci secret lama/tidak aktif). Ambil server key
-   production yang benar di dashboard Midtrans → Settings → Access Keys, lalu:
+4. **Ganti MIDTRANS_SERVER_KEY production** — charge production masih 401
+   `Unauthorized` dari Midtrans. Ambil server key production yang benar di
+   dashboard Midtrans → Settings → Access Keys, lalu:
    `npx wrangler pages secret put MIDTRANS_SERVER_KEY --project-name bunda-journal`.
    Setelah itu uji `POST /api/midtrans/charge` harus 200 (bukan 424
    `MIDTRANS_AUTH`). Lalu set Payment Notification URL ke
    `https://www.bundajournal.my.id/api/midtrans-callback`, aktifkan QRIS/GoPay,
    dan lakukan satu pembayaran kecil.
-4. **Ads backend** (menunggu key): D1 `meta_*`, `functions/api/ads/*`, token vault
+5. **Ads backend** (menunggu key): D1 `meta_*`, `functions/api/ads/*`, token vault
    AES-GCM, Cloudflare Access, scheduler. Lihat IMPLEMENTATION-STATUS §7.
+6. **Suara notifikasi kustom saat app ditutup** — tidak bisa lewat PWA/Web Push;
+   butuh native wrapper (Capacitor/local notification) + distribusi APK/AAB.
+   Saat ini suara mengikuti channel notifikasi Android.
 
 ## Keputusan yang menunggu (jangan dieksekusi tanpa tanya)
 
