@@ -30,7 +30,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `1264d0b6`,
 - Skema data **v1** (`bunda_schema_version`), index hari **Sen=0 … Min=6**.
 - Foto & isi bab 1–5 di **IndexedDB** (`src/lib/mediaStore.ts`); localStorage hanya
   `bunda_media_index`. Guard kuota `src/lib/storageQuota.ts`.
-- Service worker source `v21` (`public/sw.js`).
+- Service worker source `v22` (`public/sw.js`), termasuk handler klik notifikasi.
 - **Ruang Iklan `/ads`** (demo, terpisah dari PWA): 5 tab, 14 kalkulator, CSV,
   approval lokal. Data demo deterministik; **tidak ada request ke Meta** dan token
   tidak disimpan. Route `/ads*` memakai fallback SPA otomatis Cloudflare Pages.
@@ -49,6 +49,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `1264d0b6`,
 | Ruang Iklan demo `/ads` | `src/ads/`, `docs/meta-ads-command-center/` |
 | Audit aksesibilitas (axe WCAG A/AA) | `docs/accessibility-audit.md`; Lighthouse landing 1.00; semua layar utama 0 violation |
 | Payment gateway Midtrans Snap | `functions/_lib/payments.ts`, charge/callback/upgrade, health; uji sandbox 15/15 di `docs/payment-setup.md` |
+| Notifikasi PWA (logo + klik) + toast unduhan + catatan Ayah di WhatsApp + backup Drive tahan ganti HP | `src/utils/notifications.ts`, `public/sw.js`, `TabJurnal`, `driveBackup` |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)
 

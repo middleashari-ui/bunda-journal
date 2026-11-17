@@ -27,6 +27,17 @@ test.describe('Jurnal — struktur baru', () => {
     await expect(page.getByText('Belum ada catatan').first()).toBeVisible();
   });
 
+  test('catatan harian dibatasi 160 karakter dan 2 baris', async ({ page }) => {
+    await openApp(page, '/#/jurnal');
+    const note = page.locator('#textarea-catatan-harian');
+    await expect(note).toHaveAttribute('maxLength', '160');
+    await expect(note).toHaveAttribute('rows', '2');
+
+    // Mengetik lebih dari 160 karakter harus dipotong (emoji dihitung 1).
+    await note.fill('a'.repeat(200));
+    await expect(note).toHaveValue('a'.repeat(160));
+  });
+
   test('kartu jadwal kontrol menampilkan data dan tombol kirim', async ({ page }) => {
     await openApp(page, '/#/jurnal');
     await page.waitForSelector('#tour-step-jadwal');

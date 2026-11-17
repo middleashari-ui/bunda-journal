@@ -200,6 +200,17 @@ async function ensureFolder(token: string): Promise<string> {
   return (await findFolder(token)) || (await createFolder(token));
 }
 
+async function findFileByName(token: string, folderId: string, name: string): Promise<string | null> {
+  const q = encodeURIComponent(
+    `'${folderId}' in parents and name='${name}' and trashed=false`
+  );
+  const data = await driveJson(
+    `/files?q=${q}&orderBy=modifiedTime desc&pageSize=1&fields=files(id,name,modifiedTime)`,
+    token
+  );
+  return data?.files?.[0]?.id || null;
+}
+
 function todayStamp(date = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -290,19 +301,24 @@ export async function backupJournalToDrive(options?: {
     const name = `bunda-backup-${todayStamp()}.json`;
     const bytes = new Blob([json]).size;
 
-    // Update file hari ini kalau sudah ada (lebih hemat daripada bikin baru terus).
-    if (meta?.fileId && meta.name === name) {
-      const res = await fetch(`${UPLOAD_API}/files/${meta.fileId}?uploadType=media`, {
+    // Update file hari ini kalau sudah ada. Kalau meta lokal hilang (ganti HP,
+    // clear data), cari file dengan nama yang sama di Drive supaya tidak
+    // membuat duplikat dan backup tetap "update" bukan "tambah file baru".
+    const knownFileId = meta?.fileId && meta.name === name ? meta.fileId : null;
+    const existingFileId = knownFileId || (await findFileByName(token, folderId, name));
+
+    if (existingFileId) {
+      const res = await fetch(`${UPLOAD_API}/files/${existingFileId}?uploadType=media`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: json,
       });
-      if (!res.ok && res.status !== 404) throw new Error(`drive-update-${res.status}`);
       if (res.ok) {
-        const next: DriveBackupMeta = { at: new Date().toISOString(), fileId: meta.fileId, name, hash, bytes };
+        const next: DriveBackupMeta = { at: new Date().toISOString(), fileId: existingFileId, name, hash, bytes };
         setBackupMeta(next);
         return { ok: true, meta: next };
       }
+      if (res.status !== 404) throw new Error(`drive-update-${res.status}`);
     }
 
     // Buat file baru (multipart: metadata + isi).

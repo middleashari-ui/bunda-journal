@@ -197,6 +197,13 @@ export const TabProfil: React.FC<TabProfilProps> = ({
       case 'token-failed':
       case 'token-error':
         return 'Izin Google Drive dibutuhkan. Coba lagi lalu setujui akses.';
+      case 'access_denied':
+      case 'drive-403':
+      case 'drive-update-403':
+      case 'drive-create-403':
+        return 'Google menolak akses Drive (403). Tambahkan email Bunda sebagai test user di Google Cloud, atau publikasikan aplikasi OAuth.';
+      case 'popup_closed':
+        return 'Jendela izin Google ditutup. Coba lagi lalu setujui akses.';
       case 'offline':
         return 'Tidak ada koneksi internet.';
       case 'empty':
@@ -878,9 +885,15 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                   if (reminderSettings.soundEnabled) playGentleChime();
                   const perm = await requestNotificationPermission();
                   if (perm === 'granted') {
-                    sendSystemNotification('Pengingat Vitamin Bunda', 'Saatnya minum vitamin kehamilan & asupan air hari ini!');
+                    await sendSystemNotification(
+                      'Pengingat Vitamin Bunda',
+                      `Saatnya minum vitamin kehamilan & asupan air hari ini (${reminderSettings.vitaminTime} WIB).`,
+                      { tag: 'bunda-test-vitamin' }
+                    );
+                    if (onShowToast) onShowToast('Notifikasi uji dikirim ke perangkat');
+                  } else {
+                    if (onShowToast) onShowToast('Izin notifikasi diblokir. Aktifkan di pengaturan browser.');
                   }
-                  if (onShowToast) onShowToast('Uji pengingat & lonceng berhasil dijalankan');
                 }}
                 className="w-full py-1.5 px-3 bg-white hover:bg-stone-100 text-stone-700 border border-stone-300 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >

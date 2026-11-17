@@ -1,5 +1,8 @@
 // Notification and audio reminder helper for Bunda app
 
+const NOTIFICATION_ICON = '/icon-192-v2.png';
+const NOTIFICATION_BADGE = '/icon-192-v2.png';
+
 export const playGentleChime = () => {
   try {
     const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -51,16 +54,49 @@ export const requestNotificationPermission = async (): Promise<NotificationPermi
   }
 };
 
-export const sendSystemNotification = (title: string, body: string) => {
-  if ('Notification' in window && Notification.permission === 'granted') {
-    try {
-      new Notification(title, {
-        body,
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
-      });
-    } catch {
-      // Ignore background restrictions
+export interface SystemNotificationOptions {
+  tag?: string;
+  url?: string;
+  requireInteraction?: boolean;
+  silent?: boolean;
+}
+
+/**
+ * Tampilkan notifikasi sistem.
+ * Di Android, `new Notification()` sering diabaikan; service worker
+ * `showNotification()` lebih andal dan mendukung ikon/logo aplikasi.
+ */
+export const sendSystemNotification = async (
+  title: string,
+  body: string,
+  options: SystemNotificationOptions = {}
+): Promise<boolean> => {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return false;
+
+  const payload: NotificationOptions = {
+    body,
+    icon: NOTIFICATION_ICON,
+    badge: NOTIFICATION_BADGE,
+    tag: options.tag || 'bunda-reminder',
+    data: { url: options.url || '/' },
+    requireInteraction: options.requireInteraction ?? false,
+    silent: options.silent ?? false,
+  };
+
+  try {
+    const registration = await navigator.serviceWorker?.getRegistration();
+    if (registration?.showNotification) {
+      await registration.showNotification(title, payload);
+      return true;
     }
+  } catch {
+    // fallback di bawah
+  }
+
+  try {
+    new Notification(title, payload);
+    return true;
+  } catch {
+    return false;
   }
 };

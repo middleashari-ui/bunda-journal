@@ -605,6 +605,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    if (onShowToast) onShowToast('Kartu jadwal berhasil diunduh');
   };
 
   const Gl = () => {
@@ -617,8 +618,10 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     const lokasiText = appointment.lokasi || '-';
     const pesanText = appointment.pesanAyah || 'Ayah, kosongin jadwal ya';
     const catatanText = activeNote ? `\nCatatan Bunda: ${activeNote.slice(0, 200)}` : '';
-    const text = `${pesanText}\nJadwal USG / Dokter: ${dokterText} di ${lokasiText} (${tanggalText}${jamText})\nStatus: ${status}${catatanText}\n\n* lampirkan foto jadwal ya`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    const catatanAyahText = catatanAyah.trim() ? `\nCatatan Persiapan Ayah: ${catatanAyah.slice(0, 300)}` : '';
+    const text = `${pesanText}\nJadwal USG / Dokter: ${dokterText} di ${lokasiText} (${tanggalText}${jamText})\nStatus: ${status}${catatanText}${catatanAyahText}\n\n* lampirkan foto jadwal ya`;
+    // Navigasi langsung (bukan window.open) supaya tidak diblokir popup blocker.
+    window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
   };
 
   // Kirim kartu jadwal sebagai GAMBAR ke WhatsApp (share sheet: WhatsApp langsung muncul).
@@ -637,6 +640,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
     const jenis = appointment.jenis || 'kontrol kehamilan';
     const pesan = appointment.pesanAyah || `Ayah, tolong kosongkan jadwal${when ? ` ${when}` : ''}${jam} ya.`;
     const lines = [pesan, '', `${jenis}${tempat}${when ? ` — ${when}${jam}` : ''}`];
+    if (catatanAyah.trim()) lines.push(`Catatan Persiapan Ayah: ${catatanAyah.slice(0, 300)}`);
     if (namaAnak) lines.push(`Untuk ${namaAnak}`);
     const text = lines.join('\n');
 
@@ -663,10 +667,10 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 4000);
     }
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(text + '\n\n(kartu jadwal tersimpan sebagai gambar — lampirkan ya)')}`,
-      '_blank'
-    );
+    // Navigasi langsung: window.open setelah await sering diblokir popup blocker.
+    window.location.href = `https://wa.me/?text=${encodeURIComponent(
+      text + '\n\n(kartu jadwal tersimpan sebagai gambar — lampirkan ya)'
+    )}`;
   };
 
   // Onboarding 8-Step Interactive Tutorial State (bunda_onboarding_done)
@@ -1499,16 +1503,14 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
               <textarea
                 ref={noteTextareaRef}
                 id="textarea-catatan-harian"
-                rows={4}
-                maxLength={DAILY_NOTE_MAX_CHARS * 2}
+                rows={2}
+                maxLength={DAILY_NOTE_MAX_CHARS}
                 defaultValue={activeNote}
                 inputMode="text"
                 enterKeyHint="done"
                 placeholder={`Tulis perasaan atau momen Bunda pada hari ${activeDay.dayNameFull}...`}
                 onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
                   const ta = e.currentTarget as HTMLTextAreaElement;
-                  ta.style.height = 'auto';
-                  ta.style.height = ta.scrollHeight + 'px';
                   const rawVal = ta.value;
                   const val = clampDailyNote(rawVal);
                   if (val !== rawVal) ta.value = val;
@@ -1524,8 +1526,8 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                     noteTextareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }, 300);
                 }}
-                className="w-full text-xs sm:text-sm text-stone-850 bg-stone-50/60 hover:bg-stone-50 focus:bg-white border border-stone-200 focus:border-[#556B2F] rounded-xl p-3 outline-none transition-colors font-serif italic leading-relaxed min-h-[110px] resize-none relative z-10 pointer-events-auto overflow-visible"
-                style={{ touchAction: 'manipulation', height: 'auto', overflowWrap: 'anywhere', wordBreak: 'break-word', whiteSpace: 'pre-wrap' as any }}
+                className="w-full text-xs sm:text-sm text-stone-850 bg-stone-50/60 hover:bg-stone-50 focus:bg-white border border-stone-200 focus:border-[#556B2F] rounded-xl p-3 outline-none transition-colors font-serif italic leading-relaxed h-[64px] resize-none relative z-10 pointer-events-auto overflow-y-auto"
+                style={{ touchAction: 'manipulation', overflowWrap: 'anywhere', wordBreak: 'break-word', whiteSpace: 'pre-wrap' as any }}
               />
 
               {/* Suasana hati hari ini — masuk ke buku jurnal & widget Beranda */}

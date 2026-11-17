@@ -24,7 +24,13 @@ export const BookPreviewModal: React.FC<BookPreviewModalProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [pdfProgress, setPdfProgress] = useState(0);
+  const [notice, setNotice] = useState('');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const showNotice = (message: string) => {
+    setNotice(message);
+    window.setTimeout(() => setNotice(''), 3500);
+  };
 
   const handleDownloadPdf = async () => {
     if (isGeneratingPdf) return;
@@ -39,8 +45,10 @@ export const BookPreviewModal: React.FC<BookPreviewModalProps> = ({
         fileName: 'Bunda-Journal-Preview.pdf',
         onProgress: (prog) => setPdfProgress(prog.percentage),
       });
+      showNotice('PDF berhasil diunduh');
     } catch (err) {
       console.error('PDF generation failed:', err);
+      showNotice('Gagal membuat PDF. Coba lagi.');
     } finally {
       setIsGeneratingPdf(false);
       setPdfProgress(0);
@@ -58,7 +66,15 @@ export const BookPreviewModal: React.FC<BookPreviewModalProps> = ({
 
   return (
     <div className="book-preview-container fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200 print:static print:bg-white print:p-0 print:overflow-visible">
-      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Pratinjau buku" className="bg-[#1C1A18] rounded-2xl sm:rounded-3xl max-w-2xl w-full h-[95vh] sm:h-[92vh] shadow-2xl border border-stone-800 flex flex-col overflow-hidden print:bg-white print:border-none print:shadow-none print:w-[176mm] print:h-auto print:overflow-visible">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Pratinjau buku" className="relative bg-[#1C1A18] rounded-2xl sm:rounded-3xl max-w-2xl w-full h-[95vh] sm:h-[92vh] shadow-2xl border border-stone-800 flex flex-col overflow-hidden print:bg-white print:border-none print:shadow-none print:w-[176mm] print:h-auto print:overflow-visible">
+        {notice && (
+          <div
+            role="status"
+            className="pointer-events-none absolute bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full bg-stone-900/95 text-white text-[11px] font-semibold px-4 py-2 shadow-lg border border-white/10"
+          >
+            {notice}
+          </div>
+        )}
         {/* ============================================================== */}
         {/* 1. TOP HEADER: TUTUP (X), LOGO BUNDA., EDIT, & DOWNLOAD PDF     */}
         {/* ============================================================== */}
