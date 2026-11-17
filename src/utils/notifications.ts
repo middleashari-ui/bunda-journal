@@ -92,7 +92,7 @@ export const sendSystemNotification = async (
 ): Promise<boolean> => {
   if (!('Notification' in window) || Notification.permission !== 'granted') return false;
 
-  const payload: NotificationOptions = {
+  const payload: any = {
     body,
     icon: NOTIFICATION_ICON,
     badge: NOTIFICATION_BADGE,
@@ -100,16 +100,23 @@ export const sendSystemNotification = async (
     data: { url: options.url || '/' },
     requireInteraction: options.requireInteraction ?? false,
     silent: options.silent ?? false,
+    renotify: false,
   };
 
   try {
     const registration = await navigator.serviceWorker?.getRegistration();
     if (registration?.showNotification) {
-      await registration.showNotification(title, payload);
-      return true;
+      // Jangan fallback ke `new Notification` setelah ini: di Android keduanya
+      // bisa tampil sebagai dua notifikasi (satu berlogo aplikasi, satu Chrome).
+      try {
+        await registration.showNotification(title, payload);
+        return true;
+      } catch {
+        return false;
+      }
     }
   } catch {
-    // fallback di bawah
+    // lanjut ke fallback hanya kalau service worker tidak tersedia
   }
 
   try {

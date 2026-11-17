@@ -877,6 +877,11 @@ export const TabProfil: React.FC<TabProfilProps> = ({
               const nextVal = !reminderSettings.enabled;
               setReminderSettings(prev => ({ ...prev, enabled: nextVal }));
               setNotificationsEnabled(nextVal);
+              if (nextVal) {
+                // Minta izin saat user menyalakan pengingat (gesture), supaya
+                // alarm tidak perlu dites manual dulu.
+                void requestNotificationPermission();
+              }
               if (onShowToast) onShowToast(nextVal ? 'Pengingat harian diaktifkan' : 'Pengingat harian dinonaktifkan');
             }}
             className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer ${

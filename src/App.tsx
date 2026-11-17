@@ -58,6 +58,7 @@ const PrintBookStudio = lazyWithRetry(() =>
 const PrintBookView = lazyWithRetry(() => import('./components/bookPrint/PrintBookView'));
 import { isJournalLocalOnly } from './config/storage';
 import { maybeAutoBackup } from './lib/driveBackup';
+import { isReminderDue, reminderDayKey } from './lib/reminderSchedule';
 import { OnboardingModal } from './components/OnboardingModal';
 import { PicModal } from './components/PicModal';
 import { CheckoutModal } from './components/CheckoutModal';
@@ -621,66 +622,97 @@ export default function App() {
     storageSet('bunda_profile', JSON.stringify(userProfile));
   }, [userProfile]);
 
-  // Periodic Reminder Checker (every 30s)
+  // Periodic Reminder Checker (every 30s + saat app kembali terlihat)
   useEffect(() => {
     if (!reminderSettings.enabled) return;
 
-    const checkReminders = () => {
-      const now = new Date();
-      const currentH = String(now.getHours()).padStart(2, '0');
-      const currentM = String(now.getMinutes()).padStart(2, '0');
-      const currentTimeStr = `${currentH}:${currentM}`;
-      const todayDateStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+    let checking = false;
+    const checkReminders = async () => {
+      if (checking) return;
+      checking = true;
+      try {
+        const now = new Date();
+        const todayDateStr = reminderDayKey(now);
+        const visible = document.visibilityState === 'visible';
 
-      // Check Vitamin Reminder
-      const lastVitaminAlert = storageGet('bunda_last_vitamin_date');
-      if (currentTimeStr === reminderSettings.vitaminTime && lastVitaminAlert !== todayDateStr) {
-        storageSet('bunda_last_vitamin_date', todayDateStr);
-        if (!habits.vitamins) {
+        // Jadwal dianggap jatuh tempo kalau menitnya sudah lewat (maks. 3 jam).
+        // Android menahan timer saat app di latar belakang, jadi jangan pakai
+        // kecocokan menit persis — alarm tetap muncul saat app dibuka kembali.
+        const isDue = (time: string) => isReminderDue(time, now, 180);
+
+        const notifyOnce = async (
+          key: string,
+          title: string,
+          body: string,
+          options: { tag?: string; url?: string }
+        ) => {
+          if (storageGet(key) === todayDateStr) return false;
+          storageSet(key, todayDateStr);
           if (reminderSettings.soundEnabled) playGentleChime();
-          sendSystemNotification(
+          const shown = await sendSystemNotification(title, body, {
+            ...options,
+            silent: visible,
+          });
+          if (!shown) {
+            showToast('Izin notifikasi belum aktif. Buka Profil → Uji Notifikasi untuk mengizinkan.');
+          }
+          return shown;
+        };
+
+        // Vitamin
+        if (isDue(reminderSettings.vitaminTime) && !habits.vitamins) {
+          const shown = await notifyOnce(
+            'bunda_last_vitamin_date',
             'Bunda Journal — Minum vitamin',
             'Asam folat & zat besi penting untuk perkembangan sel darah dan saraf buah hati hari ini.',
-            { silent: document.visibilityState === 'visible' }
+            { tag: 'bunda-vitamin', url: '/' }
           );
-          showToast('Waktunya minum vitamin & nutrisi hari ini!');
+          if (shown) showToast('Waktunya minum vitamin & nutrisi hari ini!');
         }
-      }
 
-      // Check Journal & Night Reflection Reminder
-      const lastJournalAlert = storageGet('bunda_last_journal_date');
-      if (currentTimeStr === reminderSettings.journalTime && lastJournalAlert !== todayDateStr) {
-        storageSet('bunda_last_journal_date', todayDateStr);
-        if (reminderSettings.soundEnabled) playGentleChime();
-        sendSystemNotification(
-          'Bunda Journal — Isi jurnal',
-          'Luangkan waktu sejenak untuk mencatat momen manis kehamilan hari ini.',
-          { silent: document.visibilityState === 'visible' }
-        );
-        showToast('Waktunya menulis kenangan & jurnal harian!');
-      }
+        // Jurnal
+        if (isDue(reminderSettings.journalTime)) {
+          const shown = await notifyOnce(
+            'bunda_last_journal_date',
+            'Bunda Journal — Isi jurnal',
+            'Luangkan waktu sejenak untuk mencatat momen manis kehamilan hari ini.',
+            { tag: 'bunda-journal', url: '/' }
+          );
+          if (shown) showToast('Waktunya menulis kenangan & jurnal harian!');
+        }
 
-      // Notifikasi custom buatan Bunda
-      (reminderSettings.customReminders || []).forEach((reminder) => {
-        if (!reminder.enabled || !reminder.time || !reminder.title.trim()) return;
-        const lastKey = `bunda_last_custom_${reminder.id}_date`;
-        if (currentTimeStr !== reminder.time) return;
-        if (storageGet(lastKey) === todayDateStr) return;
-        storageSet(lastKey, todayDateStr);
-        if (reminderSettings.soundEnabled) playGentleChime();
-        sendSystemNotification(
-          `Bunda Journal — ${reminder.title.trim()}`,
-          reminder.message.trim() || 'Pengingat dari Bunda Journal.',
-          { tag: `bunda-custom-${reminder.id}`, url: '/', silent: document.visibilityState === 'visible' }
-        );
-        showToast(`${reminder.title.trim()}: ${reminder.message.trim() || 'waktunya ya, Bunda'}`);
-      });
+        // Notifikasi custom
+        for (const reminder of reminderSettings.customReminders || []) {
+          if (!reminder.enabled || !reminder.title.trim() || !isDue(reminder.time)) continue;
+          const shown = await notifyOnce(
+            `bunda_last_custom_${reminder.id}_date`,
+            `Bunda Journal — ${reminder.title.trim()}`,
+            reminder.message.trim() || 'Pengingat dari Bunda Journal.',
+            { tag: `bunda-custom-${reminder.id}`, url: '/' }
+          );
+          if (shown) {
+            showToast(`${reminder.title.trim()}: ${reminder.message.trim() || 'waktunya ya, Bunda'}`);
+          }
+        }
+      } finally {
+        checking = false;
+      }
     };
 
-    // Run check once on load and every 30 seconds
-    checkReminders();
-    const timer = setInterval(checkReminders, 30000);
-    return () => clearInterval(timer);
+    void checkReminders();
+    const timer = setInterval(() => { void checkReminders(); }, 30000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void checkReminders();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    window.addEventListener('pageshow', onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+      window.removeEventListener('pageshow', onVisible);
+    };
   }, [reminderSettings, habits.vitamins]);
 
   // Auto-balik 5 menit (300.000 ms) idle view-only ke tanggal & minggu hari ini.
