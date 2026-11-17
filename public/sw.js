@@ -1,11 +1,12 @@
-const CACHE_NAME = 'bunda-journal-v22';
+const CACHE_NAME = 'bunda-journal-v23';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/manifest.json',
   '/offline.html',
   '/icon-192-v2.png',
-  '/icon-512-v2.png'
+  '/icon-512-v2.png',
+  '/sounds/bunda-notif.mp3'
 ];
 
 self.addEventListener('install', (event) => {

@@ -971,7 +971,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                     await sendSystemNotification(
                       'Pengingat Vitamin Bunda',
                       `Saatnya minum vitamin kehamilan & asupan air hari ini (${reminderSettings.vitaminTime} WIB).`,
-                      { tag: 'bunda-test-vitamin' }
+                      { tag: 'bunda-test-vitamin', silent: true }
                     );
                     if (onShowToast) onShowToast('Notifikasi uji dikirim ke perangkat');
                   } else {

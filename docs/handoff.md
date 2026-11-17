@@ -2,8 +2,8 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `842ec200`,
-17 Nov 2026; SW v22; health `keyCheck: invalid` — server key production perlu diganti)
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3694c05f`,
+17 Nov 2026; SW v23; health `keyCheck: invalid` — server key production perlu diganti)
 
 ## Baca dulu
 
@@ -30,7 +30,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `842ec200`,
 - Skema data **v1** (`bunda_schema_version`), index hari **Sen=0 … Min=6**.
 - Foto & isi bab 1–5 di **IndexedDB** (`src/lib/mediaStore.ts`); localStorage hanya
   `bunda_media_index`. Guard kuota `src/lib/storageQuota.ts`.
-- Service worker source `v22` (`public/sw.js`), termasuk handler klik notifikasi.
+- Service worker source `v23` (`public/sw.js`), termasuk handler klik notifikasi dan cache nada notifikasi.
 - **Ruang Iklan `/ads`** (demo, terpisah dari PWA): 5 tab, 14 kalkulator, CSV,
   approval lokal. Data demo deterministik; **tidak ada request ke Meta** dan token
   tidak disimpan. Route `/ads*` memakai fallback SPA otomatis Cloudflare Pages.
@@ -53,6 +53,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `842ec200`,
 | Riwayat timer kontraksi (durasi + jam otomatis) & hitungan tendangan (sesi + waktu) | `TabProfil` |
 | Isi otomatis jurnal dengan review (contoh kalimat, bukan catatan asli) | `AutoFillJournalModal`, tombol di Profil |
 | Notifikasi custom (judul, pesan, jam) + semua notifikasi berlogo "Bunda Journal — …" | Profil → Notifikasi Custom, scheduler di `App.tsx` |
+| Nada notifikasi custom (audio dari Bunda) | `public/sounds/bunda-notif.mp3`, `playGentleChime()` |
 | Catatan harian per hari (tidak membawa teks kemarin) + batas 2 baris di Jurnal & buku | `dailyNoteLimit.ts`, tes e2e |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)

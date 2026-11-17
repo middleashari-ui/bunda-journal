@@ -62,8 +62,9 @@ export const DailyReminderWidget: React.FC<DailyReminderWidgetProps> = ({
 
     if (perm === 'granted') {
       sendSystemNotification(
-        'Pengingat Bunda: Waktunya Minum Vitamin',
-        'Jangan lupa konsumsi asam folat, kalsium, dan segelas air hangat untuk si kecil tercinta.'
+        'Bunda Journal — Minum vitamin',
+        'Jangan lupa konsumsi asam folat, kalsium, dan segelas air hangat untuk si kecil tercinta.',
+        { tag: 'bunda-test-vitamin', silent: true }
       );
       if (onShowToast) {
         onShowToast('Notifikasi pengingat berhasil dikirim ke perangkat Anda!');

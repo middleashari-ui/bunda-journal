@@ -640,7 +640,8 @@ export default function App() {
           if (reminderSettings.soundEnabled) playGentleChime();
           sendSystemNotification(
             'Bunda Journal — Minum vitamin',
-            'Asam folat & zat besi penting untuk perkembangan sel darah dan saraf buah hati hari ini.'
+            'Asam folat & zat besi penting untuk perkembangan sel darah dan saraf buah hati hari ini.',
+            { silent: document.visibilityState === 'visible' }
           );
           showToast('Waktunya minum vitamin & nutrisi hari ini!');
         }
@@ -653,7 +654,8 @@ export default function App() {
         if (reminderSettings.soundEnabled) playGentleChime();
         sendSystemNotification(
           'Bunda Journal — Isi jurnal',
-          'Luangkan waktu sejenak untuk mencatat momen manis kehamilan hari ini.'
+          'Luangkan waktu sejenak untuk mencatat momen manis kehamilan hari ini.',
+          { silent: document.visibilityState === 'visible' }
         );
         showToast('Waktunya menulis kenangan & jurnal harian!');
       }
@@ -669,7 +671,7 @@ export default function App() {
         sendSystemNotification(
           `Bunda Journal — ${reminder.title.trim()}`,
           reminder.message.trim() || 'Pengingat dari Bunda Journal.',
-          { tag: `bunda-custom-${reminder.id}`, url: '/' }
+          { tag: `bunda-custom-${reminder.id}`, url: '/', silent: document.visibilityState === 'visible' }
         );
         showToast(`${reminder.title.trim()}: ${reminder.message.trim() || 'waktunya ya, Bunda'}`);
       });

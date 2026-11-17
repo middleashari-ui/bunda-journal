@@ -2,25 +2,26 @@
 
 const NOTIFICATION_ICON = '/icon-192-v2.png';
 const NOTIFICATION_BADGE = '/icon-192-v2.png';
+const NOTIFICATION_SOUND = '/sounds/bunda-notif.mp3';
 
-export const playGentleChime = () => {
+let notifAudio: HTMLAudioElement | null = null;
+
+function playFallbackChime() {
   try {
     const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextClass) return;
     const ctx = new AudioContextClass();
-    
-    // Create gentle warm dual tone (soft chime)
+
     const osc1 = ctx.createOscillator();
     const osc2 = ctx.createOscillator();
     const gain = ctx.createGain();
 
     osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-    osc1.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.3); // E5
-
+    osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.3);
     osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(783.99, ctx.currentTime); // G5
-    osc2.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.4); // C6
+    osc2.frequency.setValueAtTime(783.99, ctx.currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(1046.5, ctx.currentTime + 0.4);
 
     gain.gain.setValueAtTime(0.001, ctx.currentTime);
     gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.05);
@@ -29,13 +30,31 @@ export const playGentleChime = () => {
     osc1.connect(gain);
     osc2.connect(gain);
     gain.connect(ctx.destination);
-
     osc1.start(ctx.currentTime);
     osc2.start(ctx.currentTime);
     osc1.stop(ctx.currentTime + 0.85);
     osc2.stop(ctx.currentTime + 0.85);
   } catch {
     // AudioContext might be restricted until user gesture; fails gracefully
+  }
+}
+
+/** Nada notifikasi Bunda Journal (file di public/sounds/bunda-notif.mp3). */
+export const playGentleChime = () => {
+  try {
+    if (typeof Audio === 'undefined') return;
+    if (!notifAudio) {
+      notifAudio = new Audio(NOTIFICATION_SOUND);
+      notifAudio.preload = 'auto';
+      notifAudio.volume = 0.9;
+    }
+    notifAudio.currentTime = 0;
+    const played = notifAudio.play();
+    if (played && typeof played.catch === 'function') {
+      played.catch(() => playFallbackChime());
+    }
+  } catch {
+    playFallbackChime();
   }
 };
 
