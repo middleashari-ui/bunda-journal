@@ -639,7 +639,7 @@ export default function App() {
         if (!habits.vitamins) {
           if (reminderSettings.soundEnabled) playGentleChime();
           sendSystemNotification(
-            'Pengingat Bunda: Waktunya Minum Vitamin!',
+            'Bunda Journal — Minum vitamin',
             'Asam folat & zat besi penting untuk perkembangan sel darah dan saraf buah hati hari ini.'
           );
           showToast('Waktunya minum vitamin & nutrisi hari ini!');
@@ -652,11 +652,27 @@ export default function App() {
         storageSet('bunda_last_journal_date', todayDateStr);
         if (reminderSettings.soundEnabled) playGentleChime();
         sendSystemNotification(
-          'Waktunya Jurnal Bunda',
+          'Bunda Journal — Isi jurnal',
           'Luangkan waktu sejenak untuk mencatat momen manis kehamilan hari ini.'
         );
         showToast('Waktunya menulis kenangan & jurnal harian!');
       }
+
+      // Notifikasi custom buatan Bunda
+      (reminderSettings.customReminders || []).forEach((reminder) => {
+        if (!reminder.enabled || !reminder.time || !reminder.title.trim()) return;
+        const lastKey = `bunda_last_custom_${reminder.id}_date`;
+        if (currentTimeStr !== reminder.time) return;
+        if (storageGet(lastKey) === todayDateStr) return;
+        storageSet(lastKey, todayDateStr);
+        if (reminderSettings.soundEnabled) playGentleChime();
+        sendSystemNotification(
+          `Bunda Journal — ${reminder.title.trim()}`,
+          reminder.message.trim() || 'Pengingat dari Bunda Journal.',
+          { tag: `bunda-custom-${reminder.id}`, url: '/' }
+        );
+        showToast(`${reminder.title.trim()}: ${reminder.message.trim() || 'waktunya ya, Bunda'}`);
+      });
     };
 
     // Run check once on load and every 30 seconds

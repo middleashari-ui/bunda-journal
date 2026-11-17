@@ -53,4 +53,23 @@ test.describe('Profil — alat bantu & riwayat', () => {
     await dialog.getByRole('button', { name: 'Batal' }).click();
     await expect(page.getByRole('dialog', { name: /Isi otomatis/i })).toHaveCount(0);
   });
+
+  test('notifikasi custom bisa ditambahkan dan disimpan', async ({ page }) => {
+    await openApp(page);
+    await page.locator('#dev-toolbar').evaluate((el) => el.remove()).catch(() => {});
+    await page.getByRole('button', { name: 'Profil', exact: true }).click();
+
+    await page.getByLabel('Judul notifikasi custom').fill('Minum obat');
+    await page.getByLabel('Pesan notifikasi custom').fill('Habiskan setelah makan');
+    await page.getByRole('button', { name: '+ Tambah' }).click();
+
+    await expect(page.getByText('Minum obat', { exact: false }).first()).toBeVisible();
+    await expect(page.getByText(/1 pengingat/)).toBeVisible();
+
+    // Tetap ada setelah reload (tersimpan di pengaturan).
+    await page.reload();
+    await page.locator('#dev-toolbar').evaluate((el) => el.remove()).catch(() => {});
+    await page.getByRole('button', { name: 'Profil', exact: true }).click();
+    await expect(page.getByText('Minum obat', { exact: false }).first()).toBeVisible();
+  });
 });

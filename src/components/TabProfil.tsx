@@ -308,6 +308,9 @@ export const TabProfil: React.FC<TabProfilProps> = ({
   const [showAutoFill, setShowAutoFill] = useState(false);
   const [kicksCount, setKicksCount] = useState(0);
   const [kickStartedAt, setKickStartedAt] = useState<Date | null>(null);
+  const [newReminderTitle, setNewReminderTitle] = useState('');
+  const [newReminderMessage, setNewReminderMessage] = useState('');
+  const [newReminderTime, setNewReminderTime] = useState('09:00');
   const [kickHistory, setKickHistory] = useState<Array<{ date: string; start?: string; end?: string; count: number }>>(() => {
     try {
       const parsed = JSON.parse(storageGet('bunda_kick_history') || '[]');
@@ -980,6 +983,132 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                 <Bell className="w-3 h-3 text-[#556B2F]" />
                 <span>Uji Notifikasi & Alarm Sekarang</span>
               </button>
+            </div>
+
+            {/* Custom notifications */}
+            <div className="pt-2 border-t border-stone-200/60 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-stone-600">Notifikasi Custom</p>
+                <span className="text-[10px] text-stone-600">{(reminderSettings.customReminders || []).length} pengingat</span>
+              </div>
+
+              {(reminderSettings.customReminders || []).map((reminder) => (
+                <div key={reminder.id} className="bg-white rounded-xl border border-stone-200 px-2.5 py-2 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-stone-800 truncate">
+                      {reminder.time} · {reminder.title}
+                    </p>
+                    {reminder.message && (
+                      <p className="text-[10px] text-stone-600 truncate">{reminder.message}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={reminder.enabled}
+                      aria-label={`Aktifkan notifikasi ${reminder.title}`}
+                      onClick={() => {
+                        setReminderSettings((prev) => ({
+                          ...prev,
+                          customReminders: (prev.customReminders || []).map((item) =>
+                            item.id === reminder.id ? { ...item, enabled: !item.enabled } : item
+                          ),
+                        }));
+                      }}
+                      className={`w-8 h-[18px] flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${
+                        reminder.enabled ? 'bg-[#556B2F]' : 'bg-stone-300'
+                      }`}
+                    >
+                      <span aria-hidden="true" className={`bg-white w-3.5 h-3.5 rounded-full shadow-xs transform transition-transform ${
+                        reminder.enabled ? 'translate-x-3.5' : 'translate-x-0'
+                      }`} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Hapus notifikasi ${reminder.title}`}
+                      onClick={() => {
+                        setReminderSettings((prev) => ({
+                          ...prev,
+                          customReminders: (prev.customReminders || []).filter((item) => item.id !== reminder.id),
+                        }));
+                      }}
+                      className="text-rose-600 hover:bg-rose-50 p-1 rounded-lg cursor-pointer"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              <div className="bg-white rounded-xl border border-stone-200 p-2.5 space-y-2">
+                <input
+                  type="text"
+                  value={newReminderTitle}
+                  onChange={(e) => setNewReminderTitle(e.target.value)}
+                  maxLength={40}
+                  placeholder="Judul (mis. Minum obat)"
+                  aria-label="Judul notifikasi custom"
+                  className="w-full text-[11px] bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-[#556B2F]"
+                />
+                <input
+                  type="text"
+                  value={newReminderMessage}
+                  onChange={(e) => setNewReminderMessage(e.target.value)}
+                  maxLength={90}
+                  placeholder="Pesan (mis. Habiskan setelah makan)"
+                  aria-label="Pesan notifikasi custom"
+                  className="w-full text-[11px] bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-[#556B2F]"
+                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="time"
+                    value={newReminderTime}
+                    onChange={(e) => setNewReminderTime(e.target.value)}
+                    aria-label="Jam notifikasi custom"
+                    className="bg-stone-50 border border-stone-200 rounded-lg px-2 py-1 text-[11px] text-stone-800"
+                  />
+                  <span className="text-[10px] text-stone-600">WIB</span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const title = newReminderTitle.trim();
+                      if (!title) {
+                        if (onShowToast) onShowToast('Isi judul notifikasi dulu ya');
+                        return;
+                      }
+                      const reminder = {
+                        id: `custom-${Date.now()}`,
+                        title,
+                        message: newReminderMessage.trim(),
+                        time: newReminderTime || '09:00',
+                        enabled: true,
+                      };
+                      setReminderSettings((prev) => ({
+                        ...prev,
+                        customReminders: [...(prev.customReminders || []), reminder],
+                      }));
+                      setNewReminderTitle('');
+                      setNewReminderMessage('');
+                      const perm = await requestNotificationPermission();
+                      if (onShowToast) {
+                        onShowToast(
+                          perm === 'granted'
+                            ? `Pengingat "${title}" ditambahkan`
+                            : 'Pengingat disimpan, tapi izin notifikasi belum aktif'
+                        );
+                      }
+                    }}
+                    className="ml-auto px-3 py-1.5 rounded-lg bg-[#556B2F] text-white text-[11px] font-semibold hover:bg-[#465926] cursor-pointer"
+                  >
+                    + Tambah
+                  </button>
+                </div>
+              </div>
+              <p className="text-[10px] text-stone-600 leading-snug">
+                Notifikasi tampil dengan logo Bunda Journal. Pengingat berjalan saat aplikasi aktif;
+                kalau browser ditutup total, Android bisa menundanya.
+              </p>
             </div>
           </div>
         )}

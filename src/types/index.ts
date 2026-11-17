@@ -67,10 +67,19 @@ export interface BookOrder {
   status: 'draft' | 'ordered';
 }
 
+export interface CustomReminder {
+  id: string;
+  title: string;
+  message: string;
+  time: string;
+  enabled: boolean;
+}
+
 export interface ReminderSettings {
   enabled: boolean;
   vitaminTime: string;
   journalTime: string;
   waterIntervalHours: number;
   soundEnabled: boolean;
+  customReminders?: CustomReminder[];
 }

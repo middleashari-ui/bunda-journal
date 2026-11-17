@@ -2,7 +2,7 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `bb7980f8`,
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `842ec200`,
 17 Nov 2026; SW v22; health `keyCheck: invalid` — server key production perlu diganti)
 
 ## Baca dulu
@@ -52,6 +52,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `bb7980f8`,
 | Notifikasi PWA (logo + klik) + toast unduhan + catatan Ayah di WhatsApp + backup Drive tahan ganti HP | `src/utils/notifications.ts`, `public/sw.js`, `TabJurnal`, `driveBackup` |
 | Riwayat timer kontraksi (durasi + jam otomatis) & hitungan tendangan (sesi + waktu) | `TabProfil` |
 | Isi otomatis jurnal dengan review (contoh kalimat, bukan catatan asli) | `AutoFillJournalModal`, tombol di Profil |
+| Notifikasi custom (judul, pesan, jam) + semua notifikasi berlogo "Bunda Journal — …" | Profil → Notifikasi Custom, scheduler di `App.tsx` |
 | Catatan harian per hari (tidak membawa teks kemarin) + batas 2 baris di Jurnal & buku | `dailyNoteLimit.ts`, tes e2e |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)
