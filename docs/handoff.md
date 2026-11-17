@@ -2,8 +2,8 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `575b5d64`,
-17 Nov 2026; SW v23; health `keyCheck: invalid` — server key production perlu diganti)
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `17acba1f`,
+17 Nov 2026; SW v24; health `keyCheck: invalid` — server key production perlu diganti)
 
 ## Baca dulu
 
@@ -30,7 +30,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `575b5d64`,
 - Skema data **v1** (`bunda_schema_version`), index hari **Sen=0 … Min=6**.
 - Foto & isi bab 1–5 di **IndexedDB** (`src/lib/mediaStore.ts`); localStorage hanya
   `bunda_media_index`. Guard kuota `src/lib/storageQuota.ts`.
-- Service worker source `v23` (`public/sw.js`), termasuk handler klik notifikasi dan cache nada notifikasi.
+- Service worker source `v24` (`public/sw.js`), install resilien (satu file gagal tidak menggagalkan PWA), handler klik notifikasi, cache nada notifikasi.
 - **Ruang Iklan `/ads`** (demo, terpisah dari PWA): 5 tab, 14 kalkulator, CSV,
   approval lokal. Data demo deterministik; **tidak ada request ke Meta** dan token
   tidak disimpan. Route `/ads*` memakai fallback SPA otomatis Cloudflare Pages.
@@ -60,6 +60,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `575b5d64`,
 | Pop-up pengingat saat app terlihat + tombol Buka Jurnal; klik notifikasi sistem membuka `/#/jurnal` | `ReminderPopup.tsx`, scheduler `App.tsx`, `sw.js` |
 | Reset penanda pengingat versi lama + tombol "Cek Pengingat Sekarang" | `bunda_reminder_engine=v2`, `TabProfil` |
 | Toleransi pengingat 12 jam + tombol "Tampilkan Contoh Pop-up" | `reminderSchedule.ts`, `TabProfil` |
+| Install PWA cepat (bukan 15 menit) | `public/sw.js` v24: hapus URL yang kena 308 (`/index.html`, `/offline.html`), cache per-file |
 | Catatan harian per hari (tidak membawa teks kemarin) + batas 2 baris di Jurnal & buku | `dailyNoteLimit.ts`, tes e2e |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)

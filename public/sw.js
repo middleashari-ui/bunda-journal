@@ -1,20 +1,30 @@
-const CACHE_NAME = 'bunda-journal-v23';
+const CACHE_NAME = 'bunda-journal-v24';
+// Gunakan URL kanonik. Cloudflare Pages membalikkan /index.html dan
+// /offline.html dengan 308, yang bisa membuat cache.addAll gagal dan install
+// PWA menggantung lama.
 const APP_SHELL = [
   '/',
-  '/index.html',
   '/manifest.json',
-  '/offline.html',
+  '/offline',
   '/icon-192-v2.png',
   '/icon-512-v2.png',
   '/sounds/bunda-notif.mp3'
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(APP_SHELL);
-    }).then(() => self.skipWaiting())
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    // Cache satu per satu: satu file gagal tidak boleh menggagalkan install PWA.
+    await Promise.all(
+      APP_SHELL.map(async (url) => {
+        try {
+          const res = await fetch(new Request(url, { cache: 'reload' }));
+          if (res && res.ok) await cache.put(url, res.clone());
+        } catch {}
+      })
+    );
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (event) => {
@@ -68,9 +78,9 @@ self.addEventListener('fetch', (event) => {
         .catch(async () => {
           const cached = await caches.match(req);
           if (cached) return cached;
-          const shell = await caches.match('/index.html') || await caches.match('/');
+          const shell = await caches.match('/') || await caches.match('/index.html');
           if (shell) return shell;
-          return caches.match('/offline.html');
+          return (await caches.match('/offline')) || (await caches.match('/offline.html'));
         })
     );
     return;
@@ -90,7 +100,7 @@ self.addEventListener('fetch', (event) => {
       .catch(async () => {
         const cached = await caches.match(req);
         if (cached) return cached;
-        return caches.match('/offline.html');
+        return (await caches.match('/offline')) || (await caches.match('/offline.html'));
       })
   );
 });
