@@ -1,4 +1,4 @@
-import { storageGet, storageSet, storageClear } from '../lib/storage/appStorage';
+import { storageGet, storageSet, storageRemove, storageClear } from '../lib/storage/appStorage';
 import React, { useState, useRef, useEffect } from 'react';
 import { UserProfile, JournalEntry, PhotoMemory, HabitState, ReminderSettings } from '../types';
 import { PRICING_CONFIG } from '../config/pricing';
@@ -881,6 +881,13 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                 // Minta izin saat user menyalakan pengingat (gesture), supaya
                 // alarm tidak perlu dites manual dulu.
                 void requestNotificationPermission();
+                // Hapus penanda hari ini agar jadwal yang sudah lewat tetap
+                // memunculkan pop-up setelah pengingat dinyalakan.
+                storageRemove('bunda_last_vitamin_date');
+                storageRemove('bunda_last_journal_date');
+                (reminderSettings.customReminders || []).forEach((item) => {
+                  storageRemove(`bunda_last_custom_${item.id}_date`);
+                });
               }
               if (onShowToast) onShowToast(nextVal ? 'Pengingat harian diaktifkan' : 'Pengingat harian dinonaktifkan');
             }}
@@ -913,6 +920,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                   value={reminderSettings.vitaminTime}
                   onChange={(e) => {
                     setReminderSettings(prev => ({ ...prev, vitaminTime: e.target.value }));
+                    storageRemove('bunda_last_vitamin_date');
                   }}
                   className="bg-white border border-stone-300 rounded-lg px-2 py-1 text-xs font-sans text-stone-800 focus:outline-[#556B2F]"
                 />
@@ -936,6 +944,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                   value={reminderSettings.journalTime}
                   onChange={(e) => {
                     setReminderSettings(prev => ({ ...prev, journalTime: e.target.value }));
+                    storageRemove('bunda_last_journal_date');
                   }}
                   className="bg-white border border-stone-300 rounded-lg px-2 py-1 text-xs font-sans text-stone-800 focus:outline-[#556B2F]"
                 />
@@ -993,6 +1002,17 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                 <span>Uji Notifikasi & Alarm Sekarang</span>
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                window.dispatchEvent(new Event('bunda_check_reminders'));
+                if (onShowToast) onShowToast('Pengingat dicek. Kalau sudah waktunya, pop-up akan muncul.');
+              }}
+              className="w-full py-1.5 px-3 bg-[#FAF8F5] hover:bg-white text-stone-700 border border-stone-200 rounded-xl text-[11px] font-medium transition-all cursor-pointer"
+            >
+              Cek Pengingat Sekarang
+            </button>
 
             {/* Custom notifications */}
             <div className="pt-2 border-t border-stone-200/60 space-y-2">

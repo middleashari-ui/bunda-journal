@@ -105,6 +105,7 @@ export default function App() {
     return 'home';
   });
   const [reminderQueue, setReminderQueue] = useState<ReminderPopupData[]>([]);
+  const [reminderCheckNonce, setReminderCheckNonce] = useState(0);
 
   // Notifikasi yang diklik membawa hash #/jurnal → langsung buka tab Jurnal.
   useEffect(() => {
@@ -501,6 +502,27 @@ export default function App() {
     };
   });
 
+  // Versi mesin pengingat. Sekali saja setelah update: buang penanda "sudah
+  // terkirim hari ini" dari versi lama supaya alarm yang terlewat tetap muncul.
+  useEffect(() => {
+    if (storageGet('bunda_reminder_engine') === 'v2') return;
+    try {
+      storageRemove('bunda_last_vitamin_date');
+      storageRemove('bunda_last_journal_date');
+      (reminderSettings.customReminders || []).forEach((item) => {
+        storageRemove(`bunda_last_custom_${item.id}_date`);
+      });
+      storageSet('bunda_reminder_engine', 'v2');
+    } catch {}
+  }, []);
+
+  // Tombol "Cek Pengingat Sekarang" di Profil memicu pemeriksaan ulang.
+  useEffect(() => {
+    const onCheck = () => setReminderCheckNonce((n) => n + 1);
+    window.addEventListener('bunda_check_reminders', onCheck);
+    return () => window.removeEventListener('bunda_check_reminders', onCheck);
+  }, []);
+
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [syncSuccess, setSyncSuccess] = useState<boolean>(false);
 
@@ -752,7 +774,7 @@ export default function App() {
       window.removeEventListener('focus', onVisible);
       window.removeEventListener('pageshow', onVisible);
     };
-  }, [reminderSettings, habits.vitamins]);
+  }, [reminderSettings, habits.vitamins, reminderCheckNonce]);
 
   // Auto-balik 5 menit (300.000 ms) idle view-only ke tanggal & minggu hari ini.
   // Ini BUKAN reset data: catatan history tetap tersimpan di localStorage.
