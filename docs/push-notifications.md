@@ -85,6 +85,7 @@ Cron selalu 1.440 kali/hari berapa pun jumlah user. Yang tumbuh adalah jumlah pu
 
 - iOS: harus dipasang ke Home Screen, iOS 16.4+.
 - Android: penghemat baterai OEM bisa menunda push.
+- Heads-up/suara notifikasi dikontrol channel Chrome/Android, bukan Web Push. Kode meminta `silent:false`, `renotify`, dan `vibrate`; kalau channel situs disetel senyap, pengguna harus mengubahnya di pengaturan Android.
 - Endpoint push bisa kedaluwarsa; cron menghapus subscription mati.
 - Kalau push gagal, fallback pop-up dalam app tetap ada saat app dibuka.
 - `PUSH_ENABLED=false` di Pages mematikan config/opt-in tanpa menghapus data.

@@ -40,8 +40,8 @@ Environment yang harus ada di Pages (Settings → Environment variables):
 
 ## 4. Setelah deploy
 
-1. Buka `https://www.bundajournal.my.id/?v=26` sekali → pastikan service worker naik ke
-   `v26` (cek DevTools → Application → Service Workers).
+1. Buka `https://www.bundajournal.my.id/?v=27` sekali → pastikan service worker naik ke
+   `v27` (cek DevTools → Application → Service Workers).
 2. Buka `https://www.bundajournal.my.id/ads` → harus 200 dan tampil Ruang Iklan
    (bukan redirect ke `/`).
 3. Cek `https://www.bundajournal.my.id/api/payments/health` → `ok: true`,

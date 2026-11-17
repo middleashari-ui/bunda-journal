@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bunda-journal-v26';
+const CACHE_NAME = 'bunda-journal-v27';
 // Gunakan URL kanonik. Cloudflare Pages membalikkan /index.html dan
 // /offline.html dengan 308, yang bisa membuat cache.addAll gagal dan install
 // PWA menggantung lama.
@@ -66,6 +66,10 @@ self.addEventListener('push', (event) => {
       icon: '/icon-192-v2.png',
       badge: '/icon-192-v2.png',
       tag: data.tag || 'bunda-push',
+      renotify: true,
+      silent: false,
+      requireInteraction: false,
+      vibrate: [200, 100, 200],
       data: { url: data.url || '/#/jurnal' },
     });
   })());

@@ -2,8 +2,8 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3cf667b6`,
-17 Nov 2026; SW v26; Worker cron `bunda-reminder-cron` aktif; health `keyCheck: invalid` — server key production perlu diganti)
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3e6595d2`,
+17 Nov 2026; SW v27; Worker cron `bunda-reminder-cron` aktif; health `keyCheck: invalid` — server key production perlu diganti)
 
 ## Baca dulu
 
@@ -30,7 +30,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3cf667b6`,
 - Skema data **v1** (`bunda_schema_version`), index hari **Sen=0 … Min=6**.
 - Foto & isi bab 1–5 di **IndexedDB** (`src/lib/mediaStore.ts`); localStorage hanya
   `bunda_media_index`. Guard kuota `src/lib/storageQuota.ts`.
-- Service worker source `v26` (`public/sw.js`), install resilien, handler push/klik notifikasi, cache nada notifikasi.
+- Service worker source `v27` (`public/sw.js`), install resilien, handler push/klik notifikasi, cache nada notifikasi.
 - **Ruang Iklan `/ads`** (demo, terpisah dari PWA): 5 tab, 14 kalkulator, CSV,
   approval lokal. Data demo deterministik; **tidak ada request ke Meta** dan token
   tidak disimpan. Route `/ads*` memakai fallback SPA otomatis Cloudflare Pages.
@@ -61,7 +61,7 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `3cf667b6`,
 | Reset penanda pengingat versi lama + tombol "Cek Pengingat Sekarang" | `bunda_reminder_engine=v2`, `TabProfil` |
 | Toleransi pengingat 12 jam + tombol "Tampilkan Contoh Pop-up" | `reminderSchedule.ts`, `TabProfil` |
 | Install PWA cepat (bukan 15 menit) | `public/sw.js` v26: hapus URL yang kena 308 (`/index.html`, `/offline.html`), cache per-file |
-| Web Push saat app ditutup (opt-in, jadwal saja bukan jurnal) | `src/lib/pushNotifications.ts`, `/api/push/*` (termasuk status), Worker `workers/reminder-cron`, `schema_push.sql`; cron teruji `due:1 sent:1`; detail `docs/push-notifications.md` |
+| Web Push saat app ditutup (default aktif, jadwal saja bukan jurnal) | `src/lib/pushNotifications.ts`, `/api/push/*` (termasuk status), Worker `workers/reminder-cron`, `schema_push.sql`; cron teruji `due:1 sent:1`; detail `docs/push-notifications.md` |
 | Catatan harian per hari (tidak membawa teks kemarin) + batas 2 baris di Jurnal & buku | `dailyNoteLimit.ts`, tes e2e |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)

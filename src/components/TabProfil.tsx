@@ -337,6 +337,12 @@ export const TabProfil: React.FC<TabProfilProps> = ({
   useEffect(() => {
     if (isPushEnabled()) void refreshPushStatus();
   }, []);
+
+  useEffect(() => {
+    const onChanged = () => { void refreshPushStatus(); };
+    window.addEventListener('bunda_push_changed', onChanged);
+    return () => window.removeEventListener('bunda_push_changed', onChanged);
+  }, []);
   const [kicksCount, setKicksCount] = useState(0);
   const [kickStartedAt, setKickStartedAt] = useState<Date | null>(null);
   const [newReminderTitle, setNewReminderTitle] = useState('');

@@ -60,7 +60,15 @@ import { isJournalLocalOnly } from './config/storage';
 import { maybeAutoBackup } from './lib/driveBackup';
 import { isReminderDue, reminderDayKey } from './lib/reminderSchedule';
 import { ReminderPopup, type ReminderPopupData } from './components/ReminderPopup';
-import { isPushEnabled, syncPushReminders, enablePush } from './lib/pushNotifications';
+import {
+  isPushEnabled,
+  syncPushReminders,
+  enablePush,
+  isPushOptedOut,
+  isPushSupported,
+  shouldPromptPushPermission,
+  snoozePushPrompt,
+} from './lib/pushNotifications';
 import { OnboardingModal } from './components/OnboardingModal';
 import { PicModal } from './components/PicModal';
 import { CheckoutModal } from './components/CheckoutModal';
@@ -77,7 +85,8 @@ import {
   BookMarked,
   User,
   CheckCircle,
-  BookOpen
+  BookOpen,
+  Bell,
 } from 'lucide-react';
 
 const INITIAL_PHOTOS: PhotoMemory[] = [];
@@ -107,6 +116,7 @@ export default function App() {
   });
   const [reminderQueue, setReminderQueue] = useState<ReminderPopupData[]>([]);
   const [reminderCheckNonce, setReminderCheckNonce] = useState(0);
+  const [showPushPrompt, setShowPushPrompt] = useState(false);
 
   // Notifikasi yang diklik membawa hash #/jurnal → langsung buka tab Jurnal.
   useEffect(() => {
@@ -524,6 +534,7 @@ export default function App() {
       const data = event.data;
       if (!data || typeof data !== 'object') return;
       if (data.type === 'bunda_push_reminder') {
+        if (reminderSettings.soundEnabled) playGentleChime();
         setReminderQueue((prev) =>
           prev.some((item) => item.tag === data.tag)
             ? prev
@@ -840,6 +851,28 @@ export default function App() {
     }, 1200);
     return () => window.clearTimeout(timer);
   }, [reminderSettings]);
+
+  // Push default aktif: kalau izin sudah diberikan, daftar otomatis tanpa
+  // menekan toggle. Kalau izin belum diminta, tampilkan banner sekali.
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setShowPushPrompt(false);
+      return;
+    }
+    if (isPushEnabled() || isPushOptedOut() || !isPushSupported()) {
+      setShowPushPrompt(false);
+      return;
+    }
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      const timer = window.setTimeout(() => {
+        void enablePush(reminderSettings)
+          .then(() => window.dispatchEvent(new Event('bunda_push_changed')))
+          .catch(() => {});
+      }, 1500);
+      return () => window.clearTimeout(timer);
+    }
+    if (shouldPromptPushPermission()) setShowPushPrompt(true);
+  }, [isLoggedIn, reminderSettings]);
 
   // Auto-balik 5 menit (300.000 ms) idle view-only ke tanggal & minggu hari ini.
   // Ini BUKAN reset data: catatan history tetap tersimpan di localStorage.
@@ -1444,6 +1477,51 @@ export default function App() {
             }
           }}
         />
+
+        {/* Banner izin push (default aktif, sekali tampil) */}
+        {showPushPrompt && (
+          <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[130] w-[calc(100%-1.5rem)] max-w-sm rounded-2xl bg-white border border-stone-200 shadow-2xl p-3.5">
+            <div className="flex items-start gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#556B2F]/12 text-[#556B2F] flex items-center justify-center shrink-0">
+                <Bell className="w-4 h-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-stone-900">Aktifkan notifikasi pengingat?</p>
+                <p className="text-[11px] text-stone-600 mt-0.5 leading-snug">
+                  Supaya pengingat vitamin, jurnal, dan jadwal tetap masuk saat aplikasi ditutup.
+                </p>
+                <div className="flex items-center gap-2 mt-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      snoozePushPrompt(7);
+                      setShowPushPrompt(false);
+                    }}
+                    className="px-3 py-1.5 rounded-lg border border-stone-300 text-stone-700 text-[11px] font-semibold cursor-pointer"
+                  >
+                    Nanti
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await enablePush(reminderSettings);
+                        setShowPushPrompt(false);
+                        window.dispatchEvent(new Event('bunda_push_changed'));
+                        showToast('Notifikasi pengingat aktif');
+                      } catch (err: any) {
+                        showToast(err?.message || 'Gagal mengaktifkan notifikasi');
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-[#556B2F] text-white text-[11px] font-bold cursor-pointer"
+                  >
+                    Aktifkan
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Pop-up pengingat (saat app terlihat) */}
         {reminderQueue.length > 0 && (

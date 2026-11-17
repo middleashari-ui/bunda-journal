@@ -4,6 +4,8 @@ import type { ReminderSettings } from '../types';
 
 const DEVICE_KEY = 'bunda_push_device_id';
 const ENABLED_KEY = 'bunda_push_enabled';
+const OPTOUT_KEY = 'bunda_push_optout';
+const PROMPT_SNOOZE_KEY = 'bunda_push_prompt_snooze';
 
 export interface PushReminderPayload {
   tag: string;
@@ -28,6 +30,30 @@ export function isPushEnabled(): boolean {
   } catch {
     return false;
   }
+}
+
+/** Default aktif: user baru otomatis ditawari, kecuali pernah memilih "matikan". */
+export function isPushOptedOut(): boolean {
+  try {
+    return storageGet(OPTOUT_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function shouldPromptPushPermission(): boolean {
+  if (!isPushSupported() || isPushOptedOut() || isPushEnabled()) return false;
+  if (typeof Notification === 'undefined' || Notification.permission !== 'default') return false;
+  try {
+    const snooze = Number(storageGet(PROMPT_SNOOZE_KEY) || '0');
+    return !snooze || Date.now() > snooze;
+  } catch {
+    return true;
+  }
+}
+
+export function snoozePushPrompt(days = 7) {
+  try { storageSet(PROMPT_SNOOZE_KEY, String(Date.now() + days * 86400000)); } catch {}
 }
 
 export interface PushStatus {
@@ -198,7 +224,10 @@ export async function enablePush(settings: ReminderSettings): Promise<void> {
   }
 
   await postSubscription(subscription, settings);
-  try { storageSet(ENABLED_KEY, 'true'); } catch {}
+  try {
+    storageSet(ENABLED_KEY, 'true');
+    storageSet(OPTOUT_KEY, 'false');
+  } catch {}
 }
 
 export async function syncPushReminders(settings: ReminderSettings): Promise<void> {
@@ -224,5 +253,8 @@ export async function disablePush(): Promise<void> {
   try {
     await postJson('/api/push/unsubscribe', { deviceId: getDeviceId() });
   } catch {}
-  try { storageRemove(ENABLED_KEY); } catch {}
+  try {
+    storageRemove(ENABLED_KEY);
+    storageSet(OPTOUT_KEY, 'true');
+  } catch {}
 }
