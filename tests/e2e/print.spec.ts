@@ -70,4 +70,25 @@ test.describe('Buku jurnal /print', () => {
     await expect(rightPage).toContainText('Catatan Dokter / Pertanyaan Konsul');
     await expect(rightPage).toContainText('Panjang janin 15.3 cm');
   });
+
+  test('catatan yang diketik langsung di buku dibatasi 2 baris', async ({ page }) => {
+    await openApp(page, '/#/print');
+    await page.waitForSelector('.print-book-spread');
+
+    const note = page.locator('textarea[maxlength="160"]').first();
+    await note.fill('Bunda merasa si kecil aktif sekali hari ini tendangannya terasa kuat sejak pagi sampai malam '.repeat(2));
+
+    const value = await note.inputValue();
+    expect(value.length).toBeGreaterThan(0);
+    expect(value.length).toBeLessThanOrEqual(160);
+
+    const fitsTwoLines = await note.evaluate((el) => {
+      const ta = el as HTMLTextAreaElement;
+      const style = getComputedStyle(ta);
+      const lineHeight = parseFloat(style.lineHeight) || 12;
+      const padding = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+      return ta.scrollHeight <= lineHeight * 2 + padding + 3;
+    });
+    expect(fitsTwoLines).toBe(true);
+  });
 });

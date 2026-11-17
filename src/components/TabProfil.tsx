@@ -16,6 +16,7 @@ import {
   DriveBackupMeta,
 } from '../lib/driveBackup';
 import { playGentleChime, requestNotificationPermission, sendSystemNotification } from '../utils/notifications';
+import { AutoFillJournalModal } from './AutoFillJournalModal';
 import { 
   ColorThemeId, 
   APP_COLOR_THEMES, 
@@ -43,6 +44,8 @@ import {
   X,
   Clock,
   Pill,
+  Trash2,
+  Sparkles,
   Volume2,
   BellRing,
   Camera,
@@ -302,14 +305,63 @@ export const TabProfil: React.FC<TabProfilProps> = ({
 
   // Kick Counter State
   const [showKickCounter, setShowKickCounter] = useState(false);
+  const [showAutoFill, setShowAutoFill] = useState(false);
   const [kicksCount, setKicksCount] = useState(0);
+  const [kickStartedAt, setKickStartedAt] = useState<Date | null>(null);
+  const [kickHistory, setKickHistory] = useState<Array<{ date: string; start?: string; end?: string; count: number }>>(() => {
+    try {
+      const parsed = JSON.parse(storageGet('bunda_kick_history') || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Contraction Timer State
   const [showContractionTimer, setShowContractionTimer] = useState(false);
   const [isContractionRunning, setIsContractionRunning] = useState(false);
   const [contractionSeconds, setContractionSeconds] = useState(0);
+  const [contractionStartedAt, setContractionStartedAt] = useState<Date | null>(null);
+  const [contractionHistory, setContractionHistory] = useState<Array<{ date: string; start?: string; end?: string; durationSeconds: number }>>(() => {
+    try {
+      const parsed = JSON.parse(storageGet('bunda_contraction_history') || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
   const contractionTimerRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const saveKickHistory = (next: typeof kickHistory) => {
+    setKickHistory(next);
+    try { storageSet('bunda_kick_history', JSON.stringify(next)); } catch {}
+  };
+
+  const saveContractionHistory = (next: typeof contractionHistory) => {
+    setContractionHistory(next);
+    try { storageSet('bunda_contraction_history', JSON.stringify(next)); } catch {}
+  };
+
+  const formatClock = (seconds: number) => {
+    const safe = Math.max(0, Math.floor(seconds));
+    return `${String(Math.floor(safe / 60)).padStart(2, '0')}:${String(safe % 60).padStart(2, '0')}`;
+  };
+
+  const formatHistoryMoment = (iso?: string) => {
+    if (!iso) return '-';
+    try {
+      return new Date(iso).toLocaleString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return '-';
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -740,7 +792,11 @@ export const TabProfil: React.FC<TabProfilProps> = ({
 
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => setShowKickCounter(true)}
+            onClick={() => {
+              setKicksCount(0);
+              setKickStartedAt(new Date());
+              setShowKickCounter(true);
+            }}
             className="p-3 bg-[#FAF8F5] rounded-2xl border border-stone-200/60 text-left hover:border-[#556B2F]/40 transition-all cursor-pointer"
           >
             <Heart className="w-4 h-4 text-[#A85A44] mb-1" />
@@ -749,7 +805,12 @@ export const TabProfil: React.FC<TabProfilProps> = ({
           </button>
 
           <button
-            onClick={() => setShowContractionTimer(true)}
+            onClick={() => {
+              setContractionSeconds(0);
+              setIsContractionRunning(false);
+              setContractionStartedAt(null);
+              setShowContractionTimer(true);
+            }}
             className="p-3 bg-[#FAF8F5] rounded-2xl border border-stone-200/60 text-left hover:border-[#556B2F]/40 transition-all cursor-pointer"
           >
             <Timer className="w-4 h-4 text-[#556B2F] mb-1" />
@@ -757,6 +818,25 @@ export const TabProfil: React.FC<TabProfilProps> = ({
             <p className="text-[10px] text-stone-600 font-light">Durasi & interval kontraksi</p>
           </button>
         </div>
+      </div>
+
+      {/* Auto-fill jurnal untuk yang join di tengah trimester */}
+      <div className="bg-white p-4 rounded-3xl border border-stone-200/60 shadow-xs space-y-2">
+        <h4 className="font-serif text-xs font-bold text-stone-800 uppercase tracking-wider">
+          Bantu Isi Jurnal
+        </h4>
+        <p className="text-[11px] text-stone-600 leading-relaxed">
+          Baru mulai di tengah trimester? Isi contoh kalimat untuk hari yang terlewat.
+          Semua kalimat bisa dibaca dan diedit dulu sebelum disimpan.
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowAutoFill(true)}
+          className="w-full py-2 px-3 bg-[#FAF8F5] hover:bg-[#F3EFE8] border border-stone-200 rounded-xl text-xs font-semibold text-stone-800 flex items-center justify-center gap-1.5 cursor-pointer"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-[#556B2F]" />
+          Isi otomatis hari yang terlewat
+        </button>
       </div>
 
       {/* Notification & Preferences Settings */}
@@ -1119,32 +1199,49 @@ export const TabProfil: React.FC<TabProfilProps> = ({
         </div>
       )}
 
+      <AutoFillJournalModal
+        isOpen={showAutoFill}
+        onClose={() => setShowAutoFill(false)}
+        onApplied={(count) => {
+          if (onShowToast) onShowToast(`${count} hari diisi. Periksa lagi di tab Jurnal.`);
+        }}
+      />
+
       {/* Kick Counter Modal */}
       {showKickCounter && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl border border-stone-200 text-center">
-            <div className="flex justify-between items-center mb-4">
+          <div role="dialog" aria-modal="true" aria-label="Hitung Gerak Janin" className="bg-white rounded-3xl p-5 max-w-sm w-full max-h-[88vh] overflow-y-auto shadow-2xl border border-stone-200 text-center">
+            <div className="flex justify-between items-center mb-3">
               <span className="font-serif font-bold text-stone-800 text-sm">Hitung Gerak Janin</span>
-              <button onClick={() => setShowKickCounter(false)} className="text-stone-600 p-1">
+              <button onClick={() => setShowKickCounter(false)} aria-label="Tutup" className="text-stone-600 p-1">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-stone-500 mb-4">
-              Ketuk tombol hati setiap kali si kecil terasa menendang atau bergerak.
+            <p className="text-xs text-stone-600 mb-3 leading-relaxed">
+              Ketuk tombol hati setiap kali si kecil menendang/bergerak. Waktu mulai dan selesai
+              tersimpan otomatis — Bunda tidak perlu mengisi jam.
             </p>
 
             <button
               onClick={() => setKicksCount(c => c + 1)}
-              className="w-28 h-28 mx-auto rounded-full bg-[#C87A64]/15 border-4 border-[#C87A64] text-[#A85A44] flex flex-col items-center justify-center active:scale-95 transition-transform cursor-pointer shadow-md mb-4"
+              aria-label={`Tambah gerakan, saat ini ${kicksCount}`}
+              className="w-28 h-28 mx-auto rounded-full bg-[#C87A64]/15 border-4 border-[#C87A64] text-[#A85A44] flex flex-col items-center justify-center active:scale-95 transition-transform cursor-pointer shadow-md mb-3"
             >
               <Heart className="w-8 h-8 fill-[#C87A64] mb-1" />
               <span className="font-serif text-2xl font-bold">{kicksCount}</span>
             </button>
 
+            <p className="text-[10px] text-stone-600 mb-3">
+              Mulai: {formatHistoryMoment(kickStartedAt?.toISOString())}
+            </p>
+
             <div className="flex gap-2">
               <button
-                onClick={() => setKicksCount(0)}
+                onClick={() => {
+                  setKicksCount(0);
+                  setKickStartedAt(new Date());
+                }}
                 className="flex-1 py-2 text-xs border border-stone-200 rounded-xl text-stone-600 hover:bg-stone-50 cursor-pointer"
               >
                 Reset
@@ -1152,10 +1249,16 @@ export const TabProfil: React.FC<TabProfilProps> = ({
               <button
                 onClick={() => {
                   if (kicksCount > 0) {
-                    const existing = JSON.parse(storageGet('bunda_kick_history') || '[]');
-                    existing.push({ date: new Date().toISOString(), count: kicksCount });
-                    storageSet('bunda_kick_history', JSON.stringify(existing));
-                    if (onShowToast) onShowToast(`${kicksCount} gerakan janin tersimpan di riwayat!`);
+                    const end = new Date();
+                    const entry = {
+                      date: end.toISOString(),
+                      start: kickStartedAt?.toISOString(),
+                      end: end.toISOString(),
+                      count: kicksCount,
+                    };
+                    const next = [entry, ...kickHistory].slice(0, 30);
+                    saveKickHistory(next);
+                    if (onShowToast) onShowToast(`${kicksCount} gerakan tersimpan di riwayat`);
                   }
                   setShowKickCounter(false);
                 }}
@@ -1164,6 +1267,34 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                 Selesai
               </button>
             </div>
+
+            {kickHistory.length > 0 && (
+              <div className="mt-4 text-left">
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-600">Riwayat gerakan</p>
+                  <button
+                    type="button"
+                    onClick={() => saveKickHistory([])}
+                    className="text-[10px] text-rose-600 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" /> Hapus
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {kickHistory.slice(0, 8).map((item, index) => (
+                    <div key={`${item.date}-${index}`} className="rounded-xl border border-stone-200 bg-stone-50/60 px-2.5 py-1.5">
+                      <p className="text-[11px] font-semibold text-stone-800">
+                        Sesi {kickHistory.length - index}: {item.count} gerakan
+                      </p>
+                      <p className="text-[10px] text-stone-600">
+                        {formatHistoryMoment(item.start || item.date)}
+                        {item.end ? ` – ${formatHistoryMoment(item.end)}` : ''}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1171,7 +1302,7 @@ export const TabProfil: React.FC<TabProfilProps> = ({
       {/* Contraction Timer Modal */}
       {showContractionTimer && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl border border-stone-200 text-center">
+          <div role="dialog" aria-modal="true" aria-label="Timer Kontraksi" className="bg-white rounded-3xl p-5 max-w-sm w-full max-h-[88vh] overflow-y-auto shadow-2xl border border-stone-200 text-center">
             <div className="flex justify-between items-center mb-3">
               <span className="font-serif font-bold text-stone-800 text-sm">Timer Kontraksi</span>
               <button 
@@ -1180,19 +1311,28 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                   setIsContractionRunning(false);
                   setShowContractionTimer(false);
                 }} 
+                aria-label="Tutup"
                 className="text-stone-600 p-1"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-stone-500 mb-4">
-              Mulai timer saat kontraksi datang dan tekan berhenti saat reda.
+            <p className="text-xs text-stone-600 mb-3 leading-relaxed">
+              Mulai saat kontraksi datang, hentikan saat reda. Setiap kontraksi masuk riwayat
+              dengan durasi dan jam otomatis.
             </p>
 
-            <div className="py-4 font-sans text-3xl font-bold text-stone-800 tracking-wider">
-              00:{contractionSeconds.toString().padStart(2, '0')}
+            <div className="py-3 font-sans text-3xl font-bold text-stone-800 tracking-wider">
+              {formatClock(contractionSeconds)}
             </div>
+            <p className="text-[10px] text-stone-600 mb-3">
+              {isContractionRunning
+                ? `Berjalan sejak ${formatHistoryMoment(contractionStartedAt?.toISOString())}`
+                : contractionHistory.length > 0
+                  ? `Kontraksi terakhir: ${contractionHistory[0].durationSeconds} detik`
+                  : 'Belum ada kontraksi tercatat'}
+            </p>
 
             <button
               onClick={() => {
@@ -1200,24 +1340,24 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                   if (contractionTimerRef.current) clearInterval(contractionTimerRef.current);
                   setIsContractionRunning(false);
                   if (contractionSeconds > 0) {
-                    const existing = JSON.parse(storageGet('bunda_contraction_history') || '[]');
-                    existing.push({ date: new Date().toISOString(), durationSeconds: contractionSeconds });
-                    storageSet('bunda_contraction_history', JSON.stringify(existing));
-                    if (onShowToast) onShowToast(`Kontraksi ${contractionSeconds} detik tercatat!`);
+                    const end = new Date();
+                    const entry = {
+                      date: end.toISOString(),
+                      start: contractionStartedAt?.toISOString(),
+                      end: end.toISOString(),
+                      durationSeconds: contractionSeconds,
+                    };
+                    const next = [entry, ...contractionHistory].slice(0, 30);
+                    saveContractionHistory(next);
+                    if (onShowToast) onShowToast(`Kontraksi #${next.length}: ${contractionSeconds} detik tercatat`);
                   }
                 } else {
+                  setContractionStartedAt(new Date());
                   setIsContractionRunning(true);
-                  setContractionSeconds(1);
+                  setContractionSeconds(0);
                   if (contractionTimerRef.current) clearInterval(contractionTimerRef.current);
                   contractionTimerRef.current = setInterval(() => {
-                    setContractionSeconds(prev => {
-                      if (prev >= 60) {
-                        if (contractionTimerRef.current) clearInterval(contractionTimerRef.current);
-                        setIsContractionRunning(false);
-                        return 0;
-                      }
-                      return prev + 1;
-                    });
+                    setContractionSeconds(prev => prev + 1);
                   }, 1000);
                 }
               }}
@@ -1235,10 +1375,38 @@ export const TabProfil: React.FC<TabProfilProps> = ({
                 setContractionSeconds(0);
                 setShowContractionTimer(false);
               }}
-              className="text-xs text-stone-600 hover:text-stone-600 py-1"
+              className="text-xs text-stone-600 hover:text-stone-700 py-1"
             >
               Tutup
             </button>
+
+            {contractionHistory.length > 0 && (
+              <div className="mt-4 text-left">
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-600">Riwayat kontraksi</p>
+                  <button
+                    type="button"
+                    onClick={() => saveContractionHistory([])}
+                    className="text-[10px] text-rose-600 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" /> Hapus
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {contractionHistory.slice(0, 10).map((item, index) => (
+                    <div key={`${item.date}-${index}`} className="rounded-xl border border-stone-200 bg-stone-50/60 px-2.5 py-1.5 flex items-center justify-between gap-2">
+                      <p className="text-[11px] font-semibold text-stone-800">
+                        Kontraksi #{contractionHistory.length - index}
+                      </p>
+                      <div className="text-right">
+                        <p className="text-[11px] font-bold text-[#A85A44]">{item.durationSeconds} detik</p>
+                        <p className="text-[10px] text-stone-600">{formatHistoryMoment(item.start || item.date)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

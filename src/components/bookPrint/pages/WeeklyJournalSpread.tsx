@@ -8,6 +8,7 @@ import { Camera, Check, Edit2 } from 'lucide-react';
 import { readDayHabits, isHabitDone, toggleHabitDone, getWeekHabits, getWeekHabitScore, setSupplementTaken, writeActivity } from '../../../lib/habitStore';
 import { getWeeklyJasmani, subscribeJasmaniSummary, JASMANI_TARGETS } from '../../../lib/jasmaniStore';
 import { DAILY_NOTE_MAX_CHARS, DAILY_NOTE_LINE_CHARS, clampDailyNote } from '../../../config/journal';
+import { clampTextareaToLines } from '../../../lib/dailyNoteLimit';
 
 // Batas catatan harian diambil dari satu sumber: src/config/journal.ts
 
@@ -451,7 +452,12 @@ export const WeeklyJournalSpread: React.FC<WeeklyJournalSpreadProps> = ({
                         aria-label={`Catatan hari ${dayObj.label} minggu ${week}`}
                         placeholder={`Catatan hari ${dayObj.label}...`}
                         value={noteText}
-                        onChange={(e) => handleDailyTextChange(dayObj.key, e.target.value)}
+                        onChange={(e) => {
+                          // Isi langsung di buku juga dibatasi 2 baris visual,
+                          // supaya tidak ada teks yang terpotong saat dicetak.
+                          const val = clampTextareaToLines(e.currentTarget, 2);
+                          handleDailyTextChange(dayObj.key, val);
+                        }}
                         className="flex-1 text-[8.5px] text-[9px] font-serif italic text-stone-700 bg-transparent border-b border-stone-300 px-1 pr-2 py-0.5 focus:bg-amber-50/40 focus:outline-hidden leading-[1.2] resize-none overflow-hidden"
                         style={{
                           borderColor: theme.borderColor,

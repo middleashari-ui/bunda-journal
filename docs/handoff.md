@@ -2,7 +2,7 @@
 
 Terakhir diperbarui: 17 Nov 2026
 Branch: `main`
-Production: `https://www.bundajournal.my.id` (deployment Cloudflare `512b2f0f`,
+Production: `https://www.bundajournal.my.id` (deployment Cloudflare `bb7980f8`,
 17 Nov 2026; SW v22; health `keyCheck: invalid` — server key production perlu diganti)
 
 ## Baca dulu
@@ -50,6 +50,9 @@ Production: `https://www.bundajournal.my.id` (deployment Cloudflare `512b2f0f`,
 | Audit aksesibilitas (axe WCAG A/AA) | `docs/accessibility-audit.md`; Lighthouse landing 1.00; semua layar utama 0 violation |
 | Payment gateway Midtrans Snap | `functions/_lib/payments.ts`, charge/callback/upgrade, health; uji sandbox 15/15 di `docs/payment-setup.md` |
 | Notifikasi PWA (logo + klik) + toast unduhan + catatan Ayah di WhatsApp + backup Drive tahan ganti HP | `src/utils/notifications.ts`, `public/sw.js`, `TabJurnal`, `driveBackup` |
+| Riwayat timer kontraksi (durasi + jam otomatis) & hitungan tendangan (sesi + waktu) | `TabProfil` |
+| Isi otomatis jurnal dengan review (contoh kalimat, bukan catatan asli) | `AutoFillJournalModal`, tombol di Profil |
+| Catatan harian per hari (tidak membawa teks kemarin) + batas 2 baris di Jurnal & buku | `dailyNoteLimit.ts`, tes e2e |
 
 ## Keputusan yang sudah diambil (jangan diubah tanpa alasan)
 

@@ -33,9 +33,44 @@ test.describe('Jurnal — struktur baru', () => {
     await expect(note).toHaveAttribute('maxLength', '160');
     await expect(note).toHaveAttribute('rows', '2');
 
-    // Mengetik lebih dari 160 karakter harus dipotong (emoji dihitung 1).
+    // Mengetik lebih dari 160 karakter harus dipotong dan tetap muat 2 baris.
     await note.fill('a'.repeat(200));
-    await expect(note).toHaveValue('a'.repeat(160));
+    const value = await note.inputValue();
+    expect(value.length).toBeGreaterThan(0);
+    expect(value.length).toBeLessThanOrEqual(160);
+    const fitsTwoLines = await note.evaluate((el) => {
+      const ta = el as HTMLTextAreaElement;
+      const style = getComputedStyle(ta);
+      const lineHeight = parseFloat(style.lineHeight) || 20;
+      const padding = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+      const twoLineLimit = Math.max(lineHeight * 2 + padding + 2, ta.clientHeight + 2);
+      return ta.scrollHeight <= twoLineLimit;
+    });
+    expect(fitsTwoLines).toBe(true);
+  });
+
+  test('catatan harian terpisah per hari dan hari baru mulai kosong', async ({ page }) => {
+    await openApp(page, '/#/jurnal');
+    const note = page.locator('#textarea-catatan-harian');
+    await expect(note).toBeVisible();
+
+    // Senin punya catatan dari fixture, Kamis kosong.
+    await page.click('#btn-day-strip-0');
+    await expect(note).toHaveValue(/Ayah bikin bubur/);
+
+    await page.click('#btn-day-strip-3');
+    await expect(note).toHaveValue('');
+
+    await note.fill('Catatan baru hari Kamis');
+    await page.waitForTimeout(450);
+
+    // Kembali ke Senin: catatan lama tidak tertimpa catatan Kamis.
+    await page.click('#btn-day-strip-0');
+    await expect(note).toHaveValue(/Ayah bikin bubur/);
+
+    // Kamis tetap menyimpan catatannya sendiri.
+    await page.click('#btn-day-strip-3');
+    await expect(note).toHaveValue('Catatan baru hari Kamis');
   });
 
   test('kartu jadwal kontrol menampilkan data dan tombol kirim', async ({ page }) => {

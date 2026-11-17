@@ -43,6 +43,7 @@ import { getTodayPosition, getWeekStrip, isSameDay } from '../lib/pregnancyDate'
 import { setItemSafe } from '../lib/storageQuota';
 import { mediaGet, mediaSet, mediaRemove } from '../lib/mediaStore';
 import { DAILY_NOTE_MAX_CHARS, clampDailyNote, countDailyNoteChars } from '../config/journal';
+import { clampTextareaToLines } from '../lib/dailyNoteLimit';
 import {
   AppointmentData,
   EMPTY_APPOINTMENT,
@@ -1501,6 +1502,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
             {/* Single Fast Native Textarea (Uncontrolled + debounced for smooth Android input) */}
             <div>
               <textarea
+                key={activeDay.key}
                 ref={noteTextareaRef}
                 id="textarea-catatan-harian"
                 rows={2}
@@ -1511,9 +1513,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                 placeholder={`Tulis perasaan atau momen Bunda pada hari ${activeDay.dayNameFull}...`}
                 onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
                   const ta = e.currentTarget as HTMLTextAreaElement;
-                  const rawVal = ta.value;
-                  const val = clampDailyNote(rawVal);
-                  if (val !== rawVal) ta.value = val;
+                  const val = clampTextareaToLines(ta, 2);
                   setCurrentNoteLength(countDailyNoteChars(val));
                   handleUpdateDailyNote(activeDay.key, val);
                 }}
@@ -1526,7 +1526,7 @@ export const TabJurnal: React.FC<TabJurnalProps> = ({
                     noteTextareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }, 300);
                 }}
-                className="w-full text-xs sm:text-sm text-stone-850 bg-stone-50/60 hover:bg-stone-50 focus:bg-white border border-stone-200 focus:border-[#556B2F] rounded-xl p-3 outline-none transition-colors font-serif italic leading-relaxed h-[64px] resize-none relative z-10 pointer-events-auto overflow-y-auto"
+                className="w-full text-xs sm:text-sm text-stone-850 bg-stone-50/60 hover:bg-stone-50 focus:bg-white border border-stone-200 focus:border-[#556B2F] rounded-xl p-3 outline-none transition-colors font-serif italic leading-relaxed h-[72px] resize-none relative z-10 pointer-events-auto overflow-y-auto"
                 style={{ touchAction: 'manipulation', overflowWrap: 'anywhere', wordBreak: 'break-word', whiteSpace: 'pre-wrap' as any }}
               />
 
